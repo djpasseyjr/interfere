@@ -29,8 +29,8 @@ notebooks = [
     "jupyter"
 ]
 
-[tool.setuptools]
-packages = ["interfere"]
+[tool.setuptools.packages]
+find = {}
 
 [project.urls]
 Repository = "https://github.com/djpasseyjr/interfere"
