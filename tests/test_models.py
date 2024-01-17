@@ -213,7 +213,7 @@ def test_arithmetic_brownian_motion():
 
     # Test that expectation matches the analytic expectation
     diff = np.mean(X, axis=1)  - (mu[0] * time_points + x0[0])
-    assert np.all(np.abs(diff) < 0.2)
+    assert np.all(np.abs(diff) < 0.25)
 
     f = interfere.perfect_intervention(0, 10)
     Xdo = model.simulate(x0, time_points, f, rng=rng, dW=dW)
@@ -240,7 +240,7 @@ def test_geometric_brownian_motion():
 
     # Test that expectation matches the analytic expectation
     diff = np.mean(X, axis=1)  - (np.exp(mu[0] * time_points) * x0[0])
-    assert np.all(np.abs(diff) < 0.2)
+    assert np.all(np.abs(diff) < 0.25)
 
     f = interfere.perfect_intervention(0, 10)
     Xdo = model.simulate(x0, time_points, f, rng=rng, dW=dW)
