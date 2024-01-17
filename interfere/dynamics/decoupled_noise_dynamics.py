@@ -14,7 +14,6 @@ from abc import abstractmethod
 from typing import Callable, Optional
 import numpy as np
 
-from interfere.dynamics.base import DEFAULT_RANGE
 from .base import DEFAULT_RANGE, DynamicModel
 
 class UncorrelatedNoise(DynamicModel):
