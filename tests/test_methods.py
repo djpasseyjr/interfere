@@ -70,7 +70,7 @@ def test_simulate_perfect_intervention_var():
     # Average over the 10000 simulations to compute the expected trajectory.
     # Make sure it is equal for both models.
     assert np.all(
-        np.mean(true_var_sim - perf_inter_sim[:, :, :3], axis=0) < 0.1
+        np.abs(np.mean(true_var_sim - perf_inter_sim[:, :, :3], axis=0)) < 0.1
     )
 
     # Do a third simulation to  double check that the above average doesn't hold
@@ -96,7 +96,7 @@ def test_simulate_perfect_intervention_var():
     )
 
     assert not np.all(
-        np.mean(true_var_sim - true_var_sim2, axis=0) < 0.1
+        np.abs(np.mean(true_var_sim - true_var_sim2, axis=0)) < 0.1
     )
 
 def test_benchmark_methods():

@@ -291,10 +291,94 @@ class DiscreteTimeDynamics(DynamicModel):
         return X_do
     
     @abstractmethod
-    def step(self, x_n: np.ndarray):
+    def step(self, x: np.ndarray):
         """Uses the current state to compute the next state of the system.
         
         Args:
-            x_n (np.ndarray): The current state of the system.
+            x (np.ndarray): The current state of the system.
+
+        Returns:
+            x_next (np.ndarray): The next state of the system.
+        """
+        raise NotImplementedError()
+    
+
+class DiscreteTimeDelayDynamics(DynamicModel):
+
+    def simulate(
+        self,
+        initial_condition: np.ndarray,
+        time_points: np.ndarray,
+        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
+        """Runs a simulation of the discrete time dynamic model.
+
+        Args:
+            initial_condition (ndarray): A (m, p) array of the historical
+                condition of the dynamic model.
+            time_points (ndarray): A (n,) array of the time points where the   
+                dynamic model will be simulated. Must be integers
+            intervention (callable): A function that accepts (1) a vector of the
+                current state of the dynamic model and (2) the current time. It should return a modified state. The function will be used in the
+                following way: 
+                    
+                If the dynamic model without the intervention can be described 
+                as
+                    x(t+dt) = F(x(t))
+
+                where dt is the timestep size, x(t) is the trajectory, and F is
+                the function that uses the current state to compute the state at
+                the next timestep. Then the intervention function will be used
+                to simulate the system
+
+                    z(t+dt) = F(g(z(t), t), t)
+                    x_do(t) = g(z(t), t)
+
+                where x_do is the trajectory of the intervened system and g is 
+                the intervention function.
+            rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
+                random number generator by default.)
+
+        Returns:
+            X: An (n, m) array containing a realization of the trajectory of 
+                the m dimensional system corresponding to the n times in 
+                `time_points`. The first p rows contain the initial condition/
+                history of the system and count towards n.
+        """
+        nsteps = len(time_points)
+
+        # Make sure that the simulation is not passed continuous time values
+        if np.any(np.round(time_points) != time_points):
+            raise ValueError("DiscreteTimeDynamics require integer time points")
+        
+        # Initialize array of realizations of the trajectory.
+        X_do = np.zeros((nsteps, self.dim))
+        X_do[0] = initial_condition
+
+        for i in range(nsteps - 1):
+
+            # Apply intervention to current value
+            if intervention is not None:
+                X_do[i] = intervention(X_do[i], time_points[i])
+
+            # Compute next state
+            X_do[i+1] = self.step(X_do[i])
+
+        # After the loop, apply interention to the last step
+        if intervention is not None:
+            X_do[-1] = intervention(X_do[-1], time_points[-1])
+
+        return X_do
+    
+    @abstractmethod
+    def step(self, x: np.ndarray):
+        """Uses the current state to compute the next state of the system.
+        
+        Args:
+            x (np.ndarray): The current state of the system.
+
+        Returns:
+            x_next (np.ndarray): The next state of the system.
         """
         raise NotImplementedError()

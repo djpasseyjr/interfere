@@ -2,6 +2,7 @@ import interfere
 import numpy as np
 from scipy import integrate
 import sdeint
+from statsmodels.tsa.vector_ar.util import varsim
 
 from interfere.dynamics import (
     StandardNormalNoise,
@@ -248,3 +249,46 @@ def test_geometric_brownian_motion():
     assert np.any(Xdo != X)
     assert np.all(Xdo[:, 1:] == X[:, 1:])
     assert np.all(Xdo[:, 0] == 10)
+
+
+def test_varma():
+    seed = 1
+    rs = np.random.RandomState(seed)
+
+    # Initialize a random VAR model
+    A1 = rs.rand(3, 3) - 0.5
+    A2 = rs.rand(3, 3) - 0.5
+    coefs = np.stack([A1, A2])
+    mu = np.zeros(3)
+    Z = rs.rand(3, 3)
+    Sigma = Z * Z.T
+    steps = 101
+    initial_vals = np.ones((2, 3))
+    nsims = 10000
+
+    # Simulate it
+    true_var_sim = varsim(
+        coefs,
+        mu,
+        Sigma,
+        steps=steps,
+        initial_values=initial_vals,
+        seed=seed,
+        nsimulations=nsims,
+    )
+
+    # Initialize a VARMA model with no moving average component
+    model = interfere.dynamics.VARMA_Dynamics(
+        phi_matrices=coefs,
+        theta_matrices=[np.zeros((3,3))],
+        sigma=Sigma
+    )
+    varma_sim = np.stack([
+        model.simulate(initial_vals, time_points=np.arange(steps))
+        for i in range(nsims)
+    ], axis=0)
+    # Average over the 10000 simulations to compute the expected trajectory.
+    # Make sure it is equal for both models.
+    assert np.all(
+        np.abs(np.mean(true_var_sim - varma_sim, axis=0)) < 0.2
+    )
