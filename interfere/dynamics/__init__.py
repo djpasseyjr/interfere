@@ -1,6 +1,18 @@
 from .arithmetic_brownian_motion import ArithmeticBrownianMotion
 from .base import  OrdinaryDifferentialEquation, StochasticDifferentialEquation
-from .coupled_logistic_maps import CoupledLogisticMaps
+from .coupled_map_lattice import (
+    coupled_logistic_map,
+    CoupledMapLattice,
+    coupled_map_1dlattice_chaotic_brownian,
+    coupled_map_1dlattice_chaotic_traveling_wave,
+    coupled_map_1dlattice_defect_turbulence,
+    coupled_map_1dlattice_frozen_chaos,
+    coupled_map_1dlattice_pattern_selection,
+    coupled_map_1dlattice_spatiotemp_chaos,
+    coupled_map_1dlattice_spatiotemp_intermit1,
+    coupled_map_1dlattice_spatiotemp_intermit2,
+    coupled_map_1dlattice_traveling_wave
+)
 from .decoupled_noise_dynamics import (
     StandardNormalNoise,
     StandardCauchyNoise,

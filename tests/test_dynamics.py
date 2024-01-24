@@ -9,7 +9,16 @@ from interfere.dynamics import (
     StandardCauchyNoise,
     StandardExponentialNoise,
     StandardGammaNoise,
-    StandardTNoise
+    StandardTNoise,
+    coupled_map_1dlattice_chaotic_brownian,
+    coupled_map_1dlattice_chaotic_traveling_wave,
+    coupled_map_1dlattice_defect_turbulence,
+    coupled_map_1dlattice_frozen_chaos,
+    coupled_map_1dlattice_pattern_selection,
+    coupled_map_1dlattice_spatiotemp_chaos,
+    coupled_map_1dlattice_spatiotemp_intermit1,
+    coupled_map_1dlattice_spatiotemp_intermit2,
+    coupled_map_1dlattice_traveling_wave
 )
 
 def test_lotka_voltera():
@@ -137,7 +146,7 @@ def test_coupled_logistic_map():
     rng = np.random.default_rng(10)
 
     A = rng.random((10, 10)) < 0.5
-    model = interfere.dynamics.CoupledLogisticMaps(A)
+    model = interfere.dynamics.coupled_logistic_map(A)
     x0 = rng.random(10)
     t = range(100)
     X = model.simulate(x0, t)
@@ -149,6 +158,37 @@ def test_coupled_logistic_map():
     intervention = interfere.perfect_intervention(interv_idx, interv_const)
     X_do = model.simulate(x0, t, intervention)
     assert np.all(X_do[:, interv_idx] == interv_const)
+
+
+def test_coupled_map_lattice():
+    coupled_map_lattices = [
+        coupled_map_1dlattice_chaotic_brownian,
+        coupled_map_1dlattice_chaotic_traveling_wave,
+        coupled_map_1dlattice_defect_turbulence,
+        coupled_map_1dlattice_frozen_chaos,
+        coupled_map_1dlattice_pattern_selection,
+        coupled_map_1dlattice_spatiotemp_chaos,
+        coupled_map_1dlattice_spatiotemp_intermit1,
+        coupled_map_1dlattice_spatiotemp_intermit2,
+        coupled_map_1dlattice_traveling_wave
+    ]
+    rng = np.random.default_rng(10)
+    ndims = 10
+
+    for cml in coupled_map_lattices:
+        model = cml(ndims)
+        x0 = rng.random(10)
+        t = range(100)
+        X = model.simulate(x0, t)
+        assert X.shape == (100, 10)
+
+        # Make an intervention function
+        interv_idx = 0
+        interv_const = 1.0
+        intervention = interfere.perfect_intervention(interv_idx, interv_const)
+        X_do = model.simulate(x0, t, intervention)
+        assert np.all(X_do[:, interv_idx] == interv_const)
+
 
 def test_normal_noise():
     rng = np.random.default_rng(11)
