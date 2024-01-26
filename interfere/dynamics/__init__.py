@@ -2,7 +2,7 @@ from .arithmetic_brownian_motion import ArithmeticBrownianMotion
 from .base import  OrdinaryDifferentialEquation, StochasticDifferentialEquation
 from .coupled_map_lattice import (
     coupled_logistic_map,
-    CoupledMapLattice,
+    StochasticCoupledMapLattice,
     coupled_map_1dlattice_chaotic_brownian,
     coupled_map_1dlattice_chaotic_traveling_wave,
     coupled_map_1dlattice_defect_turbulence,

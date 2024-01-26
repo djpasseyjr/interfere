@@ -92,7 +92,6 @@ class StochasticDifferentialEquation(DynamicModel):
         initial_condition: np.ndarray,
         time_points: np.ndarray,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
-        # TODO: Change measurement noise so it is a data member.
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         dW: Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -282,7 +281,7 @@ class DiscreteTimeDynamics(DynamicModel):
                 X_do[i] = intervention(X_do[i], time_points[i])
 
             # Compute next state
-            X_do[i+1] = self.step(X_do[i])
+            X_do[i+1] = self.step(X_do[i], rng)
 
         # After the loop, apply interention to the last step
         if intervention is not None:
@@ -291,11 +290,13 @@ class DiscreteTimeDynamics(DynamicModel):
         return X_do
     
     @abstractmethod
-    def step(self, x: np.ndarray):
+    def step(self, x: np.ndarray, rng: np.random.mtrand.RandomState):
         """Uses the current state to compute the next state of the system.
         
         Args:
             x (np.ndarray): The current state of the system.
+            rng (RandomState): A numpy random state for generating random
+                numbers.
 
         Returns:
             x_next (np.ndarray): The next state of the system.
