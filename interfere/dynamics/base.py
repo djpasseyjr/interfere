@@ -65,7 +65,8 @@ class OrdinaryDifferentialEquation(DynamicModel):
 
         # Optionally add measurement noise
         if self.measurement_noise_std is not None:
-            X_do = self.add_measurement_noise(X_do, rng)
+            # Don't add measurement noise to initial condition
+            X_do[1:, :] = self.add_measurement_noise(X_do[1:, :], rng)
 
         return X_do
 
@@ -169,7 +170,8 @@ class StochasticDifferentialEquation(DynamicModel):
             X_do[i + 1, :] = next_x
 
         if self.measurement_noise_std is not None:
-            X_do = self.add_measurement_noise(X_do, rng)
+            # Don't add measurement noise to initial condition
+            X_do[1:, :] = self.add_measurement_noise(X_do[1:, :], rng)
         
         return X_do
 
@@ -286,6 +288,10 @@ class DiscreteTimeDynamics(DynamicModel):
         # After the loop, apply interention to the last step
         if intervention is not None:
             X_do[-1] = intervention(X_do[-1], time_points[-1])
+
+        if self.measurement_noise_std is not None:
+            # Don't add measurement noise to initial condition
+            X_do[1:, :] = self.add_measurement_noise(X_do[1:, :], rng)
 
         return X_do
     

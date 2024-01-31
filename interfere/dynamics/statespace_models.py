@@ -142,9 +142,14 @@ class VARMA_Dynamics(DynamicModel):
 
             # Optional intervention
             if intervention is not None:
-                x_next = intervention(x_next)
+                x_next = intervention(x_next, time_points[i])
 
             X[p+i, :] = x_next
+
+        if self.measurement_noise_std is not None:
+            X = self.add_measurement_noise(X, rng)
+            # Preserve initial conditions.
+            X[:p, :] = initial_condition
 
         return X
 
