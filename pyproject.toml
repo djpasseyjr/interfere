@@ -11,6 +11,7 @@ authors = [
 dependencies = [
     "numpy",
     "pandas",
+    "pyclustering@git+https://github.com/djpasseyjr/pyclustering",
     "pysindy",
     "scikit-learn",
     "sktime",

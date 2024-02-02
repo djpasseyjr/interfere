@@ -403,10 +403,12 @@ def test_kuramoto():
     K = 0.7
     A = rng.random((10, 10)) < .3
     sigma=0.1
-    error_std = np.ones(10)
+    rho = np.random.rand(10)
 
     # Run standard checks for interfere.base.DynamicModel objects.
     model = interfere.dynamics.Kuramoto(omega, K, A, sigma)
     check_simulate_method(model)
     model = interfere.dynamics.KuramotoSakaguchi(omega, K, A, A, sigma)
+    check_simulate_method(model)
+    model = interfere.dynamics.StuartLandauKuramoto(omega, rho, K, sigma)
     check_simulate_method(model)

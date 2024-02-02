@@ -134,7 +134,7 @@ class StochasticDifferentialEquation(DynamicModel):
                 the n rows correspond to the n times in `time_points`.
         """
         m = len(time_points)
-        X_do = np.zeros((m, self.dim))
+        X_do = np.zeros((m, self.dim), dtype=initial_condition.dtype)
 
         # Optionally apply intervention to initial condition
         if intervention is not None:
