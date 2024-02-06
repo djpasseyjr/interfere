@@ -283,7 +283,7 @@ class DiscreteTimeDynamics(DynamicModel):
                 X_do[i] = intervention(X_do[i], time_points[i])
 
             # Compute next state
-            X_do[i+1] = self.step(X_do[i], rng)
+            X_do[i+1] = self.step(X_do[i], t=time_points[i], rng=rng)
 
         # After the loop, apply interention to the last step
         if intervention is not None:
@@ -296,7 +296,12 @@ class DiscreteTimeDynamics(DynamicModel):
         return X_do
     
     @abstractmethod
-    def step(self, x: np.ndarray, rng: np.random.mtrand.RandomState):
+    def step(
+        self,
+        x: np.ndarray,
+        t: float = None,
+        rng: np.random.mtrand.RandomState = None
+    ):
         """Uses the current state to compute the next state of the system.
         
         Args:

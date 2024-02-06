@@ -412,3 +412,10 @@ def test_kuramoto():
     check_simulate_method(model)
     model = interfere.dynamics.StuartLandauKuramoto(omega, rho, K, sigma)
     check_simulate_method(model)
+
+
+def test_hodgkin_huxley():
+    stimulus = [0, 0, 0, 15, 15, 15, 25, 25, 25, 40]
+    sigma = 0.1
+    model = interfere.dynamics.HodgkinHuxleyPyclustering(stimulus, sigma)
+    check_simulate_method(model)

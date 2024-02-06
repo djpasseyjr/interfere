@@ -105,7 +105,7 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         super().__init__(self.adjacency_matrix.shape[0], measurement_noise_std)
 
     
-    def step(self, x: np.ndarray, rng: np.random.mtrand.RandomState):
+    def step(self, x: np.ndarray, t: float, rng: np.random.mtrand.RandomState):
         """One step forward in time for a coupled map lattice
 
         A coupled map lattice where coupling is determined by
@@ -248,7 +248,7 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
 
 
     
-    def step(self, x: np.ndarray, rng: np.random.mtrand.RandomState):
+    def step(self, x: np.ndarray, t: float, rng: np.random.mtrand.RandomState):
         """One step forward in time for a stochastic coupled map lattice.
 
         A stochastic coupled map lattice where coupling is determined by
@@ -259,7 +259,7 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         where w[n] ~ N(0, sigma) and x_i is constrained to be in the interval
         (self.x_min, self.x_max).
         """
-        x_next = super().step(x, rng) 
+        x_next = super().step(x, t, rng) 
 
         # This check enables sigma == 0.0 to generate deterministic dynamics.
         if self.sigma != 0.0:

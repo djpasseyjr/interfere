@@ -13,21 +13,11 @@ neighbors.
 from typing import Optional, Callable
 
 import numpy as np
-from pyclustering.nnet import conn_type
 from pyclustering.nnet.fsync import fsync_network
 
 from .base import StochasticDifferentialEquation, DEFAULT_RANGE
+from .pyclustering_utils import CONN_TYPE_MAP
 from ..utils import copy_doc
-
-
-# Maps string arguments to pyclustering arguments
-CONN_TYPE_MAP = {
-    "all_to_all": conn_type.ALL_TO_ALL,
-    "grid_four": conn_type.GRID_FOUR,
-    "grid_eight": conn_type.GRID_EIGHT,
-    "list_bdir": conn_type.LIST_BIDIR,
-    "dynamic": conn_type.DYNAMIC
-}
 
 
 def kuramoto_intervention_wrapper(
@@ -259,10 +249,13 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
         self.omega = omega
         self.rho = rho
         self.K = K
-        self.Sigma = sigma * np.diag(np.ones(dim))
+        self.sigma = sigma
         self.type_conn = type_conn
         self.convert_to_real = convert_to_real
-        
+
+        # Make independent noise matrix.
+        self.Sigma = sigma * np.diag(np.ones(dim))
+
         # Initialize the pyclustering model.
         self.pyclustering_model = fsync_network(
             dim, omega, rho, K, CONN_TYPE_MAP[type_conn])

@@ -23,6 +23,7 @@ from .decoupled_noise_dynamics import (
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi, StuartLandauKuramoto
 from .lotka_voltera import LotkaVoltera, LotkaVolteraSDE
+from .neuroscience import HodgkinHuxleyPyclustering, LEGIONPyclustering
 from .ornstein_uhlenbeck import OrnsteinUhlenbeck
 from .quadratic_sdes import Belozyorov3DQuad, Liping3DQuadFinance
 from .simple_linear_sdes import (
