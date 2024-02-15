@@ -21,14 +21,50 @@ class ExogIntervention(Intervention):
     
     def split_exogeneous(self, X: np.ndarray):
         """Splits exogeneous columns from endogenous."""
-        exog_X = X[:, self.intervened_idxs]
-        endo_X = np.delete(X, self.intervened_idxs, axis=1)
+        exog_X = X[..., self.intervened_idxs]
+        endo_X = np.delete(X, self.intervened_idxs, axis=-1)
         return endo_X, exog_X
     
     def combine_exogeneous(self, endo_X: np.ndarray, exog_X: np.ndarray):
         """Recombines endogenous and endogenous signals."""
         X = np.insert(endo_X, self.intervened_idxs, exog_X, axis=1)
         return X
+    
+    def eval_at_times(self, t: np.ndarray):
+        """Produces exogeneous signals only at the time values in t.
+
+        Args:
+            t (np.ndarray): A 1D array of time points
+
+        Returns:
+            exog_X_do (np.ndarray): An (m, ) or (m, p) array where `m = len(t)` 
+                and `p = len(self.intervened_idx)`. Contains the values of the
+                exogenous signal at the time points in `t`. The order of the
+                columns corresponds to the order of indexes in 
+                `self.intervened_idx`.
+        """
+        dummy_x = np.zeros(len(self.intervened_idxs))
+        X_do = np.vstack([
+            self.__call__(dummy_x, ti) for ti in t
+        ])
+        _, exog_X_do = self.split_exogeneous(X_do)
+        return exog_X_do
+
+    def __call__(self, x: np.ndarray, t: float):
+        """A perfect intervention on multiple variables.
+
+        Args:
+            x (ndarray): In the context of this package, x represents
+                the current state of a dynamic model.
+            t: (ndarray): In the context of this package, t represents
+                the current time in a dynamic model.
+        
+        Returns:
+            x_do (ndarray): In the context of this package, x_do represents
+                the state of the dynamic model after the intervention is applied.
+        """
+        raise NotImplementedError()
+
     
 
 class PerfectIntervention(ExogIntervention):

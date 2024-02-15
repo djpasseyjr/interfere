@@ -1,6 +1,7 @@
 from .base import (
     DynamicModel, 
     generate_counterfactual_dynamics,
+    generate_counterfactual_forecasts
 )
 
 from . import dynamics

@@ -99,7 +99,8 @@ def test_simulate_perfect_intervention_var():
         np.abs(np.mean(true_var_sim - true_var_sim2, axis=0)) < 0.1
     )
 
-def test_benchmark_methods():
+
+def test_counterfactual_extrapolation_methods():
 
     # Define parameters
     gen_ctrf_kwargs = dict(
@@ -140,7 +141,7 @@ def test_benchmark_methods():
     )
     
     # Score method
-    score, best_params, X_do_pred = interfere.benchmarking.score_extrapolation_method(
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_extrapolation_method(
         **score_methods_kwargs
     )
 
@@ -154,7 +155,7 @@ def test_benchmark_methods():
     }
     
     # Score method
-    score, best_params, X_do_pred = interfere.benchmarking.score_extrapolation_method(
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_extrapolation_method(
         **score_methods_kwargs
     )
 
@@ -165,6 +166,77 @@ def test_benchmark_methods():
         "seq_len": [1, 2]
     }
     # Score method
-    score, best_params, X_do_pred = interfere.benchmarking.score_extrapolation_method(
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_extrapolation_method(
+        **score_methods_kwargs
+    )
+
+
+def test_counterfactual_forecast_methods():
+
+    # Define parameters
+    gen_ctrf_kwargs = dict(
+        model_type=interfere.dynamics.Liping3DQuadFinance,
+        model_params={"sigma": 0.5, "measurement_noise_std": np.ones(3)},
+        intervention_type=interfere.PerfectIntervention,
+        intervention_params={"intervened_idxs": 0, "constants": 0.1},
+        initial_condition_iter=[0.01 * np.ones(3)],
+        time_points_iter=[np.linspace(0, 20, 2000)],
+    )
+    
+    # Simulate dynamic model
+    X, X_do_forecasts = interfere.generate_counterfactual_forecasts(**gen_ctrf_kwargs)
+    # Initialize intervention
+    intervention=gen_ctrf_kwargs["intervention_type"](
+            **gen_ctrf_kwargs["intervention_params"])
+
+    score_methods_kwargs = dict(
+        X=X[0],
+        X_do_forecast=X_do_forecasts[0],
+        time_points=gen_ctrf_kwargs["time_points_iter"][0],
+        intervention=intervention,
+        method_type=interfere.methods.SINDY,
+        method_params={
+            "differentiation_method": ps.SINDyDerivative(kind='spline', s=2.0)
+        },
+        method_param_grid={
+            "optimizer__threshold": [1e-3, 1e-4],
+            "differentiation_method__kwargs": [
+                {'kind': 'finite_difference', 'k': 1},
+                {'kind': 'spline', 's': 1.0},
+                {'kind': 'spline', 's': 0.1},
+            ]
+        },
+        num_intervention_sims=2,
+        score_function=interfere.benchmarking.directional_accuracy,
+        score_function_args={"intervention_idx": intervention.intervened_idxs}
+    )
+    
+    # Score method
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_forecast_method(
+        **score_methods_kwargs
+    )
+
+
+    # Change args to the VAR model
+    score_methods_kwargs["method_type"] = interfere.methods.VAR
+    score_methods_kwargs["method_params"] = {}
+    score_methods_kwargs["method_param_grid"] = {
+        "maxlags": [1, 2,],
+        "trend" : ["c", "ct", "n"]
+    }
+    
+    # Score method
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_forecast_method(
+        **score_methods_kwargs
+    )
+
+    # Change args to the LTSFLinearForecaster model
+    score_methods_kwargs["method_type"] = interfere.methods.LTSFLinearForecaster
+    score_methods_kwargs["method_params"] = {"seq_len": 1, "pred_len": 1}
+    score_methods_kwargs["method_param_grid"] = {
+        "seq_len": [1, 2]
+    }
+    # Score method
+    score, best_params, X_do_pred = interfere.benchmarking.score_counterfactual_forecast_method(
         **score_methods_kwargs
     )

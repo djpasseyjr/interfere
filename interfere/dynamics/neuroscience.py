@@ -133,8 +133,8 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
             # Optionally apply the intervention (to membrane potential only).
             if intervention is not None:
-                next_N[:self.dim, :] = intervention(
-                    next_N[:self.dim, :], time_points[i + 1])
+                next_N[:self.dim, 0] = intervention(
+                    next_N[:self.dim, 0], time_points[i + 1])
                 
                 # Intervene on pyclustering model internal potential
                 self.hhn_model._membrane_potential = list(next_N[:self.dim, 0])

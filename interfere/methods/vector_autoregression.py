@@ -5,6 +5,7 @@ from statsmodels.tools.validation import array_like, int_like
 from sktime.forecasting.var import VAR as skt_VAR
 from statsmodels.tsa.api import VAR as sm_VAR
 
+from ..interventions import ExogIntervention
 
 class VAR(skt_VAR):
     """Wrapper of sktime vector autoregression model.
@@ -25,6 +26,39 @@ class VAR(skt_VAR):
             initial_values=X[0, :]
         )   
         return var_X_do 
+    
+    def counterfactual_forecast(
+        self,
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        forecast_times: np.ndarray,
+        intervention: ExogIntervention
+    ):
+        """Makes a forecast in the prescence of an intervention.
+
+        Args:
+            X_historic (np.array): Historic data.
+            historic_times (np.ndarray): Historic time points
+            forecast_times (np.ndarray): Time points to forecast.
+            intervention (ExogIntervention): The intervention to apply at each
+                future time point.
+        """
+        # Treat historic signals that will be intervened on as exogenous.
+        X_endo, X_exog = intervention.split_exogeneous(X_historic)
+
+        # Compute the intervention corresponding to the forecast.
+        X_exog_forecast = intervention.eval_at_times(forecast_times)
+
+        # Predict the response of the non-intervened signals.
+        forecast_horizon = np.arange(len(forecast_times))
+        X_endo_forcast = self.fit_predict(
+            X_endo, X=X_exog, fh=forecast_horizon, X_pred=X_exog_forecast)
+
+        # Recombine intervention and non-intervened.
+        X_do_forecast = intervention.combine_exogeneous(
+            X_endo_forcast, X_exog_forecast)
+        return X_do_forecast 
+
     
 
 def simulate_perfect_intervention_var(

@@ -2,7 +2,8 @@ import numpy as np
 import pysindy as ps
 from sklearn.base import BaseEstimator
 
-from interfere.utils import copy_doc
+from ..utils import copy_doc
+from ..interventions import ExogIntervention
 
 
 class SINDY(ps.SINDy, BaseEstimator):
@@ -56,6 +57,56 @@ class SINDY(ps.SINDy, BaseEstimator):
             sindy_X_do, interv_X[:n_steps])
         
         return pred_X_do
+    
+    def counterfactual_forecast(
+        self,
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        forecast_times: np.ndarray,
+        intervention: ExogIntervention,
+        max_sim_val=1e6,
+    ):
+        """Makes a forecast in the prescence of an intervention.
+
+        Args:
+            X_historic (np.array): Historic data.
+            historic_times (np.ndarray): Historic time points
+            forecast_times (np.ndarray): Time points to forecast.
+            intervention (ExogIntervention): The intervention to apply at each
+                future time point.
+        """
+        # Pass the intervention variable as a control signal
+        endo_X, exog_X = intervention.split_exogeneous(X_historic)
+        self.fit(endo_X, t=historic_times, u=exog_X)
+
+        # Initial condition (Exogenous signal removed.)
+        endo_X0, _ = intervention.split_exogeneous(X_historic[-1, :])
+
+        # Create a perfect intervention control signal
+        interv_X = intervention.eval_at_times(forecast_times)
+
+        # Sindy uses scipy.integrate.solve_ivp by default and solve_ivp
+        # uses event functions with assigned attributes as callbacks.
+        # The below code tells scipy to stop integrating when
+        # too_big(t, y) == True.
+        too_big = lambda t, y: np.all(np.abs(y) < max_sim_val)
+        too_big.terminal = True
+
+        # Simulate with intervention
+        sindy_X_do = self.simulate(
+            endo_X0, forecast_times, u=interv_X,
+            integrator_kws={"events": too_big}
+        )
+
+        # Retrive number of successful steps
+        n_steps = sindy_X_do.shape[0]
+        
+        # Reassemble the control and response signals into a single array
+        pred_X_do = intervention.combine_exogeneous(
+            sindy_X_do, interv_X[:n_steps])
+        
+        return pred_X_do
+
         
 
 def sindy_perf_interv_extrapolate(

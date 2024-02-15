@@ -185,3 +185,79 @@ def generate_counterfactual_dynamics(
     return observations, counterfactuals
 
 
+def generate_counterfactual_forecasts(
+    model_type: Optional[Type[DynamicModel]] = None,
+    model_params: Optional[Dict[str, Any]] = None,
+    intervention_type: Optional[
+        Callable[[np.ndarray, float], np.ndarray]] = None,
+    intervention_params: Optional[Dict[str, Any]] = None,
+    initial_condition_iter: Optional[Iterable[np.ndarray]] = None,
+    time_points_iter: Optional[Iterable[np.ndarray]] = None,
+    train_per: Optional[float] = 0.8,
+    rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+):
+    """Generates trajectories and corresponding counterfactual trajectories.
+
+    Args:
+        model (Type[DynamicModel]): The type of the dynamic model to simulate
+            with and without interventions.
+        model_params (Dict[str, Any]): The initialization parameters of the    
+            dynamic model.
+        intervention_type (Type[Intervention]): The type of the intervention to
+            apply.
+        intervention_params (Dict[str, Any]): The initialization parameters of
+            the intervention.
+        initial_condition_iter (Iterable[np.ndarray]): An iterable containing
+            initial conditions that conform to the conditions on the 
+            `initial_condition` argument in the
+            `model(**model_parameters).simulate` function.
+        time_points_iter (Iterable[np.ndarray]): An iterable containing arrays
+            of time points that conform to the conditions on the `time_points` 
+            argument in the `model(**model_parameters).simulate` function.
+        train_per (float): Percent of time points to use as training data. Must
+            be between zero and one.
+        rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
+            random number generator by default.)
+            
+    Returns:
+        observations: An list of arrays where the ith array represents a
+            realization of a trajectory of the dynamic model when the initial
+            condition is initial_condition_iter[i]. The ith array has dimensions
+            (n_i, m) where  `n_i = len(time_points_iter[i])` and m is the
+            dimensionality of the system.
+        
+        counterfactual: A list of arrays corresponding exactly to observations
+            except that the supplied intervention was applied.    
+    """
+    model = model_type(**model_params)
+    intervention = intervention_type(**intervention_params)
+    observations = [
+        model.simulate(
+            initial_condition=ic,
+            time_points=t,
+            intervention=None,
+
+            rng=rng,
+        )
+        for ic, t in zip(initial_condition_iter, time_points_iter)
+    ]
+
+    # Collect intervention points and time scales.
+    counterf_init_cond = []
+    counterf_time_points = []
+    for X, t in zip(observations, time_points_iter):
+        test_idx = int(len(t) * train_per)
+        counterf_init_cond.append(X[test_idx, :])
+        counterf_time_points.append(t[test_idx:])
+
+    # Simulate the intervention.
+    counterfactual_forecasts = [
+        model.simulate(
+            initial_condition=ic,
+            time_points=t,
+            intervention=intervention,
+            rng=rng,
+        )
+        for ic, t in zip(counterf_init_cond, counterf_time_points)
+    ]
+    return observations, counterfactual_forecasts

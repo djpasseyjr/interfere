@@ -2,10 +2,32 @@ import interfere
 import numpy as np
 
 def test_perfect_intervention():
-    g = interfere.perfect_intervention(2, 0.3)
-    assert g([0.1, 0.2, 0.0], 0) == [0.1, 0.2, 0.3]
-    g = interfere.perfect_intervention([0, 1], [0, 0])
-    assert g([0.1, 0.2, 0.0], 0.1) == [0, 0, 0]
+    rng = np.random.default_rng(2)
+
+    g = interfere.PerfectIntervention(2, 0.3)
+    assert np.all(
+        g(np.array([0.1, 0.2, 0.0]), 0) == np.array([0.1, 0.2, 0.3])
+    )
+    X = rng.random((10, 5))
+    X_en, X_ex = g.split_exogeneous(X)
+    assert np.all(
+        X_en == np.hstack([X[:, :2], X[:, 3:]])
+    )
+    assert np.all(X_ex == X[:, 2:3])
+
+    g = interfere.PerfectIntervention([0, 1], [0, 0])
+    assert np.all(
+        g(np.array([0.1, 0.2, 0.0]), 0.1) == np.zeros(3)
+    )
+
+    assert np.all(
+        g.eval_at_times(np.array([0, 1, 2])) == np.zeros((3, 2))
+    )
+    X = rng.random((10, 5))
+    X_en, X_ex = g.split_exogeneous(X)
+    assert np.all(X_en == X[:, 2:])
+    assert np.all(X_ex == X[:, :2])
+
 
 def test_signal_intervention():
     g = interfere.signal_intervention(1, np.sin)
