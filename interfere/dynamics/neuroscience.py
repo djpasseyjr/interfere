@@ -237,5 +237,94 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
 
 class LEGIONPyclustering(DiscreteTimeDynamics):
-    pass
 
+
+    def __init__(
+        self,
+        num_neurons: int,
+        sigma: float=0.0,
+        parameters: legion_parameters = DEFAULT_LEGION_PARAMETERS,
+        type_conn: str = "all_to_all",
+        measurement_noise_std: Optional[np.ndarray] = None
+    ):
+        """LEGION (local excitatory global inhibitory oscillatory network).
+        
+        Args:
+            num_neurons (int): Number of neurons in the model. Must be an even  
+                number.
+            sigma (float): Scale of the independent stochastic noise added to
+                the system.
+            parameters (hhn_parameters): A pyclustering.nnet.hhn.hhn_paramerers 
+                object.
+            type_conn (str): Type of connection between oscillators. One
+                of ["all_to_all", "grid_four", "grid_eight", "list_bdir",
+                "dynamic"]. See pyclustering.nnet.__init__::conn_type for
+                details.
+            measurement_noise_std (ndarray): None, or a vector with shape (n,)
+                where each entry corresponds to the standard deviation of the
+                measurement noise for that particular dimension of the dynamic
+                model. For example, if the dynamic model had two variables x1
+                and x2 and measurement_noise_std = [1, 10], then independent
+                gaussian noise with standard deviation 1 and 10 will be added to
+                x1 and x2 respectively at each point in time. 
+        """
+        if num_neurons % 2 == 1:
+            raise ValueError("LEGION model requires an even number of neurons.")
+
+        self.num_excite = num_neurons // 2
+        self.parameters = parameters
+        self.sigma = sigma
+        self.type_conn = type_conn
+        self.Sigma = sigma * np.diag(np.ones(num_neurons))  # Noise covariance.
+        super().__init__(num_neurons, measurement_noise_std)
+
+
+    @copy_doc(DiscreteTimeDynamics.simulate)
+    def simulate(
+        self,
+        initial_condition: np.ndarray,
+        time_points: np.ndarray,
+        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+    ):
+        self.legion_model = legion_network(
+            self.dim // 2,
+            self.parameters,
+            CONN_TYPE_MAP[self.type_conn],
+            ccore=False
+        )
+        # Assumes equally spaced time points.
+        self.dt = (time_points[-1] - time_points[0]) / len(time_points)
+
+
+        X_do = super().simulate(
+            initial_condition, time_points, intervention, rng)
+        return X_do
+    
+
+    def step(
+        self,
+        x: np.ndarray,
+        t: float = None,
+        rng: np.random.RandomState = None,
+    ):
+
+        # Unpack the state of the excitatory and inhibitory neurons
+        x_excite = x[:self.num_excite]
+        x_inhib = x[self.num_excite:]
+
+        # Overwrite the states in the legion model 
+        self.legion_model._excitatory = list(x_excite)
+        self.legion_model._global_inhibitor = list(x_inhib)
+
+        # Calulate next states and extract them.
+        self.legion_model._calculate_states(0, t, self.dt, self.dt/10)
+        x_next = np.hstack([
+            self.legion_model._excitatory, self.legion_model._global_inhibitor
+        ])
+
+        # Add stochastic system noise:
+        if self.sigma != 0:
+            x_next +=  self.Sigma @ rng.normal(0.0, np.sqrt(self.dt))
+
+        return x_next

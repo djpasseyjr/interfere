@@ -24,6 +24,12 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
         where r_i and k_i are the growth rates and carrying capacities of
         species i, A is the matrix of interspecies interactions.
 
+        See:
+        * Vadillo 2019, "Comparing stochastic Lotka–Volterra predator-prey
+        models"
+        * https://en.wikipedia.org/wiki/Competitive_Lotka%E2%80%93Volterra_equations        
+        * https://github.com/netsiphd/netrd/blob/master/netrd/dynamics/lotka_volterra.py
+
         Args:
             growth_rates (ndarray): A length n vector of growth rates (r_i's).
             capacities (ndarray): A length n vector of carrying capacities 
@@ -52,16 +58,17 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
                             )
         
         # Assign parameters.
+        dim = len(growth_rates)
         self.growth_rates = growth_rates
         self.capacities = capacities
         self.interaction_mat = interaction_mat
         # Set dimension of the system.
-        super().__init__(len(growth_rates), measurement_noise_std)
+        super().__init__(dim, measurement_noise_std)
 
     def dXdt(self, x: np.ndarray, t: Optional[float] = None):
         """Coputes derivative of a generalized Lotka Voltera model.
 
-        dx_i/dt = r_i * x_i * (1 - x_i / k_i +  [A x]_i / k_i)
+        dx_i/dt = r_i * x_i * (1 - (x_i +  [A x]_i) / k_i)
 
         Args:
             x (ndarray): The current state of the system.
@@ -72,9 +79,7 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
             The derivative of the system at x and t with respect to time.
         """
         return self.growth_rates * x * (
-            1 - x / self.capacities + self.interaction_mat @ (
-                x / self.capacities
-            )
+            1 -  (x + self.interaction_mat @ x) / self.capacities
         )
     
 
@@ -90,11 +95,17 @@ class LotkaVolteraSDE(StochasticDifferentialEquation, LotkaVoltera):
     ):
         """Initializes class for simulating Lotka Voltera dynamics.
 
-            dx_i/dt = r_i * x_i * (1 - x_i / k_i +  [A x]_i / k_i) + sigma * dW
+            dx_i/dt = r_i * x_i * (1 - x_i / k_i +  [A x]_i / k_i) + sigma * x_i
+           * dW
 
         where r_i and k_i are the growth rates and carrying capacities of
         species i, A is the matrix of interspecies interactions and sigma
         is the magnitude of the effect of the Weiner process.
+
+        See:
+        * Vadillo 2019, "Comparing stochastic Lotka–Volterra predator-prey
+        models"
+        * https://en.wikipedia.org/wiki/Competitive_Lotka%E2%80%93Volterra_equations
 
 
         Args:
@@ -123,6 +134,6 @@ class LotkaVolteraSDE(StochasticDifferentialEquation, LotkaVoltera):
         return self.dXdt(x, t)
     
     def noise(self, x, t):
-        return self.sigma * np.eye(self.dim)
+        return self.sigma * np.diag(x)
 
     

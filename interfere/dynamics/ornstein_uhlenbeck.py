@@ -38,8 +38,8 @@ class OrnsteinUhlenbeck(StochasticDifferentialEquation):
             Sigma.shape[1] != mu.shape[0]
         ]):
             raise ValueError(
-                "Parameters for Lotka Voltera must have matching dimensions. "
-                "Argument shapes: "
+                "Parameters for OrnsteinUhlenback must have matching "
+                "dimensions. Argument shapes: "
                 f"\n\ttheta.shape = {theta.shape}"
                 f"\n\tmu.shape = {mu.shape}"
                 f"\n\tSigma.shape = {Sigma.shape}"

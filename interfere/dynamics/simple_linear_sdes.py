@@ -203,7 +203,7 @@ def imag_roots_4d_linear_sde(
     """
     Sigma = sigma * np.eye(MATRIX_ALL_IMAG_EIGS.shape[0])
     A = MATRIX_ALL_IMAG_EIGS
-    return LinearSDE(A, Sigma)
+    return LinearSDE(A, Sigma, measurement_noise_std)
 
 
 def attracting_fixed_point_4d_linear_sde(

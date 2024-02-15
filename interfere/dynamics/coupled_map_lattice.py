@@ -184,7 +184,7 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         sigma: float = 0.0,
         x_min: float = 0.0,
         x_max: float = 1.0,
-        boundry_condition: Optional[str] = "none",
+        boundary_condition: Optional[str] = "none",
         tsteps_btw_obs: int = 1,
         measurement_noise_std: Optional[np.ndarray] = None
     ):
@@ -223,7 +223,7 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
             x_max (float): Optional maximum bound (applied to state
                 elementwise) to ensure that the noise does not peturb the system
                 out of it's domain.
-            boundry_condition (string): One of ["none", "truncate", "mod"]. If
+            boundary_condition (string): One of ["none", "truncate", "mod"]. If
                 "truncate", is selected, entries in `x` are reset to be the
                 closer of `x_min` or `x_max` when they leave the domain. If
                 "mod" is selected, and and entry in `x`, `x_i` is not in
@@ -242,7 +242,7 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         self.sigma = sigma
         self.x_max = x_max
         self.x_min = x_min
-        self.boundry_condition = boundry_condition
+        self.boundary_condition = boundary_condition
         super().__init__(
             adjacency_matrix, eps, f, f_params, tsteps_btw_obs, measurement_noise_std)
 
@@ -266,10 +266,10 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
             x_next += rng.normal(0, self.sigma, size=self.dim)
 
             # See if the state is within boundary and apply appropriate transform. 
-            if self.boundry_condition == "mod":
+            if self.boundary_condition == "mod":
                 x_next = mod_interval(x_next, self.x_min, self.x_max)
 
-            elif self.boundry_condition == "truncate":
+            elif self.boundary_condition == "truncate":
                 x_next[x_next < self.x_min] = self.x_min
                 x_next[x_next > self.x_max] = self.x_max
 
@@ -280,6 +280,7 @@ def coupled_logistic_map(
     adjacency_matrix: np.array,
     logistic_param=3.72,
     eps=0.5,
+    sigma=0.0,
     measurement_noise_std: Optional[np.ndarray] = None
 ):
     """Initializes an N-dimensional coupled logistic map model.
@@ -299,6 +300,8 @@ def coupled_logistic_map(
             r, where the map is f(x) = rx(1-x).
         eps (float): A parameter that controls the relative strenth of    
             coupling. High epsilon means greater connection to neighbors.
+        sigma (float): The standard deviation of the additive gaussian noise
+            in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
             where each entry corresponds to the standard deviation of the
             measurement noise for that particular dimension of the dynamic
@@ -307,8 +310,15 @@ def coupled_logistic_map(
             independent gaussian noise with standard deviation 1 and 10
             will be added to x1 and x2 respectively at each point in time.
     """
-    return CoupledMapLattice(
-        adjacency_matrix, eps, logistic_map, (logistic_param,), measurement_noise_std=measurement_noise_std)
+    return StochasticCoupledMapLattice(
+        adjacency_matrix,
+        eps,
+        logistic_map,
+        (logistic_param,),
+        sigma=sigma,
+        measurement_noise_std=measurement_noise_std, 
+        boundary_condition="truncate"
+    )
 
     
 
@@ -357,7 +367,7 @@ def stochastic_coupled_map_1dlattice(
         sigma=sigma,
         x_min=-1,
         x_max=1,
-        boundry_condition="truncate",
+        boundary_condition="truncate",
         tsteps_btw_obs=tsteps_btw_obs, measurement_noise_std=measurement_noise_std
     )
 

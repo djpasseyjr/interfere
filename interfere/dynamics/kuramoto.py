@@ -11,6 +11,7 @@ For the kuramoto model Cliff et. al. used three coupling schemes (1) all to all
 neighbors.
 """
 from typing import Optional, Callable
+from warnings import warn
 
 import numpy as np
 from pyclustering.nnet.fsync import fsync_network
@@ -104,8 +105,11 @@ class Kuramoto(StochasticDifferentialEquation):
     ) -> np.ndarray:        
         # Check initial condition.
         if np.any(np.abs(initial_condition) > 1):
-            raise ValueError("Kuramoto Models require initial conditions in "
-                             "the interval (-1, 1).")
+            warn("Kuramoto Models require initial conditions in "
+                 "the interval (-1, 1). Initial conditions will be thresholded at -1 and 1.")
+            initial_condition[initial_condition > 1] = 1
+            initial_condition[initial_condition < -1] = -1
+            
         # Extract phase of the initial condition.
         theta0 = np.arcsin(initial_condition)
 

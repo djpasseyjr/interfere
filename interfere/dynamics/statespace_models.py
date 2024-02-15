@@ -1,6 +1,7 @@
 """State space dynamic models such as vector autoregression or VARIMAX.
 """
 from typing import Callable, List, Optional
+from warnings import warn
 
 import numpy as np
 
@@ -94,8 +95,18 @@ class VARMA_Dynamics(DynamicModel):
                 `time_points`. The first p rows contain the initial condition/
                 history of the system and count towards n.
         """
-        p, m = initial_condition.shape
+        p = len(self.phi_matrices)
         q = len(self.theta_matrices)
+        m = self.phi_matrices[0].shape
+
+        if len(initial_condition.shape) == 1:
+            warn("Historic timesteps not found in initial condition. Replacing with zeros")
+            initial_condition = np.vstack([
+                np.zeros(m) for i in range(max(p, q))
+            ] + [initial_condition]
+            )
+
+        p, m = initial_condition.shape
         n = len(time_points)
         X = np.zeros((n, m))
 
@@ -105,21 +116,6 @@ class VARMA_Dynamics(DynamicModel):
         # Initialize noise
         noise_vecs = rng.multivariate_normal(
             np.zeros(m), self.sigma, n - p + q)
-        
-        # Simulate 
-        for i in range(n - p - 1):
-            x_AR = np.sum([
-                phi @ x_i
-                for x_i, phi in zip(X[i:(p+i)], self.phi_matrices[::-1])
-            ])
-            x_MA = np.sum([
-                theta @ a_i
-                for a_i, theta in zip(
-                    noise_vecs[i:(q+i)], self.theta_matrices[::-1])
-            ])
-            x_next = noise_vecs[q+i+1] + x_AR + x_MA
-
-            X[p+i+1, :] = x_next
 
         # Simulate
         for i in range(n - p):

@@ -60,7 +60,7 @@ def check_simulate_method(
         m = 100
 
     # For non noise models, add measurement noise:
-    if not isinstance(model,UncorrelatedNoise):
+    if not isinstance(model, UncorrelatedNoise):
         model.measurement_noise_std = 0.2 * np.ones(n)
 
     # Make intervention
@@ -90,6 +90,10 @@ def check_simulate_method(
     X_rerun = model.simulate(x0, t, rng=rng)
     assert np.all(X == X_rerun), (
         f"Random state does not preserve noise for {model}.")
+    
+    # Check that model is not deterministic
+    X_new_realization = model.simulate(x0, t, rng=rng)
+    assert not np.all(X == X_new_realization)
 
     # Apply an intervention
     rng = np.random.default_rng(10)
@@ -124,9 +128,6 @@ def test_lotka_voltera():
     interv_const = 1.0
     model = interfere.dynamics.LotkaVoltera(r, k, A)
 
-    # Standard checks for intervene.base.DynamicModel objects
-    check_simulate_method(model)
-
     # Make two kinds of interventions
     perf_interv = interfere.perfect_intervention(interv_idx, interv_const)
     sin_interv = interfere.signal_intervention(interv_idx, np.sin)
@@ -134,13 +135,13 @@ def test_lotka_voltera():
     # Create ground truth systems with the interventions built in
     def perf_int_true_deriv(x, t):
         x[interv_idx] = interv_const
-        dx = r * x *( 1 - x / k + A @ (x / k))
+        dx = r * x * ( 1 - (x + A @ x) / k)
         dx[interv_idx] = 0.0
         return dx
 
     def sin_int_true_deriv(x, t):
         x[interv_idx] = np.sin(t)
-        dx = r * x *( 1 - x / k + A @ (x / k))
+        dx = r * x *( 1 - (x + A @ x) / k)
         dx[interv_idx] = np.cos(t)
         return dx
 
@@ -159,6 +160,10 @@ def test_lotka_voltera():
     true_sin_X = integrate.odeint(sin_int_true_deriv, x0, t)
     interfere_sin_X = model.simulate(x0, t, sin_interv)
     assert np.allclose(true_sin_X, interfere_sin_X)
+
+    # Standard checks for intervene.base.DynamicModel objects
+    model = interfere.dynamics.LotkaVolteraSDE(r, k, A, sigma=1.0)
+    check_simulate_method(model)
 
 
 def test_ornstein_uhlenbeck_and_sde_integrator():
