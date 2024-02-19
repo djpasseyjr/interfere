@@ -17,7 +17,7 @@ ERR_MSG = f"""
           
           """
 
-SAVE_FILE = f"{DIR_PATH}/{FILE_PREFIX}_output{PARAM_IDX}.pkl"
+SAVE_FILE = f"{FILE_PREFIX}_output{PARAM_IDX}.pkl"
 
 # Read the dynamic models param array and access at the command line arg index
 with open(f"{DIR_PATH}/dynamic_models_small.pkl", "rb") as f:
