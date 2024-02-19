@@ -191,9 +191,12 @@ def generate_counterfactual_forecasts(
     intervention_type: Optional[
         Callable[[np.ndarray, float], np.ndarray]] = None,
     intervention_params: Optional[Dict[str, Any]] = None,
-    initial_condition_iter: Optional[Iterable[np.ndarray]] = None,
-    time_points_iter: Optional[Iterable[np.ndarray]] = None,
+    initial_conds: Optional[Iterable[np.ndarray]] = None,
+    start_time: Optional[float] = None,
+    end_time: Optional[float] = None,
+    dt: Optional[float] = None,
     train_per: Optional[float] = 0.8,
+    reps: Optional[int] = 1,
     rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
 ):
     """Generates trajectories and corresponding counterfactual trajectories.
@@ -207,57 +210,55 @@ def generate_counterfactual_forecasts(
             apply.
         intervention_params (Dict[str, Any]): The initialization parameters of
             the intervention.
-        initial_condition_iter (Iterable[np.ndarray]): An iterable containing
-            initial conditions that conform to the conditions on the 
-            `initial_condition` argument in the
-            `model(**model_parameters).simulate` function.
-        time_points_iter (Iterable[np.ndarray]): An iterable containing arrays
-            of time points that conform to the conditions on the `time_points` 
-            argument in the `model(**model_parameters).simulate` function.
+        initials_conds (List[np.ndarray]): A list of initial conditions to use
+            to run the simulations.
+        start_time (float): The time to start each simulation.
+        end_time (float): The time to end each simulation.
+        dt (float): The timestep size for the numerical solver.
         train_per (float): Percent of time points to use as training data. Must
             be between zero and one.
         rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
             random number generator by default.)
             
     Returns:
-        observations: An list of arrays where the ith array represents a
+        observation: An list of arrays where the ith array represents a
             realization of a trajectory of the dynamic model when the initial
             condition is initial_condition_iter[i]. The ith array has dimensions
             (n_i, m) where  `n_i = len(time_points_iter[i])` and m is the
             dimensionality of the system.
-        
         counterfactual: A list of arrays corresponding exactly to observations
-            except that the supplied intervention was applied.    
+            except that the supplied intervention was applied.  
+        time_points: The time points corresponding to each row of a particular 
+            observation. 
     """
     model = model_type(**model_params)
     intervention = intervention_type(**intervention_params)
+    time_points = np.arange(start_time, end_time + dt, dt)
+
     observations = [
         model.simulate(
             initial_condition=ic,
-            time_points=t,
+            time_points=time_points,
             intervention=None,
-
             rng=rng,
         )
-        for ic, t in zip(initial_condition_iter, time_points_iter)
+        for ic in initial_conds
     ]
 
     # Collect intervention points and time scales.
     counterf_init_cond = []
-    counterf_time_points = []
-    for X, t in zip(observations, time_points_iter):
-        test_idx = int(len(t) * train_per)
+    for X in observations:
+        test_idx = int(len(time_points) * train_per)
         counterf_init_cond.append(X[test_idx, :])
-        counterf_time_points.append(t[test_idx:])
 
     # Simulate the intervention.
     counterfactual_forecasts = [
         model.simulate(
             initial_condition=ic,
-            time_points=t,
+            time_points=time_points[test_idx:],
             intervention=intervention,
             rng=rng,
         )
-        for ic, t in zip(counterf_init_cond, counterf_time_points)
+        for ic in counterf_init_cond
     ]
-    return observations, counterfactual_forecasts
+    return observations, counterfactual_forecasts, time_points

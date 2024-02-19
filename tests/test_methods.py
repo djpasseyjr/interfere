@@ -179,12 +179,15 @@ def test_counterfactual_forecast_methods():
         model_params={"sigma": 0.5, "measurement_noise_std": np.ones(3)},
         intervention_type=interfere.PerfectIntervention,
         intervention_params={"intervened_idxs": 0, "constants": 0.1},
-        initial_condition_iter=[0.01 * np.ones(3)],
-        time_points_iter=[np.linspace(0, 20, 2000)],
+        initial_conds=[np.zeros(3), np.ones(3)],
+        start_time=0,
+        end_time=20,
+        dt=0.01,
+        rng=np.random.default_rng(1)
     )
     
     # Simulate dynamic model
-    X, X_do_forecasts = interfere.generate_counterfactual_forecasts(**gen_ctrf_kwargs)
+    X, X_do_forecasts, t = interfere.generate_counterfactual_forecasts(**gen_ctrf_kwargs)
     # Initialize intervention
     intervention=gen_ctrf_kwargs["intervention_type"](
             **gen_ctrf_kwargs["intervention_params"])
@@ -192,7 +195,7 @@ def test_counterfactual_forecast_methods():
     score_methods_kwargs = dict(
         X=X[0],
         X_do_forecast=X_do_forecasts[0],
-        time_points=gen_ctrf_kwargs["time_points_iter"][0],
+        time_points=t,
         intervention=intervention,
         method_type=interfere.methods.SINDY,
         method_params={

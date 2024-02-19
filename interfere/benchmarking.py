@@ -1,4 +1,6 @@
 from typing import Any, Callable, Dict, List, Tuple, Type
+from abc import ABC
+
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import TimeSeriesSplit
@@ -7,6 +9,62 @@ from .interventions import ExogIntervention
 from .base import (
     generate_counterfactual_dynamics, generate_counterfactual_forecasts
 )
+from .utils import copy_doc
+
+
+class CounterfactualForecastingMetric(ABC):
+
+    def __init__(self, name):
+        """Initializes a metric for counterfactual forecasting.
+        """
+        self.name = name
+    
+    def __call__(self, X, X_do, X_do_pred, intervention_idxs):
+        """Scores the ability to forecast the counterfactual.
+
+        Args:
+            X (np.ndarray): An (m, n) matrix that is interpreted to be a  
+                realization of an n dimensional stochastic multivariate
+                timeseries sampled at m points
+            X_do (np.ndarray): A (m, n) maxtix. The ground truth 
+                counterfactual, what X would be if the intervention was applied.
+            X_do_pred (np.ndarray):  A (m, n) maxtix. The PREDICTED 
+                counterfactual, what X would be if the intervention was applied.
+            intervention_idxs (List[int]): Which columns of X, X_do, X_do_pred.
+                received the intervention.
+            t (np.ndarray): A, (m,) array of time points associated with the
+                time series.
+
+        Returns:
+            score (float): A scalar score.
+        """
+        raise NotImplementedError
+
+
+class DirectionalChangeClassification(CounterfactualForecastingMetric):
+
+    def __init__(self, std_tol):
+        super().__init__("Directional Change (Increase or decrease)")
+
+    @copy_doc(CounterfactualForecastingMetric.__call__)
+    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
+        # Drop intervention column
+        X_resp = np.delete(X, intervention_idxs, axis=1)
+        X_do_resp = np.delete(X_do, intervention_idxs, axis=1)
+        pred_X_do_resp = np.delete(X_do_pred, intervention_idxs, axis=1)
+
+        # Compute time average
+        X_avg = np.mean(X_resp, axis=0)
+        X_do_avg = np.mean(X_do_resp, axis=0)
+        pred_X_do_avg = np.mean(pred_X_do_resp, axis=0)
+
+        # Compute sign of the difference
+        sign_of_true_diff = (X_do_avg - X_avg) > 0
+        sign_of_pred_diff = (pred_X_do_avg - X_avg) > 0
+
+        # Return number of signals correct
+        acc = np.mean(sign_of_true_diff == sign_of_pred_diff)
+        return acc
 
 
 def directional_accuracy(X, X_do, pred_X_do, intervention_idx):
@@ -173,6 +231,62 @@ def counterfactual_extrapolation_benchmark(
 # Counterfactual Forecasts
 ###############################################################################
 
+def forecast_intervention(
+    X: np.ndarray,
+    X_do_forecast: np.ndarray,
+    time_points: np.ndarray,
+    intervention: ExogIntervention,
+    method_type: Type,
+    method_params: Dict[str, Any],
+    method_param_grid: Dict[str, Any],
+    num_intervention_sims: int,
+) -> Tuple[List[float], Dict[str, Any]]:
+    """Tunes, fits and forecasts the effect of an intervention with a method.
+
+    Args:
+        X (np.ndarray): An (m, n) matrix that is interpreted to be a  
+            realization of an n dimensional stochastic multivariate timeseries.
+        X_do_forecast (np.ndarray): An (p, n) maxtix. The ground truth 
+            counterfactual, what the last p rows of X would be if the
+            intervention was applied starting at time `time_points[-p]`.
+        time_points (np.ndarray): 1D array of time points corresponding to the
+            rows of X. The last p entries correspond to the rows of
+            X_do_forecast.
+        intervention (interfere.Intervention): The type of the intervention to
+            apply.
+        method_type (sktime.forecasting.base.BaseForecaster): The method to be
+            used for prediction.
+        method_param_grid (dict): The parameter grid for a sklearn grid search.
+        num_intervention_preds (int): The number of interventions to simulate
+            with the method. Used for noisy methods.
+    """
+    p = X_do_forecast.shape[0]
+    historic_times = time_points[:-p]
+    forecast_times = time_points[-p:]
+    X_historic = X[:-p, :]
+    X_forecast = X[-p:, :]
+
+    # Perform hyper parameter optimization to find optimal parameters.
+    best_params = tune_method(
+        method_type, method_params, method_param_grid,
+        X_historic, historic_times
+    )
+
+    # Combine best params with default params. (Items in best_params will
+    # overwrite items in method_params if there are duplicates here.)
+    sim_params = {**method_params, **best_params}
+
+    # Simulate intervention
+    X_do_forecast_predictions = [
+        method_type(**sim_params).counterfactual_forecast(
+            X_historic,
+            historic_times,
+            forecast_times,
+            intervention, 
+        )
+        for i in range(num_intervention_sims)
+    ]
+    return X_do_forecast_predictions, sim_params
 
 def score_counterfactual_forecast_method(
     X: np.ndarray,
@@ -216,32 +330,12 @@ def score_counterfactual_forecast_method(
         intervention simulation.
         best_params: A dictionary of the best hyper parameters found.
     """
-    p = X_do_forecast.shape[0]
-    historic_times = time_points[:-p]
-    forecast_times = time_points[-p:]
-    X_historic = X[:-p, :]
-    X_forecast = X[-p:, :]
-
-    # Perform hyper parameter optimization to find optimal parameters.
-    best_params = tune_method(
-        method_type, method_params, method_param_grid,
-        X_historic, historic_times
-    )
-
-    # Combine best params with default params. (Items in best_params will
-    # overwrite items in method_params if there are duplicates here.)
-    sim_params = {**method_params, **best_params}
-
     # Simulate intervention
-    X_do_forecast_predictions = [
-        method_type(**sim_params).counterfactual_forecast(
-            X_historic,
-            historic_times,
-            forecast_times,
-            intervention, 
-        )
-        for i in range(num_intervention_sims)
-    ]
+    X_do_forecast_predictions, best_params = forecast_intervention(
+        X, X_do_forecast, time_points, intervention, method_type, method_params, method_param_grid)
+    
+    p = X_do_forecast.shape[0]
+    X_forecast = X[-p:, :]
 
     # Score the responses predicted by the method
     scores = [
@@ -251,7 +345,7 @@ def score_counterfactual_forecast_method(
     ]
 
     return scores, best_params, X_do_forecast_predictions
-
+    
 
 def counterfactual_forecast_benchmark(
         gen_cntftl_args: [str, Any], score_cntftl_method_args: [str, Any]):
@@ -275,7 +369,7 @@ def counterfactual_forecast_benchmark(
             * score_function: Callable,
             * score_function_args: Dict[str, Any]
     """
-    obs, cntftl_forecasts = generate_counterfactual_forecasts(**gen_cntftl_args)
+    obs, cntftl_forecasts, time_points = generate_counterfactual_forecasts(**gen_cntftl_args)
     all_scores = []
     all_best_ps = []
     all_X_do_preds = []
@@ -287,7 +381,7 @@ def counterfactual_forecast_benchmark(
         score, best_ps, X_do_pred = score_counterfactual_forecast_method(
             obs[i],
             cntftl_forecasts[i],
-            gen_cntftl_args["time_points_iter"][i],
+            time_points,
             intervention,
             **score_cntftl_method_args
         )
