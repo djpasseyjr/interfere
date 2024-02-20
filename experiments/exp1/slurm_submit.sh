@@ -9,7 +9,7 @@ DATADIR="/work/users/d/j/djpassey/interfere_exp1"
 FLAGS="--ntasks=1 --cpus-per-task=1 --time=$HOURS_PER_SIM:00:00 --chdir=$DATADIR"
 
 # Total number of jobs
-NJOBS=300
+NJOBS=294
 for((n=0; n<$NJOBS; n+=1)); do
     # Submit the multiple parameter job script to the clusters
     sbatch $FLAGS /nas/longleaf/home/djpassey/interfere/experiments/exp1/single_slurm_job.sh $n
