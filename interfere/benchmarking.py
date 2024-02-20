@@ -332,7 +332,15 @@ def score_counterfactual_forecast_method(
     """
     # Simulate intervention
     X_do_forecast_predictions, best_params = forecast_intervention(
-        X, X_do_forecast, time_points, intervention, method_type, method_params, method_param_grid)
+        X,
+        X_do_forecast,
+        time_points,
+        intervention,
+        method_type,
+        method_params,
+        method_param_grid,
+        num_intervention_sims
+    )
     
     p = X_do_forecast.shape[0]
     X_forecast = X[-p:, :]
