@@ -35,7 +35,7 @@ with open(SAVE_FILE, "wb") as f:
 
 
 # Run forecasting methods
-intervention = dyn_args["intervention_type"](*dyn_args["intervention_params"])
+intervention = dyn_args["intervention_type"](**dyn_args["intervention_params"])
 
 method_predictions = []
 for ma in methods_args:
