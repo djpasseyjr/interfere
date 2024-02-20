@@ -24,7 +24,7 @@ with open(f"{DIR_PATH}/dynamic_models_small.pkl", "rb") as f:
     dyn_args = pkl.load(f)[PARAM_IDX]
 
 # Read in the list of inference methods
-with open(f"{DIR_PATH}/methods_small.pkl", "rb") as f:
+with open(f"{DIR_PATH}/nferecne_methods_small.pkl", "rb") as f:
     methods_args = pkl.load(f)
 
 
