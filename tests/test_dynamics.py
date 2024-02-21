@@ -263,6 +263,7 @@ def test_coupled_map_lattice():
         # Standard checks for intervene.base.DynamicModel objects
         check_simulate_method(model)
 
+
 def test_stochastic_coupled_map_lattice():
 
     rng = np.random.default_rng(10)

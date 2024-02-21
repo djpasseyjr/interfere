@@ -12,6 +12,7 @@ Notes:
 """
 
 from typing import Optional, Callable
+from warnings import warn
 
 import numpy as np
 
@@ -166,10 +167,18 @@ class CoupledMapLattice(DiscreteTimeDynamics):
                 initial_condition, time_points, intervention, rng)
         else:
             # Simulate longer and then down sample.
-            new_times = np.arange(len(time_points) * self.tsteps_btw_obs)
-            Xbig = super().simulate(
-                initial_condition, new_times, intervention, rng)
-            X = Xbig[::self.tsteps_btw_obs, :]
+            warn("Intervention is ambiguous for downsampled systems. Current "
+                 "implementation freezes time between observations.")
+            obs = [initial_condition]
+            for t in time_points[1:]:
+                # Use the last observation as initial condition.
+                x_i = obs[-1]
+                frozen_times = t * np.ones(self.tsteps_btw_obs + 1)
+                Xstep = super().simulate(x_i, frozen_times, intervention, rng)
+                # The last state is the next obersved state.
+                obs += [Xstep[-1, :]]
+
+            X = np.vstack(obs)
             return X
 
 
