@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, List, Tuple, Type, Iterable
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 from abc import ABC
 
 import numpy as np
@@ -216,7 +216,7 @@ def score_counterfactual_extrapolation_method(
 
 
 def counterfactual_extrapolation_benchmark(
-        gen_cntftl_args: [str, Any], score_cntftl_method_args: [str, Any]):
+    gen_cntftl_args: Dict[str, Any],  score_cntftl_method_args: Dict[str, Any]):
     """Scores if inference method can simulate a counterfactual scenario.
 
     This asks the question: "What would have happened in the past if an
@@ -273,6 +273,7 @@ def forecast_intervention(
     method_params: Dict[str, Any],
     method_param_grid: Dict[str, Any],
     num_intervention_sims: int,
+    best_params: Optional[Dict["str", Any]] = None,
 ) -> Tuple[List[float], Dict[str, Any]]:
     """Tunes, fits and forecasts the effect of an intervention with a method.
 
@@ -292,18 +293,19 @@ def forecast_intervention(
         method_param_grid (dict): The parameter grid for a sklearn grid search.
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.
+        best_params (dict): An optional dictionary of the top hyper parameters.
     """
     p = X_do_forecast.shape[0]
     historic_times = time_points[:-p]
     forecast_times = time_points[-p:]
     X_historic = X[:-p, :]
-    X_forecast = X[-p:, :]
 
-    # Perform hyper parameter optimization to find optimal parameters.
-    best_params = tune_method(
-        method_type, method_params, method_param_grid,
-        X_historic, historic_times
-    )
+    if best_params is None:
+        # Perform hyper parameter optimization to find optimal parameters.
+        best_params = tune_method(
+            method_type, method_params, method_param_grid,
+            X_historic, historic_times
+        )
 
     # Combine best params with default params. (Items in best_params will
     # overwrite items in method_params if there are duplicates here.)
@@ -389,7 +391,7 @@ def score_counterfactual_forecast_method(
     
 
 def counterfactual_forecast_benchmark(
-        gen_cntftl_args: [str, Any], score_cntftl_method_args: [str, Any]):
+        gen_cntftl_args: Dict[str, Any], score_cntftl_method_args: Dict[str, Any]):
     """Scores if inference method can simulate a counterfactual forecast.
 
     This asks the question: "What will happened next if an
