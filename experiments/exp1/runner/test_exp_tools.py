@@ -8,7 +8,8 @@ import numpy as np
 # Import local file exp_tools.py
 import exp_tools
 
-OUTFILE = Path(__file__).parents[0] / Path("test_exp_outfile.pkl")
+EXP_IDX = "0"
+OUTFILE = exp_tools.save_file_path(EXP_IDX)
 
 DIM = 3
 RNG = np.random.default_rng(11)
@@ -17,7 +18,8 @@ DYN_ARGS = dict(
     model_params={
         "dim": DIM,
         "sigma": 0.0,
-        "measurement_noise_std": 0.05 * np.ones(DIM)},
+        "measurement_noise_std": 0.05 * np.ones(DIM)
+    },
     intervention_type=interfere.PerfectIntervention,
     intervention_params={"intervened_idxs": 0, "constants": -0.5},
     initial_conds=[RNG.random(DIM), RNG.random(DIM)],
@@ -38,7 +40,7 @@ def test_result_load_and_save():
     # Not outfile should exist
     assert not OUTFILE.exists()
 
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
 
     # Check that the file was written.
     assert OUTFILE.exists()
@@ -54,8 +56,8 @@ def test_result_load_and_save():
     results["dynamic_sim_complete"] = True
     results["complete"] = True
 
-    exp_tools.save_results_dict(results, OUTFILE)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
+    exp_tools.save_results_dict(results, EXP_IDX)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
     assert results["complete"]
 
     cleanup()
@@ -78,10 +80,10 @@ def test_run_dynamics():
     dyn_args_list, _ = exp_tools.load_parameters(test=True)
     dyn_args = dyn_args_list[0]
 
-    results = exp_tools.load_results(OUTFILE, dyn_args)
+    results = exp_tools.load_results(EXP_IDX, dyn_args)
     assert not results["dynamic_sim_complete"]
 
-    Xs, X_dos, t, g = exp_tools.run_dynamics(dyn_args, results, OUTFILE)
+    Xs, X_dos, t, g = exp_tools.run_dynamics(dyn_args, results, EXP_IDX)
 
     # Check that sim was marked complete.
     assert results["dynamic_sim_complete"]
@@ -89,12 +91,12 @@ def test_run_dynamics():
         assert key in results
 
     # Check that the results were saved
-    reload_results = exp_tools.load_results(OUTFILE, dyn_args)
+    reload_results = exp_tools.load_results(EXP_IDX, dyn_args)
     assert reload_results["dynamic_sim_complete"]
     for key in ["Xs", "X_dos", "t"]:
         assert key in reload_results
 
-    _Xs, _, _, _ = exp_tools.run_dynamics(dyn_args, results, OUTFILE)
+    _Xs, _, _, _ = exp_tools.run_dynamics(dyn_args, results, EXP_IDX)
     assert np.all(_Xs == Xs)
 
     cleanup()
@@ -106,8 +108,8 @@ def test_load_method_progress():
 
     dyn_args_list, method_arg_list = exp_tools.load_parameters(test=True)
     dyn_args = dyn_args_list[0]
-    results = exp_tools.load_results(OUTFILE, dyn_args)
-    Xs, X_dos, t, g = exp_tools.run_dynamics(dyn_args, results, OUTFILE)
+    results = exp_tools.load_results(EXP_IDX, dyn_args)
+    Xs, X_dos, t, g = exp_tools.run_dynamics(dyn_args, results, EXP_IDX)
 
     method_name = method_arg_list[0]["method_type"].__name__
     assert method_name not in results["methods"]
@@ -122,7 +124,7 @@ def test_load_method_progress():
 
     # Alter the progress dict only (not main result dict) and save.
     progress["complete"] = True
-    exp_tools.save_results_dict(results, OUTFILE)
+    exp_tools.save_results_dict(results, EXP_IDX)
 
     reload_progress = exp_tools.load_method_progress(method_name, results)
     assert reload_progress["complete"]
@@ -135,18 +137,18 @@ def test_forecast():
     cleanup()
 
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
 
     # Loop over each infernce method.
     for margs in method_arg_list:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=False)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=False)
         
     # Make sure experiment was saved
     assert len(results["methods"]) == len(method_arg_list)
-    _results = exp_tools.load_results(OUTFILE, DYN_ARGS)
+    _results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
     assert len(_results["methods"]) == len(method_arg_list)
 
     # Make sure the correct number of exeriments ran
@@ -170,18 +172,18 @@ def test_forecast_opt_all():
     cleanup()
 
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
 
     # Loop over each infernce method.
     for margs in method_arg_list:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=True)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=True)
         
     # Make sure experiment was saved
     assert len(results["methods"]) == len(method_arg_list)
-    _results = exp_tools.load_results(OUTFILE, DYN_ARGS)
+    _results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
     assert len(_results["methods"]) == len(method_arg_list)
 
     # Make sure the correct number of exeriments ran
@@ -206,14 +208,14 @@ def test_partial_forecast():
     cleanup()
 
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
 
     # Loop over 2/3 infernce methods.
     for margs in method_arg_list[:2]:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=False)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=False)
         
     # Make sure that one of the methods was not run.
     not_run_method = method_arg_list[-1]["method_type"].__name__
@@ -229,13 +231,13 @@ def test_partial_forecast():
     orig_best_params = results["methods"][first_method]["best_params"]
     assert orig_best_params is not None
 
-    exp_tools.save_results_dict(results, OUTFILE)
+    exp_tools.save_results_dict(results, EXP_IDX)
 
 
     # Rerun experiment.
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
 
 
     # Only one forecast existed for `first_method`
@@ -245,7 +247,7 @@ def test_partial_forecast():
     for margs in method_arg_list:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=False)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=False)
         
     # After running the forecasts, more forecasts exists for `first_method`.
     assert len(results["methods"][first_method]["X_do_preds"]) > 1
@@ -274,25 +276,25 @@ def test_partial_forecast():
 def test_check_consistency():
 
     cleanup()
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
     cleanup()
 
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
     
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
 
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
 
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
 
     # Loop over 2/3 infernce methods.
     for margs in method_arg_list[:2]:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=False)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=False)
 
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
         
     # Remove all but one prediction for the last method (VAR).
     first_method = "VAR"
@@ -302,23 +304,23 @@ def test_check_consistency():
     # Change method to unfinished.
     results["methods"][first_method]["complete"] = False
 
-    exp_tools.save_results_dict(results, OUTFILE)
+    exp_tools.save_results_dict(results, EXP_IDX)
 
 
     # Rerun experiment.
     _, method_arg_list = exp_tools.load_parameters(test=True)
-    results = exp_tools.load_results(OUTFILE, DYN_ARGS)
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
 
-    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, OUTFILE)
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    dyn_sim_output = exp_tools.run_dynamics(DYN_ARGS, results, EXP_IDX)
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
 
 
     # Loop over ALL infernce methods.
     for margs in method_arg_list:
         # Tune hyper parameters, run forecasts and store results.
         exp_tools.run_forecasts(
-            *dyn_sim_output, margs, results, OUTFILE, opt_all=False)
+            *dyn_sim_output, margs, results, EXP_IDX, opt_all=False)
         
-    exp_tools.check_consistency(OUTFILE, DYN_ARGS, 4, opt_all=False)    
+    exp_tools.check_consistency(DYN_ARGS, EXP_IDX, opt_all=False)    
     cleanup()
