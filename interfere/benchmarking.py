@@ -1,9 +1,10 @@
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 from abc import ABC
 
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import TimeSeriesSplit
+from sktime.performance_metrics.forecasting import mean_squared_scaled_error
 
 from .interventions import ExogIntervention
 from .base import (
@@ -18,6 +19,24 @@ class CounterfactualForecastingMetric(ABC):
         """Initializes a metric for counterfactual forecasting.
         """
         self.name = name
+
+    def drop_intervention_cols(self, intervention_idxs: Iterable[int], *Xs):
+        """Remove intervention columns for each array in `args`
+        
+        Args:
+            intervention_ids (Iterable[int]): A list of the indexes of columns
+                that contain the exogeneous intervention.
+            Xs (Iterable[np.ndarray]): An iterable containing numpy arrays    
+                with dimension (m_i, n). They should all have the same number of
+                columns but can have a variable number of rows.
+
+            Returns:
+                Xs_response (Iterable[np.ndarray]): Every array in `Xs` with the
+                    columns corresponding to the indexes in `intervention_idxs`
+                    removed.  
+        """
+        return  [np.delete(X, intervention_idxs, axis=1) for X in Xs]
+
     
     def __call__(self, X, X_do, X_do_pred, intervention_idxs):
         """Scores the ability to forecast the counterfactual.
@@ -41,18 +60,18 @@ class CounterfactualForecastingMetric(ABC):
         raise NotImplementedError
 
 
-class DirectionalChangeClassification(CounterfactualForecastingMetric):
+class DirectionalChangeBinary(CounterfactualForecastingMetric):
 
-    def __init__(self, std_tol):
+    def __init__(self):
         super().__init__("Directional Change (Increase or decrease)")
 
     @copy_doc(CounterfactualForecastingMetric.__call__)
     def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
+        
         # Drop intervention column
-        X_resp = np.delete(X, intervention_idxs, axis=1)
-        X_do_resp = np.delete(X_do, intervention_idxs, axis=1)
-        pred_X_do_resp = np.delete(X_do_pred, intervention_idxs, axis=1)
-
+        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
+            intervention_idxs, *[X, X_do, X_do_pred])
+            
         # Compute time average
         X_avg = np.mean(X_resp, axis=0)
         X_do_avg = np.mean(X_do_resp, axis=0)
@@ -65,6 +84,20 @@ class DirectionalChangeClassification(CounterfactualForecastingMetric):
         # Return number of signals correct
         acc = np.mean(sign_of_true_diff == sign_of_pred_diff)
         return acc
+    
+
+class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
+
+    def __init__(self):
+        super().__init__("Room Mean Standardized Squared Error")
+
+
+    @copy_doc(CounterfactualForecastingMetric.__call__)
+    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
+        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
+            intervention_idxs, *[X, X_do, X_do_pred])
+        return mean_squared_scaled_error(
+            X_do_resp, pred_X_do_resp, y_train=X_resp)
 
 
 def directional_accuracy(X, X_do, pred_X_do, intervention_idx):
@@ -183,7 +216,7 @@ def score_counterfactual_extrapolation_method(
 
 
 def counterfactual_extrapolation_benchmark(
-        gen_cntftl_args: [str, Any], score_cntftl_method_args: [str, Any]):
+    gen_cntftl_args: Dict[str, Any],  score_cntftl_method_args: Dict[str, Any]):
     """Scores if inference method can simulate a counterfactual scenario.
 
     This asks the question: "What would have happened in the past if an
@@ -240,6 +273,7 @@ def forecast_intervention(
     method_params: Dict[str, Any],
     method_param_grid: Dict[str, Any],
     num_intervention_sims: int,
+    best_params: Optional[Dict["str", Any]] = None,
 ) -> Tuple[List[float], Dict[str, Any]]:
     """Tunes, fits and forecasts the effect of an intervention with a method.
 
@@ -259,18 +293,19 @@ def forecast_intervention(
         method_param_grid (dict): The parameter grid for a sklearn grid search.
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.
+        best_params (dict): An optional dictionary of the top hyper parameters.
     """
     p = X_do_forecast.shape[0]
     historic_times = time_points[:-p]
     forecast_times = time_points[-p:]
     X_historic = X[:-p, :]
-    X_forecast = X[-p:, :]
 
-    # Perform hyper parameter optimization to find optimal parameters.
-    best_params = tune_method(
-        method_type, method_params, method_param_grid,
-        X_historic, historic_times
-    )
+    if best_params is None:
+        # Perform hyper parameter optimization to find optimal parameters.
+        best_params = tune_method(
+            method_type, method_params, method_param_grid,
+            X_historic, historic_times
+        )
 
     # Combine best params with default params. (Items in best_params will
     # overwrite items in method_params if there are duplicates here.)
@@ -356,7 +391,7 @@ def score_counterfactual_forecast_method(
     
 
 def counterfactual_forecast_benchmark(
-        gen_cntftl_args: [str, Any], score_cntftl_method_args: [str, Any]):
+        gen_cntftl_args: Dict[str, Any], score_cntftl_method_args: Dict[str, Any]):
     """Scores if inference method can simulate a counterfactual forecast.
 
     This asks the question: "What will happened next if an

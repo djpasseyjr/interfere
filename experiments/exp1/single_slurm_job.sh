@@ -9,6 +9,6 @@ source exp1_venv/bin/activate
 
 pip install --upgrade pip
 pip install -r /nas/longleaf/home/djpassey/interfere/experiments/exp1/requirements.txt
-pip install /nas/longleaf/home/djpassey/interfere/
+pip install git+https://www.github.com/djpasseyjr/interfere.git
 
 python /nas/longleaf/home/djpassey/interfere/experiments/exp1/generate_data.py $1
