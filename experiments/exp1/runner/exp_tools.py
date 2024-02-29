@@ -78,8 +78,6 @@ def load_results(outfile_idx: str, dynamic_model_args: dict):
             "complete": False,
             **dynamic_model_args
         }
-        # Save empty results dict.
-        save_results_dict(results, outfile_idx)
 
     return results
 

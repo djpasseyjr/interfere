@@ -42,9 +42,6 @@ def test_result_load_and_save():
 
     results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
 
-    # Check that the file was written.
-    assert OUTFILE.exists()
-
     # Check that the dict has the correct format
     for key in ["dynamic_sim_complete", "methods", "model_type"]:
         assert key in results
@@ -57,6 +54,10 @@ def test_result_load_and_save():
     results["complete"] = True
 
     exp_tools.save_results_dict(results, EXP_IDX)
+
+    # Check that the file was written.
+    assert OUTFILE.exists()
+    
     results = exp_tools.load_results(EXP_IDX, DYN_ARGS)
     assert results["complete"]
 
