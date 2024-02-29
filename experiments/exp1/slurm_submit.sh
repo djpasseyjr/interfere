@@ -9,10 +9,10 @@ GIGS=32
 # Arguments for sbatch. Sets the appropriate time limit and directory
 FLAGS="--ntasks=1 --mem=${GIGS}G  --cpus-per-task=1 --time=$HOURS_PER_SIM:00:00 --chdir=$DATADIR"
 # Total number of jobs
-NJOBS=294
+NJOBS=$(python3 -c "import runner.exp_tools as ex; ex.print_num_jobs()")
 for((n=0; n<$NJOBS; n+=1)); do
 
-    incomplete=$(python -c "import exp_tools; print(exp_tools.is_incomplete("$n"))")
+    incomplete=$(python3 -c "import runner.exp_tools as ex; print(ex.is_incomplete("$n"))")
 
     if [[ "$incomplete" == 'True' ]]; then
         # Submit the multiple parameter job script to the clusters
