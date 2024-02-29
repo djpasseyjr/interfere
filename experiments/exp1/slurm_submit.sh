@@ -4,10 +4,10 @@
 HOURS_PER_SIM=24
 # Directory to store the output data
 DATADIR="/work/users/d/j/djpassey/interfere_exp1"
+GIGS=32
 
 # Arguments for sbatch. Sets the appropriate time limit and directory
-FLAGS="--ntasks=1 --cpus-per-task=1 --time=$HOURS_PER_SIM:00:00 --chdir=$DATADIR"
-
+FLAGS="--ntasks=1 --mem=${GIGS}G  --cpus-per-task=1 --time=$HOURS_PER_SIM:00:00 --chdir=$DATADIR"
 # Total number of jobs
 NJOBS=294
 for((n=0; n<$NJOBS; n+=1)); do
