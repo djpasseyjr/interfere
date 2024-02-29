@@ -186,7 +186,13 @@ def run_forecasts(
 def load_method_progress(method_name: str, results_dict: dict):
     """Loads historic method progress or makes empty progress tracker if
     none."""
-    meth_progress = results_dict["methods"].get(method_name, None)
+
+    # Check that the results dict has a methods key and add one if not.
+    methods = results_dict.get("methods", {})
+    if methods == {}:
+        results_dict["methods"] = methods
+
+    meth_progress = methods.get(method_name, None)
 
     # If no progress has been recorded start a new method progress and store.
     if meth_progress is None:
@@ -209,16 +215,17 @@ def check_consistency(dyn_args: dict, exp_idx: int, opt_all: bool):
     """Checks outfile to make sure everything is correct."""
     results = load_results(exp_idx, dyn_args)
     dyn_params_match(results, dyn_args, exp_idx)
-
+    
+    # Get stored methods
+    methods = results.get("methods", {})
 
     # If output contains no dynamics, ensure that there are no methods either.
-    if ("Xs" not in results) and (methods != {}):
+    if ("Xs" not in results) and (len(methods) > 0):
         raise ValueError(
             "Output file contains method predictions but no dynamics."
             f" Command line arg: {exp_idx}")
     
     # Check that experiment matches previous opt_all settings.
-    methods = results["methods"]
     if opt_all and (len(methods) > 0):
         for k in methods.keys():
             if methods[k]["best_params"] is not None:
