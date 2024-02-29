@@ -12,7 +12,7 @@ PARAM_DIR = Path(__file__).parents[1] / "parameters"
 DYN_PARAM_FNAME = "dynamic_models"
 METH_PARAM_FNAME = "inference_methods"
 FILE_PREFIX = "exp1"
-SAVE_DIR = Path(os.getcwd())
+SAVE_DIR = Path("/work/users/d/j/djpassey/interfere_exp1.1")
 
 def save_file_path(idx):
     return SAVE_DIR / Path(f"{FILE_PREFIX}_output{idx}.pkl")
@@ -210,8 +210,9 @@ def check_consistency(dyn_args: dict, exp_idx: int, opt_all: bool):
     results = load_results(exp_idx, dyn_args)
     dyn_params_match(results, dyn_args, exp_idx)
 
+
     # If output contains no dynamics, ensure that there are no methods either.
-    if ("Xs" not in results) and (results["methods"] != {}):
+    if ("Xs" not in results) and (methods != {}):
         raise ValueError(
             "Output file contains method predictions but no dynamics."
             f" Command line arg: {exp_idx}")

@@ -7,7 +7,7 @@ import interfere
 # Import exp_tools.py from the local directory:
 import exp_tools
 
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+# IMPORTANT: Set the path to the output directory inside exp_tools.py
 
 # Parse command line argument that designates the index of the hyper parameters.
 PARAM_IDX = int(sys.argv[1])
