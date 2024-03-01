@@ -29,8 +29,18 @@ dyn_args = dyn_args_list[PARAM_IDX]
 exp_tools.check_consistency(dyn_args, PARAM_IDX, OPT_ALL)
 
 # Load result file from previous runs, or make an empty one.
+print("Loading previous results if any")
 results = exp_tools.load_results(PARAM_IDX, dyn_args)
 
+# Summarize previous results
+print(f"Previous sims: {len(results.get('Xs', []))}")
+methods = results.get("methods", {})
+methods_summary = {
+        k + " -- complete==" + str(m["complete"]): len(m["X_do_preds"])
+        for k, m in methods.items()
+}
+print(f"Previous methods: {methods_summary}")
+    
 # Run the dyanamic simulations.
 dyn_sim_output = exp_tools.run_dynamics(dyn_args, results, PARAM_IDX)
 
