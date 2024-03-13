@@ -1,7 +1,9 @@
 """Tests for benchmarking tools."""
 
 from interfere.benchmarking import (
-    DirectionalChangeBinary, RootMeanStandardizedSquaredError
+    DirectionalChangeBinary,
+    RootMeanStandardizedSquaredError,
+    TTestDirectionalChangeAccuracy
 )
 import numpy as np
 
@@ -31,3 +33,40 @@ def test_directional():
     x_true_err = dir_change(X_train, X_true, X_pred_good, intervention_idxs)
     assert x_false_err < x_true_err
 
+
+def test_ttest_directional():
+
+    ttest_dir_acc = TTestDirectionalChangeAccuracy()
+    rng = np.random.default_rng(11)
+    dim = 5
+    nsamp = 300
+    p_cut = 0.05
+
+    # Check for X means bigger than Y means
+    X = rng.random((nsamp, dim)) + 0.33
+    Y = rng.random((nsamp, dim))
+    estim_chng = ttest_dir_acc.directional_change(X, Y, p_cut)
+    assert np.all(estim_chng == 1)
+
+    # Check for X means smaller than Y means
+    X = rng.random((nsamp, dim)) - 0.33
+    Y = rng.random((nsamp, dim))
+    estim_chng = ttest_dir_acc.directional_change(X, Y, p_cut)
+    assert np.all(estim_chng == -1)
+
+    # Check for X means same as Y means
+    X = rng.random((nsamp, dim))
+    Y = rng.random((nsamp, dim))
+    estim_chng = ttest_dir_acc.directional_change(X, Y, p_cut)
+    assert np.all(estim_chng == 0)
+
+    # Check for mix of bigger, smaller and the same
+    X = rng.random((nsamp, dim))
+    Y = rng.random((nsamp, dim))
+    X[:, :2] += 0.3
+    X[:, 2:6] -= 0.3
+
+    estim_chng = ttest_dir_acc.directional_change(X, Y, p_cut)
+    assert np.all(estim_chng[:2] == 1)
+    assert np.all(estim_chng[2:6] == -1)
+    assert np.all(estim_chng[6:] == 0)
