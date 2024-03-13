@@ -1,9 +1,11 @@
 from typing import Callable, Iterable, List, Union
+from typing_extensions import TypeAlias
 
 import numpy as np
 
 from .base import Intervention
 
+ScalarFunction: TypeAlias = Callable[[float], float]
 
 class ExogIntervention(Intervention):
     """A class describing an exogeneous intervention on a system.
@@ -91,14 +93,11 @@ class PerfectIntervention(ExogIntervention):
             constants (float or collection of floats): The values that the variables
                 at corresponding to each index will be pinned to.
 
-        Returns:
-            intervention: A function
-
         Examples:
-            intervention = perfect_intervention(0, 1.6)
+            intervention = PerfectIntervention(0, 1.6)
             intervention([10.0, 4.0, 4.0], 0) == [1.6, 4, 4] # (True.)
 
-            intervention = perfect_intervention([0, 2], [1.6, .7])
+            intervention = PerfectIntervention([0, 2], [1.6, .7])
             intervention([10.0, 4.0, 4.0], 0) == [1.6, 4.0, 0.7] # (True.)
         """
         # The case where indexs and constants are floats or ints
@@ -107,6 +106,10 @@ class PerfectIntervention(ExogIntervention):
             c = float(constants)
             intervened_idxs = [intervened_idxs]
             constants = [c]
+
+        if len(constants) != len(intervened_idxs):
+            raise ValueError(
+                "Intervened indexes must be same length as provided constants")
 
         self.intervened_idxs = intervened_idxs
         self.constants = constants
@@ -129,6 +132,58 @@ class PerfectIntervention(ExogIntervention):
             x_do[..., i] = c
         return x_do
     
+class SignalIntervention(ExogIntervention):
+
+    def __init__(
+        self,
+        intervened_idxs: Union[int, Iterable[int]],
+        signals: Union[ScalarFunction, Iterable[ScalarFunction]]
+    ):
+        """Creates an intervention that applies passed one arg functions.
+
+            A perfect intervention replaces variables with constant values.
+            This function generates intervention functions that replace
+
+            Args:
+                intervened_idxs (int or collection of ints): The indexes where the intervention
+                    will be applied.
+                signals (float or collection of floats): The functions that will
+                    replace the value of variables at `intervened_idxs` at each
+                    time point.
+        """
+        if isinstance(intervened_idxs, int):
+
+            i = intervened_idxs
+            s = signals
+            intervened_idxs = [intervened_idxs]
+            signals = [s]
+
+        if len(signals) != len(intervened_idxs):
+            raise ValueError(
+                "Number of intervened indexes must equal number of signals.")
+        
+
+        self.intervened_idxs = intervened_idxs
+        self.signals = signals
+
+    def __call__(self, x: np.ndarray, t: float):
+        """A signal intervention on multiple variables.
+
+        Args:
+            x (ndarray): In the context of this package, x represents
+                the current state of a dynamic model.
+            t: (ndarray): In the context of this package, t represents
+                the current time in a dynamic model.
+        
+        Returns:
+            x_do (ndarray): In the context of this package, x_do represents
+                the state of the dynamic model after the intervention is applied.
+        """
+        x_do = x.copy()
+        for i, s in zip(self.intervened_idxs, self.signals):
+            x_do[..., i] = s(t)
+        return x_do
+
 
 def perfect_intervention(
     idxs: Union[int, Iterable[int]],

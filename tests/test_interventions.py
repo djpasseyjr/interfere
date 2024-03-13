@@ -30,11 +30,15 @@ def test_perfect_intervention():
 
 
 def test_signal_intervention():
-    g = interfere.signal_intervention(1, np.sin)
+    g = interfere.SignalIntervention(1, np.sin)
     x = np.array([1.1, 2, -1.2])
     assert np.allclose(g(x, 0), np.array([1.1, 0.0, -1.2]))
     assert np.allclose(g(x, np.pi/2), np.array([1.1, 1.0, -1.2]))
 
-    g = interfere.signal_intervention(2, lambda t: t ** 2)
+    g = interfere.SignalIntervention(2, lambda t: t ** 2)
     assert np.allclose(g(x, 1.0), np.array([1.1, 2.0, 1.0]))
     assert np.allclose(g(x, -2.0), np.array([1.1, 2.0, 4.0]))
+
+    g = interfere.SignalIntervention([1, 2], [np.sin, lambda t: t ** 2])
+    assert np.allclose(g(x, 0.0), np.array([1.1, 0.0, 0.0]))
+    assert np.allclose(g(x, np.pi/2), np.array([1.1, 1.0, (np.pi/2)**2]))
