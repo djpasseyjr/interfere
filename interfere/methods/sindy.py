@@ -100,10 +100,11 @@ class SINDY(ps.SINDy, BaseEstimator):
 
         # Retrive number of successful steps
         n_steps = sindy_X_do.shape[0]
+        if interv_X is not None:
+            interv_X = interv_X[:n_steps]
         
         # Reassemble the control and response signals into a single array
-        pred_X_do = intervention.combine_exogeneous(
-            sindy_X_do, interv_X[:n_steps])
+        pred_X_do = intervention.combine_exogeneous(sindy_X_do, interv_X)
         
         return pred_X_do
 

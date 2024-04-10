@@ -3,13 +3,14 @@ from .base import (
     generate_counterfactual_dynamics,
     generate_counterfactual_forecasts
 )
-
+from . import benchmarking
 from . import dynamics
-from . import methods
 from .interventions import (
     perfect_intervention,
     signal_intervention,
     PerfectIntervention,
     SignalIntervention
 )
-from . import benchmarking
+from . import methods
+from . import utils
+

@@ -11,17 +11,17 @@ class OrnsteinUhlenbeck(StochasticDifferentialEquation):
         self,
         theta: Optional[np.ndarray] = None,
         mu: Optional[np.ndarray] = None,
-        Sigma: Optional[np.ndarray] = None,
+        sigma: Optional[np.ndarray] = None,
         measurement_noise_std: Optional[np.ndarray] = None
     ):
         """Initializes n-dimensional Ornstein Uhlenbeck process.
 
-        dX = theta(mu - X)dt + Sigma dW
+        dX = theta(mu - X)dt + sigma dW
 
         Args:
             theta (ndarray): A (n, n) matrix.
             mu (ndarray): A (n,) vector.
-            Sigma (ndarray): A (n, n) matrix.
+            sigma (ndarray): A (n, n) matrix.
             measurement_noise_std (ndarray): None, or a vector with shape (n,)
                 where each entry corresponds to the standard deviation of the
                 measurement noise for that particular dimension of the dynamic
@@ -34,25 +34,25 @@ class OrnsteinUhlenbeck(StochasticDifferentialEquation):
         if any([
             mu.shape[0] != theta.shape[0],
             theta.shape[0] != theta.shape[1],
-            theta.shape[0] != Sigma.shape[0],
-            Sigma.shape[1] != mu.shape[0]
+            theta.shape[0] != sigma.shape[0],
+            sigma.shape[1] != mu.shape[0]
         ]):
             raise ValueError(
                 "Parameters for OrnsteinUhlenback must have matching "
                 "dimensions. Argument shapes: "
                 f"\n\ttheta.shape = {theta.shape}"
                 f"\n\tmu.shape = {mu.shape}"
-                f"\n\tSigma.shape = {Sigma.shape}"
+                f"\n\tsigma.shape = {sigma.shape}"
             )
         # Set dimension
         super().__init__(len(mu), measurement_noise_std)
         # Assign class attributes
         self.theta = theta
         self.mu = mu
-        self.Sigma = Sigma
+        self.sigma = sigma
 
     def drift(self, x: np.ndarray, t: float):
         return self.theta @ (self.mu - x)
     
     def noise(self, x: np.ndarray, t: float):
-        return self.Sigma
+        return self.sigma

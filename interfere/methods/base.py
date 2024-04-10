@@ -40,8 +40,8 @@ class CounterfacualForecastMethodTemplate(BaseForecaster):
 
     _tags = {
         "scitype:y": "both",
-        "y_inner_mtype": "np.ndarray",
-        "X_inner_mtype": "np.ndarray",
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
     }
@@ -56,7 +56,6 @@ class CounterfacualForecastMethodTemplate(BaseForecaster):
         # for handling defaults etc, write to other attributes, e.g., self._parama
 
         # leave this as is
-        super().__init__()
 
         # todo: optional, parameter checking logic (if applicable) should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

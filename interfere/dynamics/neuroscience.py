@@ -10,10 +10,6 @@ from .base import (
 from .pyclustering_utils import CONN_TYPE_MAP
 from ..utils import copy_doc
 
-# Default Hodgkin Huxley neural net parameters.
-DEFAULT_HHN_PARAMS = hhn_parameters()
-DEFAULT_HHN_PARAMS.deltah = 400
-
 # Default LEGION parameters
 DEFAULT_LEGION_PARAMETERS = legion_parameters()
 
@@ -24,7 +20,25 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         self,
         stimulus: np.array,
         sigma: float = 1,
-        parameters: hhn_parameters = DEFAULT_HHN_PARAMS,
+        nu: float = 0,
+        vNa: float = 50.0,
+        vK: float = -77.0,
+        vL: float = -54.4,
+        vRest: float = -65.0,        
+        Icn1: float = 5.0,
+        Icn2: float = 30.0,
+        Vsyninh: float = -80.0,
+        Vsynexc: float = 0.0,
+        alfa_inhibitory: float = 6.0,
+        betta_inhibitory: float = 0.3,
+        alfa_excitatory: float = 40.0,
+        betta_excitatory: float = 2.0,
+        w1: float = 0.1,
+        w2: float = 9.0,
+        w3: float = 5.0,
+        deltah: float = 400.0,
+        threshold: float = -10,
+        eps: float = 0.16,       
         type_conn: str = "all_to_all",
         measurement_noise_std: Optional[np.ndarray] = None
     ):
@@ -35,8 +49,33 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
                 stimulus. Length equal to number of oscillators.
             sigma (float): Scale of the independent stochastic noise added to
                 the system.
-            parameters (hhn_parameters): A pyclustering.nnet.hhn.hhn_paramerers 
-                object.
+            nu (float): Intrinsic noise.
+            vNa (float): Reverse potential of sodium current [mV].
+            vK (float): Reverse potential of potassium current [mV].
+            vL (float): Reverse potential of leakage current [mV].
+            vRest (float): Rest potential [mV].    
+            Icn1 (float): External current [mV] for central element 1.
+            Icn2 (float): External current [mV] for central element 2.
+            Vsyninh (float): Synaptic reversal potential [mV] for inhibitory 
+                effects.
+            Vsynexc (float): Synaptic reversal potential [mV] for exciting 
+                effects.
+            alfa_inhibitory (float): Alfa-parameter for alfa-function for 
+                inhibitory effect.
+            betta_inhibitory (float): Betta-parameter for alfa-function for 
+                inhibitory effect.
+            alfa_excitatory (float): Alfa-parameter for alfa-function for 
+                excitatory effect.
+            betta_excitatory (float): Betta-parameter for alfa-function for 
+                excitatory effect.
+            w1 (float): Strength of the synaptic connection from PN to CN1.
+            w2 (float): Strength of the synaptic connection from CN1 to PN.
+            w3 (float): Strength of the synaptic connection from CN2 to PN.
+            deltah (float): Period of time [ms] when high strength value of 
+                synaptic connection exists from CN2 to PN.
+            threshold (float): Threshold of the membrane potential that should 
+                exceeded by oscillator to be considered as an active.
+            eps (float): Affects pulse counter.
             type_conn (str): Type of connection between oscillators. One
                 of ["all_to_all", "grid_four", "grid_eight", "list_bdir",
                 "dynamic"]. See pyclustering.nnet.__init__::conn_type for
@@ -52,11 +91,45 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         dim = len(stimulus)
         self.stimulus = stimulus
         self.sigma = sigma
-        self.parameters = parameters
         self.type_conn = type_conn
 
         # Make independent noise matrix.
         self.Sigma = sigma * np.diag(np.ones(dim))
+
+        ## Maximal conductivity for sodium current.
+        gNa = 120.0 * (1 + 0.02 * nu)
+        ## Maximal conductivity for potassium current.
+        gK = 36.0 * (1 + 0.02 * nu)
+        ## Maximal conductivity for leakage current.
+        gL = 0.3 * (1 + 0.02 * nu) 
+    
+        # Make hhn parameter class and set parameters.
+        parameters = hhn_parameters()    
+        parameters.nu = nu
+        parameters.gNa = gNa
+        parameters.gK = gK
+        parameters.gL = gL     
+        parameters.vNa = vNa
+        parameters.vK = vK
+        parameters.vL = vL
+        parameters.vRest = vRest       
+        parameters.Icn1 = Icn1
+        parameters.Icn2 = Icn2
+        parameters.Vsyninh = Vsyninh
+        parameters.Vsynexc = Vsynexc
+        parameters.alfa_inhibitory = alfa_inhibitory
+        parameters.betta_inhibitory = betta_inhibitory
+        parameters.alfa_excitatory = alfa_excitatory
+        parameters.betta_excitatory = betta_excitatory
+        parameters.w1 = w1
+        parameters.w2 = w2
+        parameters.w3 = w3
+        parameters.deltah = deltah
+        parameters.threshold = threshold
+        parameters.eps = eps
+
+        # Store hhm_parameters class for use in pyclustering simulator.
+        self.parameters = parameters
         
         super().__init__(dim, measurement_noise_std)
 

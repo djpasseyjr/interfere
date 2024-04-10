@@ -7,6 +7,7 @@ from .base import Intervention
 
 ScalarFunction: TypeAlias = Callable[[float], float]
 
+
 class ExogIntervention(Intervention):
     """A class describing an exogeneous intervention on a system.
     
@@ -73,6 +74,24 @@ class ExogIntervention(Intervention):
         """
         raise NotImplementedError()
 
+
+class IdentityIntervention(ExogIntervention):
+    """The trivial intervention. An intervention that does nothing."""
+
+    def __init__(self) -> None:
+        super().__init__([])
+
+    def split_exogeneous(self, X: np.ndarray):
+        return X, None
+    
+    def combine_exogeneous(self, endo_X: np.ndarray, exog_X: np.ndarray):
+        return endo_X
+    
+    def eval_at_times(self, t: np.ndarray):
+        return None
+
+    def __call__(self, x: np.array, t: float):
+        return x
     
 
 class PerfectIntervention(ExogIntervention):
