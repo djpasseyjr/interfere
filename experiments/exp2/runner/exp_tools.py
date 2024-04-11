@@ -102,12 +102,30 @@ def load_dynamic_sim(results_dict):
     t = results_dict["t"]
     return Xs, X_dos, t
 
+def remove_extra_simulation_args(dyn_args):
+    """Removes generate_counterfactual_forecasts incompatable kwargs.
+    
+    The function dyn_args was redesigned to carry additional information about a
+    system in it's keyword args that is then included in the results dictionary.
+    This function removes those extra args so that the dict can be passed to
+    generate_counterfactual_forecasts(**arg_dict).
+    """
+    gcf = interfere.generate_counterfactual_forecasts
+    # Grab function's number of of args.
+    n_args = gcf.__code__.co_argcount
+    # Grab all arg names
+    arg_names = gcf.__code__.co_varnames[:n_args]
+    # Make a dict containing only function args
+    arg_dict = {k:dyn_args[k] for k in arg_names if k in dyn_args}
+    return arg_dict
+
 
 def run_dynamics(dyn_args: dict, results_dict: dict, outfile_idx: str):
     """Checks for existing sim data, and if none exists, runs the simulation."""
     
     if not results_dict["dynamic_sim_complete"]:
-        Xs, X_dos, t = interfere.generate_counterfactual_forecasts(**dyn_args)
+        Xs, X_dos, t = interfere.generate_counterfactual_forecasts(
+            **remove_extra_simulation_args(dyn_args))
         store_dynamic_model_outputs(Xs, X_dos, t, results_dict)
         save_results_dict(results_dict, outfile_idx)
     else:

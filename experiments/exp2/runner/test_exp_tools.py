@@ -225,7 +225,10 @@ def test_partial_forecast():
     # Remove all but one prediction for the last method (VAR).
     first_method = "VAR"
     X_do_preds = results["methods"][first_method]["X_do_preds"]
+    X_preds = results["methods"][first_method]["X_preds"]
+
     results["methods"][first_method]["X_do_preds"] = X_do_preds[:1]
+    results["methods"][first_method]["X_preds"] = X_preds[:1]
 
     # Change method to unfinished.
     results["methods"][first_method]["complete"] = False
@@ -243,6 +246,7 @@ def test_partial_forecast():
 
     # Only one forecast existed for `first_method`
     assert len(results["methods"][first_method]["X_do_preds"]) == 1
+    assert len(results["methods"][first_method]["X_preds"]) == 1
 
     # Loop over ALL infernce methods.
     for margs in method_arg_list:
@@ -252,13 +256,17 @@ def test_partial_forecast():
         
     # After running the forecasts, more forecasts exists for `first_method`.
     assert len(results["methods"][first_method]["X_do_preds"]) > 1
+    assert len(results["methods"][first_method]["X_preds"]) > 1
         
     assert orig_best_params == results["methods"][first_method]["best_params"]
 
     # Check that half finished method data was preserved.
     X_do_pred_old = X_do_preds[0][0]
+    X_pred_old = X_preds[0][0]
     assert np.all(
         results["methods"][first_method]["X_do_preds"][0][0] == X_do_pred_old)
+    assert np.all(
+        results["methods"][first_method]["X_preds"][0][0] == X_pred_old)
     
 
     # Make sure the correct number of exeriments ran
