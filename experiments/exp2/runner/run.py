@@ -22,6 +22,16 @@ IS_TEST_RUN = False
 dyn_args_list, method_arg_list = exp_tools.load_parameters(IS_TEST_RUN) 
 dyn_args = dyn_args_list[PARAM_IDX]
 
+print(f"""EXPERIMENT PARAM IDX -- {PARAM_IDX}
+--------------------------------------------
+Location: {__file__}
+Parameter Directory: {exp_tools.PARAM_DIR}
+Output File: {exp_tools.save_file_path(PARAM_IDX)}
+Dynamic Model: {dyn_args["model_type"]}
+Model Params: {dyn_args["model_params"]}
+--------------------------------------------
+""")
+
 # Check that the previous save file (if any) is consistent with experiment.
 exp_tools.check_consistency(dyn_args, PARAM_IDX, OPT_ALL)
 
