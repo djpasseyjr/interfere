@@ -15,7 +15,7 @@ PARAM_IDX = int(sys.argv[1])
 OPT_ALL = False
 
 # Toggles a test run vs. a full run.
-IS_TEST_RUN = False
+IS_TEST_RUN = False 
 
 # Read the dynamic models param array and access at the command line arg index.
 # Read in the list of inference methods.
