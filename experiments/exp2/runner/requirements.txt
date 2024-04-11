@@ -57,7 +57,7 @@ prompt-toolkit==3.0.43
 psutil==5.9.8
 ptyprocess==0.7.0
 pure-eval==0.2.2
-pyclustering @ git+https://github.com/djpasseyjr/pyclustering@6bb2311e318d3b6ae7ef88f88ed19ec25e959b7f
+pyclustering @ git+https://github.com/djpasseyjr/pyclustering
 Pygments==2.17.2
 pymongo==4.6.2
 pyparsing==3.1.1
