@@ -1,8 +1,5 @@
 import pickle as pkl
-import os
 import sys
-
-import interfere
 
 # Import exp_tools.py from the local directory:
 import exp_tools

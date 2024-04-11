@@ -11,7 +11,7 @@ import numpy as np
 PARAM_DIR = Path(__file__).parents[1] / "parameters"
 DYN_PARAM_FNAME = "dynamic_models"
 METH_PARAM_FNAME = "inference_methods"
-FILE_PREFIX = "exp1"
+FILE_PREFIX = "exp2"
 SAVE_DIR = Path(__file__).parents[0] # Path("/work/users/d/j/djpassey/interfere_exp1.1")
 
 def save_file_path(idx):
