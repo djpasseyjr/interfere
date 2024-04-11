@@ -11,7 +11,6 @@ from scipy import integrate
 from scipy import optimize
 from warnings import warn
 from math import floor
-import numdifftools as ndt
 
 from ..interventions import ExogIntervention
 from ..utils import (
@@ -198,28 +197,6 @@ class ResComp(BaseForecaster):
             -1*r + self.activ_f(self.res @ r + recurrence + transform_exog))
 
 
-    def jacobian(self, t, r, u, trained=True):
-        """ The jacobian matrix of the untrained reservoir ode w.r.t. r. That is, if
-                dr/dt = F(t, r, u)
-                Jij = dF_i/dr_j
-            Parameters:
-                t (float): Time value
-                r (ndarray): Array of length `self.res_sz` reservoir node state
-                u (callable): function that accepts `t` and returns an ndarray 
-                    of length `n`
-            Returns:
-                Jnum (callable): Accepts a node state r (ndarray of length `self.res_sz') and returns a
-                (`self.res_sz` x `self.res_sz`) array of partial derivatives (Computed numerically
-                with finite differences). See `numdifftools.Jacobian`
-        """
-        if trained:
-            f = lambda r : self.trained_res_ode(t, r)
-        else:
-            f = lambda r : self.res_ode(t, r, u)
-        Jnum = ndt.Jacobian(f)
-        return Jnum
-
-
     def initial_condition(self, u0, d0):
         """ Function to map external system initial conditions to reservoir initial conditions
             Options are set by changing the value of self.map_initial. The options work as follows:
@@ -267,7 +244,7 @@ class ResComp(BaseForecaster):
         # An arbitrary initial condition mapping.
         elif self.map_initial == "activ_f":
             r0 = self.activ_f(
-                self.W_in_ @ (self.sigma * u0) + self.W_exog_ * (
+                self.W_in_ @ (self.sigma * u0) + self.W_exog_ @ (
                     self.delta * d0)
             )
 
@@ -425,7 +402,7 @@ class ResComp(BaseForecaster):
         return W_out
 
 
-    def forecast(self, t, D, u0=None, r0=None, return_states=False):
+    def forecast(self, t, D=None, u0=None, r0=None, return_states=False):
         """ Predict the evolution of the learned system.
 
         Args:        
