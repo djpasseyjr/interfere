@@ -42,3 +42,34 @@ def test_signal_intervention():
     g = interfere.SignalIntervention([1, 2], [np.sin, lambda t: t ** 2])
     assert np.allclose(g(x, 0.0), np.array([1.1, 0.0, 0.0]))
     assert np.allclose(g(x, np.pi/2), np.array([1.1, 1.0, (np.pi/2)**2]))
+
+
+def test_identity_intervention():
+
+    # Test identity intervention for discrete stochastic dynamics.
+    model = interfere.dynamics.coupled_map_1dlattice_chaotic_brownian(sigma=0.1)
+    x0 = np.random.rand(10)
+    t = np.arange(100)
+    rng = np.random.default_rng(11)
+
+    X = model.simulate(x0, t, rng=rng)
+
+    rng = np.random.default_rng(11)
+    X_ident = model.simulate(
+        x0, t, interfere.interventions.IdentityIntervention(), rng)
+    
+    assert np.all(X == X_ident)
+
+    # Test identity intervention for continuous stochastic dynamics.
+    model = interfere.dynamics.Belozyorov3DQuad(sigma=0.01)
+    x0 = np.random.rand(3) * 0.1
+    t = np.linspace(0, 10, 1000)
+
+    rng = np.random.default_rng(11)
+    X = model.simulate(x0, t, rng=rng)
+
+    rng = np.random.default_rng(11)
+    X_ident = model.simulate(
+        x0, t, interfere.interventions.IdentityIntervention(), rng)
+    
+    assert np.all(X == X_ident)
