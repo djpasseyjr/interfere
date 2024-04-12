@@ -203,7 +203,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
     # Construct parameters of the true intervened system
     theta_perf_inter = model.theta.copy()
-    sigma_perf_inter = model.Sigma.copy()
+    sigma_perf_inter = model.sigma.copy()
 
     theta_perf_inter[0, :] = 0
     sigma_perf_inter[0, :] = 0
@@ -357,7 +357,7 @@ def test_varma():
     coefs = np.stack([A1, A2])
     mu = np.zeros(3)
     Z = rs.rand(3, 3)
-    Sigma = Z * Z.T
+    sigma = Z * Z.T
     steps = 101
     initial_vals = np.ones((2, 3))
     nsims = 10000
@@ -366,7 +366,7 @@ def test_varma():
     true_var_sim = varsim(
         coefs,
         mu,
-        Sigma,
+        sigma,
         steps=steps,
         initial_values=initial_vals,
         seed=seed,
@@ -377,7 +377,7 @@ def test_varma():
     model = interfere.dynamics.VARMA_Dynamics(
         phi_matrices=coefs,
         theta_matrices=[np.zeros((3,3))],
-        sigma=Sigma
+        sigma=sigma
     )
     varma_sim = np.stack([
         model.simulate(initial_vals, time_points=np.arange(steps))
@@ -393,12 +393,12 @@ def test_varima_standard_checks():
     rng = np.random.default_rng(10)
     coef_matrices = [rng.random((3, 3)) - 0.5 for i in range(5)]
     Z = rng.random((3, 3))
-    Sigma = Z * Z.T
+    sigma = Z * Z.T
 
     model = interfere.dynamics.VARMA_Dynamics(
         phi_matrices=coef_matrices[:2],
         theta_matrices=coef_matrices[2:],
-        sigma=Sigma
+        sigma=sigma
     )
     check_simulate_method(model, x0=rng.random((3, 3)))
 
