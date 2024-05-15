@@ -3,26 +3,22 @@
 Adapted from the `rescomp` package. See Harding et. al. 2024 "Global forecasts
 in reservoir computers."
 """
+from math import floor
+from typing import Optional
+from warnings import warn
+
 import numpy as np
 import networkx as nx
 from scipy import sparse
 from scipy.interpolate import CubicSpline
 from scipy import integrate
 from scipy import optimize
-from warnings import warn
-from math import floor
 
+from .base import BaseInferenceMethod
 from ..interventions import ExogIntervention
-from ..utils import (
-    to_interfere_time_series, fh_to_seconds, to_sktime_time_series
-)
-
-import pandas as pd
-from sktime.forecasting.base import BaseForecaster
-from sktime.transformations.compose import IxToX
 
 
-class ResComp(BaseForecaster):
+class ResComp(BaseInferenceMethod):
     
     def __init__(
         self,
@@ -85,9 +81,6 @@ class ResComp(BaseForecaster):
         a dense reservoir matrix. However, adjacency matrix weights are scaled
         after initialization to achive desired spectral radius.
     """
-        
-        # IMPORTANT: for compatability with sktime, the self.params initialized
-        # in __init__ should never be overwritten or mutated from now on.
         self.gamma = gamma
         self.sigma = sigma
         self.delta = delta
@@ -494,92 +487,80 @@ class ResComp(BaseForecaster):
             idxs += ((start, len(t)),)
         return idxs
     
-    #---------------------------
-    # Integrate with sktime
-    #--------------------------- 
 
-    _tags = {
-        "scitype:y": "both",
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-    }
-    
-
-    def _fit(self, y: pd.DataFrame, X: pd.DataFrame = None, fh=None):
-        """Fit reservoir computer to training data.
-
-        Private sktime BaseForecaster._fit containing the core logic, called
-        from BaseForecaster.fit.
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
+    def _fit(
+        self,
+        endog_states: np.ndarray,
+        t: np.ndarray,
+        exog_states: Optional[np.ndarray] = None,
+    ):
+        """Fits the method using the passed data.
+        
         Args:
-            y (pd.DataFrame): A time series. Rows are samples, columns are   
-                variables. Index contains the time values.
-            X (pd.DataFrame): Exogeneous time series to fit to. Rows are 
-                samples, columns are variables. Index contains the time values.
-            fh (ForecastingHorizon): The forecasting horizon with the steps 
-                ahead to predict. 
-
-        Returns:
-            self : reference to self
+            endog_states: An (m, n) array of endogenous signals. Sometimes
+                called Y. Rows are observations and columns are variables. Each
+                row corresponds to the times in `t`.
+            t: An (m,) array of time points.
+            exog_states: An (m, k) array of exogenous signals. Sometimes called
+                X. Rows are observations and columns are variables. Each row 
+                corresponds to the times in `t`.
         """
-        # Save time values used during fit.
-        t, U = to_interfere_time_series(y)
-
         # Check for exogenous.
-        if X is None:
-            D = np.zeros((len(t), 1))
-        else:
-            _, D = to_interfere_time_series(X)
-
-        if U.shape[0] != D.shape[0]:
-            raise ValueError("Endogenous and exogeneous time series must have "
-                             "the same number of observations.")
+        if exog_states is None:
+            exog_states = np.zeros((len(t), 1))
 
         # Train on the data.
-        self.train(t, U, D)
-
-        return self
+        self.train(t, endog_states, exog_states)
 
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+    def _predict(
+        self,
+        forecast_times: np.ndarray,
+        historic_endog: np.ndarray,
+        historic_times: np.ndarray,
+        exog: Optional[np.ndarray] = None,
+        historic_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = None,
+    ) -> np.ndarray:
+        """Runs a simulation of the dynamics of a fitted forcasting method.
 
-        Internal sktime BaseForecaster method containing the core logic, called
-        from BaseForecaster.predict.
+        Note: Must call `self.fit(...)` before calling `self.predict`.
 
         Args:
-            fh (ForecastingHorizon): The forecasting horizon with the steps
-                ahead to to predict.
-            X (np.ndarray): Exogenous time series. Rows are observations,
-                columns are variables. Number of rows equals length of
-                fh.values.
+            forecast_times: A (m,) array of the time points for the method to
+                simulate.
+            historic_endog: A (p, n) array of historic observations of the
+                ENDOGENOUS signals. This is used as the initial condition data
+                and lagged initial conditions. It is NOT used to fit the method.
+            exog: An optional (m, k) array of exogenous signals corresponding to
+                the times in `forecast_times`.
+            historic_exog: An optional (p, k) array of historic obs of the
+                EXOGENOUS signals.  This is used as the initial condition data
+                and lag information. It is not used to fit the method. If 
+                `historic_times` is not provided and `forecast_times` contains
+                equally spaced points, the observations are assumed to have
+                occured at equally spaced points prior to `forecast times`.
+                Otherwise, the rows of this matrix must must correspond to
+                times in `historic_times`.
+            historic_times: An optional (p,) array of times corresponding to 
+                the rows of `historic_endog` and `historic_exog`.
+            rng: An optional numpy random state for reproducibility. (Uses 
+                numpy's mtrand random number generator by default.)
 
         Returns:
-            y_pred (np.ndarray): Point predictions.
+            endog_pred: A (m, n) array containing a multivariate time series.
+            The rows are observations and the columns are the
+            endogenous variables. Each row corresponds directly with the times
+            contained in `forecast_times`.
         """
-        t = fh_to_seconds(fh)
+        if exog is None:
+            exog = np.zeros((len(forecast_times), 1))
 
-        # If no forecast times are provided, use the last two time values from
-        # fit to estimate the step size and predict one step foreward.
-        if len(t) == 0:
-            dt = self.t_[-1] - self.t_[-2]
-            t = np.array([self.t_[-1], self.t_[-1] + dt])
-
-        if X is None:
-            D = np.zeros((len(t), 1))
-        else:
-            _, D = to_interfere_time_series(X)
-        
+        # Initial condition.
+        u0 = historic_endog[-1, :]
         # Forecast.
-        U_pred = self.forecast(t, X)
-
-        # Convert to sktime format.
-        return to_sktime_time_series(t, U_pred)
+        endog_pred = self.forecast(forecast_times, exog, u0=u0)
+        return endog_pred
     
 
     def get_test_params(parameter_set="default"):
@@ -601,40 +582,8 @@ class ResComp(BaseForecaster):
             overlap=0.0
         )
     
-    #---------------------------
-    # Integrate with interfere
-    #---------------------------  
-
-    def counterfactual_forecast(
-        self,
-        X_historic: np.ndarray,
-        historic_times: np.ndarray,
-        forecast_times: np.ndarray,
-        intervention: ExogIntervention
-    ):
-        """Makes a forecast in the prescence of an intervention.
-
-        Args:
-            X_historic (np.array): Historic data.
-            historic_times (np.ndarray): Historic time points
-            forecast_times (np.ndarray): Time points to forecast.
-            intervention (ExogIntervention): The intervention to apply at each
-                future time point.
-        """
-        # Separate exog and endog and collect into DataFrames for sktime.
-        X_hist_endo, X_hist_exog = intervention.split_exogeneous(X_historic)
-
-        # Fit the method using sktime API.
-        self.train(historic_times, X_hist_endo, X_hist_exog)
-
-        # Extract the exogenous signal from the intervention.
-        X_do_exog = intervention.eval_at_times(forecast_times)
-    
-        
-        # Use sktime api to predict the future evolution of the time series.
-        X_do_pred_endo = self.forecast(forecast_times, X_do_exog)
-
-        # Recombine exogenous and endogenous.
-        X_do_pred = intervention.combine_exogeneous(
-            X_do_pred_endo, X_do_exog)
-        return X_do_pred
+    def get_test_param_grid():
+        return dict(
+            sigma = [0.5, 1.0],
+            gamma = [1.0, 2.0]
+        )

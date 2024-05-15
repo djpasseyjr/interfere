@@ -1,212 +1,316 @@
-"""Base objects for methods. 
-
-Method classes should inheret from sktime.forecasting.base.BaseForecaster
-and implement the `sktime` required functions as outlined in the template
-below.
-
-In addition, methods must implement the method, `counterfactual_forecast`
-in order to be compatible with the  `interfere` API.
-
-
-The template below outlines the forecaster methods required to integrate with
-sktime and sklearn taken. The `CounterfacualForecastMethodTemplate` taken from
-`sktime.sktime.extension_templates.forecasting_supersimple` and modified.
+"""The base class for methods for intervention response prediction.
 """
-
-
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import numpy as np
-from sktime.forecasting.base import BaseForecaster
+import pandas as pd
+from sklearn.base import BaseEstimator
 
+from ..base import DEFAULT_RANGE
 from ..interventions import ExogIntervention
 
 
-class CounterfacualForecastMethodTemplate(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+class BaseInferenceMethod(BaseEstimator):
+    """Base class for interfere inference methods."""
 
-    todo: describe your custom forecaster here
+    # Class attribute to determine if the method was fit to data.
+    is_fit = False
 
-    Parameters
-    ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    """
 
-    _tags = {
-        "scitype:y": "both",
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": False,
-        "requires-fh-in-fit": False,
-    }
-
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
-        # todo: write any hyper-parameters to self
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
-        # IMPORTANT: the self.params should never be overwritten or mutated from now on
-        # for handling defaults etc, write to other attributes, e.g., self._parama
-
-        # leave this as is
-
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.parama etc
-        # instead, write to self._parama, self._newparam (starting with _)
-
-    # todo: implement this, mandatory
-    def _fit(self, y, X=None, fh=None):
-        """Fit reservoir computer to training data.
-
-        Private sktime BaseForecaster._fit containing the core logic, called
-        from BaseForecaster.fit.
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+    def simulate(
+        self,
+        simulation_times: np.ndarray,
+        historic_states: np.ndarray,
+        intervention: ExogIntervention,
+        historic_times: Optional[np.ndarray] = None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE
+    ) -> np.ndarray:
+        """Simulates a the intervention response with a fitted method.
 
         Args:
-            y (np.ndarray): A time series. Rows are samples, columns are variables.
-            fh (ForecastingHorizon): The forecasting horizon with the steps ahead to
-                predict. 
-            X (np.ndarray): Exogeneous time series to fit to.
+            simulation_times: A (m,) array of times to simulate.
+            historic_states: A (p, n + k) array of endogenous and exogenous
+                signals. Rows are observations corresponding to
+                `simulation_times` and columns are variables. The k exogenous
+                variable indexes are contained in `intervention.intervened_idxs`
+            intervention: An interfere.ExogIntervention.
+            historic_times: Optional (p,) array of times corresponding to
+                historic observations. Defaults to equally spaced points
+                immediately prior to `simulation_times`. Assumes that the last
+                row of `historic_states` corresponds to the initial condition,
+                the state of the system at time `t = simulation_times[0]`.
+            rng: Numpy random state.
 
         Returns:
-            self : reference to self
+            simulated_states: A (m, n + k) array of simulated exogenous and
+                endogenous signals. The k exogenous variable indexes are
+                contained in `intervention.intervened_idxs`.
         """
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #
-        # todo:
-        # insert logic here
-        # self.fitted_model_param_ = sthsth
-        #
-        return self
-
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (y, X) or forecasting-horizon-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
+        historic_endo, historic_exog = intervention.split_exogeneous(
+            historic_states)
+        exog = intervention.eval_at_times(simulation_times)
+        endo_pred = self.predict(
+            simulation_times,
+            historic_endo,
+            exog,
+            historic_exog,
+            historic_times,
+            rng
+        )
+        simulated_states = intervention.combine_exogeneous(endo_pred, exog)
+        return simulated_states
 
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Point predictions
-        """
-        # todo
-        # to get fitted model params set in fit, do this:
-        #
-        # fitted_model_param = self.fitted_model_param_
-
-        # todo: add logic to compute values
-        # values = sthsthsth
-
-        # then return as pd.DataFrame
-        # below code guarantees the right row and column index
-        #
-        # row_idx = fh.to_absolute_index(self.cutoff)
-        # col_idx = self._y.index
-        #
-        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
-
-        # IMPORTANT: avoid side effects to X, fh
-
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for forecasters.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # A good parameter set should primarily satisfy two criteria,
-        #   1. Chosen set of parameters should have a low testing time,
-        #      ideally in the magnitude of few seconds for the entire test suite.
-        #       This is vital for the cases where default values result in
-        #       "big" models which not only increases test time but also
-        #       run into the risk of test workers crashing.
-        #   2. There should be a minimum two such parameter sets with different
-        #      sets of values to ensure a wide range of code coverage is provided.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
-
-
-    def counterfactual_forecast(
+    def fit(
         self,
-        X_historic: np.ndarray,
-        historic_times: np.ndarray,
-        forecast_times: np.ndarray,
-        intervention: ExogIntervention
+        endog_states: np.ndarray,
+        t: np.ndarray,
+        exog_states: np.ndarray = None,
     ):
-        """Makes a forecast in the prescence of an intervention.
+        """Fits the method using the passed data.
+        
+        Args:
+            endog_states: An (m, n) array of endogenous signals. Sometimes
+                called Y. Rows are observations and columns are variables. Each
+                row corresponds to the times in `t`.
+            t: An (m,) array of time points.
+            exog_states: An (m, k) array of exogenous signals. Sometimes called
+                X. Rows are observations and columns are variables. Each row 
+                corresponds to the times in `t`.
+        """
+        # Make sure no Pandas DataFrames are passed in.
+        if any([
+            isinstance(x, pd.DataFrame) 
+            for x in [endog_states, t, exog_states]
+        ]):
+            raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+        
+
+        self.is_fit = True
+        return self._fit(endog_states, t, exog_states)
+    
+
+    def predict(
+        self,
+        forecast_times: np.ndarray,
+        historic_endog: np.ndarray,
+        exog: Optional[np.ndarray] = None,
+        historic_exog: Optional[np.ndarray] = None,
+        historic_times: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
+        """Runs a simulation of the dynamics of a fitted forcasting method.
+
+       Note: Must call `self.fit(...)` before calling `self.predict`.
 
         Args:
-            X_historic (np.array): Historic data.
-            historic_times (np.ndarray): Historic time points
-            forecast_times (np.ndarray): Time points to forecast.
-            intervention (ExogIntervention): The intervention to apply at each
-                future time point.
+            forecast_times: A (m,) array of the time points for the method to
+                simulate.
+            historic_endog: A (p, n) array of historic observations of the
+                ENDOGENOUS signals. This is used as the initial condition data
+                and lagged initial conditions. It is NOT used to fit the method.
+                If `historic_times` is not provided and `forecast_times`
+                contains equally spaced points, the observations are assumed to
+                have occured at equally spaced points prior to `forecast times`.
+                Additionally, the last row of `historic_states` is assumed to
+                correspond with the first entry in `forecast_times`. Otherwise,
+                the rows of this matrix must must correspond to times in
+                `historic_times`.
+            exog: An optional (m, k) array of exogenous signals corresponding to
+                the times in `forecast_times`.
+            historic_exog: An optional (p, k) array of historic obs of the
+                EXOGENOUS signals.  This is used as the initial condition data
+                and lag information. It is not used to fit the method. If 
+                `historic_times` is not provided and `forecast_times` contains
+                equally spaced points, the observations are assumed to have
+                occured at equally spaced points prior to `forecast times`.
+                Otherwise, the rows of this matrix must must correspond to
+                times in `historic_times`.
+            historic_times: An optional (p,) array of times corresponding to 
+                the rows of `historic_endog` and `historic_exog`. If 
+                `historic_times` is not provided and `forecast_times`
+                contains equally spaced points, then `historic_times` is assumed
+                to contain occured at equally spaced points prior to `forecast
+                times`.
+            rng: An optional numpy random state for reproducibility. (Uses 
+                numpy's mtrand random number generator by default.)
+
+        Returns:
+            X_sim: A (m, n) array of containing a multivariate time series. The
+            rows are observations correstponding to entries in `time_points` and
+            the columns correspod to the endogenous cariables in the forecasting method.
+        """
+        if not self.is_fit:
+            raise ValueError("Call self.fit(...) before self.predict(...).")
+        
+        if any([
+            isinstance(x, pd.DataFrame) 
+            for x in [forecast_times, historic_endog, exog, historic_exog]
+        ]):
+            raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+        
+        # Reshape historic_endog if it was 1D.
+        if len(historic_endog.shape) == 1:
+            historic_endog = np.reshape(historic_endog, 1, -1)
+
+        # Gather array shapes
+        p, _ = historic_endog.shape
+        (m,) = forecast_times.shape 
+
+        if len(forecast_times) < 2:
+            raise ValueError("Since the first timestep is assumed to be the " "current time, and correspond to the last row of `historic_endog`," " the `forecast_times` must have at least two time values.")
+        
+        # Create historic_times assuming equal time step size.
+        if historic_times is None:
+            dt = forecast_times[1] - forecast_times[0]
+
+            # Check for equally spaced forecast time points.
+            if not np.all(np.isclose(np.diff(forecast_times)), dt):
+                raise ValueError("The `historic_times` argument not provided"
+                " AND `forecast_times` are equally spaced. Cannot infer "
+                " `historic_times`. Either pass it explicitly or provide "
+                " equally spaced time `forecast_times`.")
+            
+            historic_times = np.arange(-p, 1) * dt + forecast_times[0]
+
+
+        # Check shape of exogenous signals.
+        if exog is not None:
+            m_exog, k_exog = exog.shape
+            if m_exog != m:
+                raise ValueError(f"Number of exogenous observations ({m_exog})"
+                f" does not match the number of forecast_times ({m}).")
+
+
+        # Check shape of historic exogenous signals.
+        if historic_exog is not None:
+            p_hexog, k_hexog = historic_exog.shape
+
+            if p_hexog != p:
+                raise ValueError("Arguments `historic_endog` and "
+                "`historic_exog` must have the same number of rows.")
+            
+            if exog is not None:
+                if k_hexog != k_exog:
+                    raise ValueError("The `historic_exog` and `exog` arguments"
+                    " must have the same number of columns.")
+
+
+        return self._predict(
+            forecast_times=forecast_times,
+            historic_endog=historic_endog,
+            exog=exog,
+            historic_exog=historic_exog,
+            historic_times=historic_times,
+            rng=rng
+        )
+    
+
+    def get_window_size(self):
+        """Returns number of previous observations model requires in order to
+        make a prediction.
+        
+        For example, an autoregressive model with four lags needs the four
+        previous timesteps in order to make a prediction, but an ODE only needs
+        the current observed state.
+
+        This function only exists to maintain flexible compatibility with the
+        hyper parameter optimizer. However, at least two
+        previous observations are needed in order for the hyper parameter
+        optimizer to determine the timestep size. If no previous observations
+        are known, simply pad with zeros and supply the appropriate times.
+
+        Because at least two are needed, the default behavior is to require two
+        previous observations.
+        
+        If your model needs more previous observations, overwrite this function.
+        The optimizer calls this function after initialization, so the number of
+        previous observations needed can depend on interal attributes:
+
+        E.x.
+            `return max(self.lags)`
+        """
+        return 2
+
+
+    @abstractmethod
+    def _fit(
+        self,
+        endog_states: np.ndarray,
+        t: np.ndarray,
+        exog_states: Optional[np.ndarray] = None,
+    ):
+        """Fits the method using the passed data.
+        
+        Args:
+            endog_states: An (m, n) array of endogenous signals. Sometimes
+                called Y. Rows are observations and columns are variables. Each
+                row corresponds to the times in `t`.
+            t: An (m,) array of time points.
+            exog_states: An (m, k) array of exogenous signals. Sometimes called
+                X. Rows are observations and columns are variables. Each row 
+                corresponds to the times in `t`.
         """
         raise NotImplementedError()
+    
+
+    @abstractmethod
+    def _predict(
+        self,
+        forecast_times: np.ndarray,
+        historic_endog: np.ndarray,
+        historic_times: np.ndarray,
+        exog: Optional[np.ndarray] = None,
+        historic_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
+        """Runs a simulation of the dynamics of a fitted forcasting method.
+
+       Note: Must call `self.fit(...)` before calling `self.predict`.
+
+        Args:
+            forecast_times: A (m,) array of the time points for the method to
+                simulate.
+            historic_endog: A (p, n) array of historic observations of the
+                ENDOGENOUS signals. This is used as the initial condition data
+                and lagged initial conditions. It is NOT used to fit the method.
+            exog: An optional (m, k) array of exogenous signals corresponding to
+                the times in `forecast_times`.
+            historic_exog: An optional (p, k) array of historic obs of the
+                EXOGENOUS signals.  This is used as the initial condition data
+                and lag information. It is not used to fit the method. If 
+                `historic_times` is not provided and `forecast_times` contains
+                equally spaced points, the observations are assumed to have
+                occured at equally spaced points prior to `forecast times`.
+                Otherwise, the rows of this matrix must must correspond to
+                times in `historic_times`.
+            historic_times: An optional (p,) array of times corresponding to 
+                the rows of `historic_endog` and `historic_exog`.
+            rng: An optional numpy random state for reproducibility. (Uses 
+                numpy's mtrand random number generator by default.)
+
+        Returns:
+            endog_pred: A (m, n) array containing a multivariate time series.
+            The rows are observations and the columns are the
+            endogenous variables. Each row corresponds directly with the times
+            contained in `forecast_times`.
+        """
+        raise NotImplementedError()
+    
+
+    @abstractmethod
+    def get_test_param_grid(self) -> Dict[str, List[Any]]:
+        """Returns a dict of hyper parameters for testing grid search.
+        
+        Should be small and not take a long time to iterate through.
+        """
+        raise NotImplementedError()
+    
+
+    @abstractmethod
+    def get_test_params(self) -> Dict[str, Any]:
+        """Returns initialization parameters for testing. 
+        
+        Should be condusive to fast test cases."""
+        raise NotImplementedError

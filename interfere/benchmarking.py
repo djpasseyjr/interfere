@@ -2,16 +2,19 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 from abc import ABC
 
 import numpy as np
+import pandas as pd
 import scipy as sp
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import TimeSeriesSplit
+from skforecast.model_selection_multiseries import grid_search_forecaster_multiseries
 from sktime.performance_metrics.forecasting import mean_squared_scaled_error
 
-from .interventions import ExogIntervention
 from .base import (
-    generate_counterfactual_dynamics, generate_counterfactual_forecasts
+    generate_counterfactual_dynamics,
+    generate_counterfactual_forecasts,
+    DEFAULT_RANGE
 )
+from .interventions import ExogIntervention
 from .utils import copy_doc
+from .methods import BaseInferenceMethod
 
 
 class CounterfactualForecastingMetric(ABC):
@@ -218,16 +221,207 @@ def directional_accuracy(X, X_do, pred_X_do, intervention_idx):
     return acc
 
 
-def tune_method(method_type, method_params, method_param_grid, X, time_points):
-    """Tune hyperparameters using sklearn."""
-    grid_search = GridSearchCV(
-        method_type(**method_params),
-        method_param_grid,
-        cv=TimeSeriesSplit(n_splits=5)
-    )
-    grid_search.fit(X)
-    return grid_search.best_params_
+##################################
+# Skforecast Grid Search Adapter #
+##################################
+
+
+class ForecasterAutoregMultiSeriesCustom:
+    """Custom class to interface with the skforecast grid search method.
     
+    Because of the difficulty getting hyper parameter tuning for time series
+    models to work with sklearn (not enough features) and sktime
+    (over-engineered), the interfere package uses a small hack to make custom
+    methods compatible with the skforecast API.
+
+    The skforecast package does not have a base API and their grid search
+    functions only with for their own defined types. By naming our adapter class
+    the same name as their defined types, we are able to bypass their type
+    checker and insert optimize any interfere method by wrapping it in this
+    custom class.
+
+    This class does not inherit any methods from skforecast classes, and this is
+    done to restrict the manner that functions can operate on internal
+    attributes.
+    
+    Still, yes, this is a hack. I've been careful and looked through their code
+    for ways the dummy class attributes initialized here interact with grid
+    search, and believe they have no major impact, but there is always a risk of
+    a bug. (Hence, this is accompanied with a suite of tests.)
+    """
+
+
+    def __init__(
+        self,
+        method_type: Type[BaseInferenceMethod],
+        method_params: Dict[str, Any],
+        **kwargs
+    ):
+        self.method = method_type(**method_params, **kwargs)
+
+        # Sets the number of previous observations the method needs in order to
+        # make a prediction.
+        self.window_size = self.method.get_window_size()
+
+        # These attributes are dummy variables which are needed to maintain 
+        # compatibility with skforecast API.
+        self.dropna_from_series = None
+        self.regressor = "None"
+        self.level = None
+
+
+    def fit(
+        self,
+        series: pd.DataFrame = None,
+        exog: pd.DataFrame = None,
+        store_last_window = None,
+        suppress_warnings = None,
+        store_in_sample_residuals = None,
+    ):
+        """Adapter that maps skforecast fit API to 
+        interfere.BaseInferenceMethod.fit API.
+
+        Args:
+            series: A pandas dataframe containing the endogenous states with
+                time values as the index.
+            exog: A pandas dataframe contianing the exogenous states with
+                time values as the index.
+            store_last_window: NOT USED - INCLUDED FOR COMPATABILITY
+            suppress_warnings: NOT USED - INCLUDED FOR COMPATABILITY
+            store_in_sample_residuals: NOT USED - INCLUDED FOR COMPATABILITY
+        """
+        t = series.index.values
+        return self.method.fit(
+            endog_states=series.values,
+            t=t,
+            exog_states=exog.values
+        )
+    
+
+    def predict(
+        self,
+        steps: int,           
+        levels,
+        last_window: pd.DataFrame,
+        exog: pd.DataFrame,
+        suppress_warnings,
+    ):
+        """Maps skforecast predict() to interfere.BaseInferenceMethod.predict().
+        
+        Args:
+            steps: The number of timesteps forward to predict.
+            levels: NOT USED - INCLUDED FOR COMPATABILITY.
+            last_window: A DataFrame of previously simulated (or observed)
+                states.
+            exog: A DataFrame of exogenous signals corresponding to each step.
+            suppress_warnings: NOT USED - INCLUDED FOR COMPATABILITY.
+
+        Returns:
+            A dataframe where rows are observations, columns are variables and
+            the index is floating point time values.
+        """
+        if len(last_window) < 2:
+            raise ValueError("For compatibility with skforecast, all interfere" " methods must provide at least two previous observations and have"
+            " a time window size of two or more so that the timestep can be "
+            "determined from the passed historic time series.")
+        
+        historic_times = last_window.index.values
+        historic_endog = last_window.values
+        dt = historic_times[1] - historic_times[0]
+
+        if not np.all(np.isclose(np.diff(historic_times), dt)):
+                raise ValueError(
+                    "`last_window` must have equally spaced time values.")
+            
+        forecast_times = np.arange(0, steps) * dt + historic_times[-1]
+
+        endog_pred = self.method.predict(
+            forecast_times,
+            historic_endog,
+            exog.values,
+            historic_exog=None,
+            historic_times=historic_times,
+            rng=DEFAULT_RANGE, # TODO: Figure out randomness.
+        )
+        preds = pd.DataFrame(endog_pred)
+        preds.set_index(forecast_times)
+        return preds
+    
+
+    def set_params(self, params):
+        self.method.set_params(**params)
+
+
+    
+def grid_search(
+    method_type: Type[BaseInferenceMethod],
+    method_params: Dict[str, Any],
+    param_grid: Dict[str, List[Any]],
+    endog_states: np.ndarray,
+    t: np.ndarray,
+    exog_states: Optional[np.ndarray] = None,
+    initial_train_window_percent: float = 0.2,
+    predict_percent: float = 0.2,
+) -> Tuple[BaseInferenceMethod, pd.DataFrame]:
+    """Tunes hyperparameters using skforecast.
+
+    Args:
+        method_type (sktime.forecasting.base.BaseForecaster): The method to be
+            used for prediction.
+        method_params (dict): A dictionary of default parameters for the method.
+        param_grid (dict): The parameter grid for a skforecast grid search.
+        endog_states: An (m, n) array of endogenous signals. Sometimes
+            called Y. Rows are observations and columns are variables. Each
+            row corresponds to the times in `t`.
+        t: An (m,) array of time points.
+        exog_states: An (m, k) array of exogenous signals. Sometimes called
+            X. Rows are observations and columns are variables. Each row 
+            corresponds to the times in `t`.
+        initial_train_window_percent: A number between zero and one that denotes
+            the percentage of endogenous states that will be used for the first
+            moving window.
+        predict_percent: A number between zero and one that denotes the 
+            percentage of endogenous states that will be predicted for each
+            sliding window.
+
+    Returns:
+        best_method: 
+    """
+    # Transform interfere time series to skforecast format.
+    endog_skf = pd.DataFrame(endog_states)
+    endog_skf.set_index(t)
+    exog_skf = pd.DataFrame(exog_states)
+    exog_skf.set_index(t)
+
+    # Initialize the interfere <-> skforecast adapter.
+    adapter = ForecasterAutoregMultiSeriesCustom(method_type, method_params)
+
+    n_obs = len(endog_skf)
+    initial_train_size = int(initial_train_window_percent * n_obs)
+    steps = int(predict_percent * n_obs)
+
+    # Run the grid search.
+    gs_results = grid_search_forecaster_multiseries(
+        adapter,
+        endog_skf,
+        param_grid,
+        exog=exog_skf,
+        steps=steps,
+
+        initial_train_size=initial_train_size, # This is an important argument and it connects to self.window_size
+        metric="mean_squared_error",
+        verbose=False,
+
+        # Do not touch these. Grid search will break.
+        allow_incomplete_fold=False,
+        levels=None,
+    )
+
+    # Return the best method and results.
+    best_method = adapter.method
+    return best_method, gs_results
+
+
 ###############################################################################
 # Historic Counterfactuals.
 ###############################################################################
@@ -257,6 +451,7 @@ def score_counterfactual_extrapolation_method(
             apply.
         method_type (sktime.forecasting.base.BaseForecaster): The method to be
             used for prediction.
+        method_params (dict): A dictionary of default parameters for the method.
         method_param_grid (dict): The parameter grid for a sklearn grid search.
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.
@@ -375,6 +570,7 @@ def forecast_intervention(
             apply.
         method_type (sktime.forecasting.base.BaseForecaster): The method to be
             used for prediction.
+        method_params (dict): A dictionary of default parameters for the method.
         method_param_grid (dict): The parameter grid for a sklearn grid search.
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.
@@ -435,6 +631,8 @@ def score_counterfactual_forecast_method(
             apply.
         method_type (sktime.forecasting.base.BaseForecaster): The method to be
             used for prediction.
+        method_params (dict): A dictionary of default parameters for the method.
+
         method_param_grid (dict): The parameter grid for a sklearn grid search.
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.

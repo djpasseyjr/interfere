@@ -1,3 +1,5 @@
+from .average_method import AverageMethod
+from .base import BaseInferenceMethod
 from .deep_learning import LTSFLinearForecaster
 from .vector_autoregression import (
     var_perf_interv_extrapolate, 
@@ -6,3 +8,4 @@ from .vector_autoregression import (
 from .reservoir_computer import ResComp
 from .sindy import sindy_perf_interv_extrapolate, SINDY
 from .vector_autoregression import VAR
+
