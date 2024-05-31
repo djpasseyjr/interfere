@@ -1,6 +1,17 @@
 # interfere.py
 
-When can we predict how complex systems will respond to interventions?
+***When can we predict how complex systems will respond to interventions?***
+
+This package contains classes and functions for modeling and predicting the response of
+dynamic nonlinear multivariate stochastic systems to unobserved exogenous interventions. At
+its essence, this is question about causality: how will a dynamic system react to
+new scenarios? The code here is designed to study and explore this question.
+
+For example, the API defined in this package was used to simulate the effect of
+stochasticity on the ability to forecast intervention response as described in
+the following figure.
+
+![ (Figure of stochastic and deterministic systems responding to interventions.)](https://github.com/djpasseyjr/interfere/blob/c7090043aec4a984a45517794d266df4eb105f79/images/det_v_stoch.png?raw=true)
 
 ## Install
 
