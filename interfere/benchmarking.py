@@ -1,5 +1,6 @@
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 from abc import ABC
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ from .base import (
 from .interventions import ExogIntervention
 from .utils import copy_doc
 from .methods import BaseInferenceMethod
+from .methods.neuralforecast_methods import NeuralForecastAdapter
 
 
 class CounterfactualForecastingMetric(ABC):
@@ -291,6 +293,11 @@ class ForecasterAutoregMultiSeriesCustom:
             store_in_sample_residuals: NOT USED - INCLUDED FOR COMPATABILITY
         """
         t = series.index.values
+
+        # Store the endog and exog data.
+        self._series = series
+        self._exog = exog
+
         return self.method.fit(
             endog_states=series.values,
             t=t,
@@ -327,6 +334,24 @@ class ForecasterAutoregMultiSeriesCustom:
         
         historic_times = last_window.index.values
         historic_endog = last_window.values
+
+        # Build historic exogeneous array. TODO: Pass true exog states.
+        if set(historic_times).issubset(self._exog.index):        
+            historic_exog = np.vstack([
+                self._exog.loc[ti].values
+                for ti in historic_times
+            ])
+        else:
+            warn("Missing exogeneous data detected in grid gearch."
+                 " Replacing with np.inf values.")
+            # Using np.inf bypasses the neuralforecast missing value checker
+            # but will throw an error if these values are used in computation.
+            # It is unlikely that models will use historic exogenous signals
+            # for prediction and so this is an acceptable solution for now.
+            historic_exog = np.full(
+                (len(historic_times), exog.shape[1]), np.inf)
+            
+        # Compute timestep size.
         dt = historic_times[1] - historic_times[0]
 
         if not np.all(np.isclose(np.diff(historic_times), dt)):
@@ -335,11 +360,12 @@ class ForecasterAutoregMultiSeriesCustom:
             
         forecast_times = np.arange(0, steps) * dt + historic_times[-1]
 
+
         endog_pred = self.method.predict(
             forecast_times,
             historic_endog,
             exog.values,
-            historic_exog=None,
+            historic_exog=historic_exog,
             historic_times=historic_times,
             rng=DEFAULT_RANGE, # TODO: Figure out randomness.
         )
@@ -350,6 +376,7 @@ class ForecasterAutoregMultiSeriesCustom:
 
     def set_params(self, params):
         self.method.set_params(**params)
+        self.window_size = self.method.get_window_size()
 
 
     
@@ -408,9 +435,13 @@ def grid_search(
         exog=exog_skf,
         steps=steps,
 
-        initial_train_size=initial_train_size, # This is an important argument and it connects to self.window_size
+        # This is an important argument and it connects to 
+        # ForecasterAutoregMultiSeriesCustom.window_size.
+        initial_train_size=initial_train_size, 
+
         metric="mean_squared_error",
         verbose=False,
+        n_jobs="auto",
 
         # Do not touch these. Grid search will break.
         allow_incomplete_fold=False,
