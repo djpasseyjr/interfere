@@ -1,12 +1,15 @@
+from typing import Dict, List, Optional
+
 import numpy as np
 import pysindy as ps
-from sklearn.base import BaseEstimator
 
+from .base import BaseInferenceMethod
+from ..base import DEFAULT_RANGE
 from ..utils import copy_doc
 from ..interventions import ExogIntervention
 
 
-class SINDY(ps.SINDy, BaseEstimator):
+class SINDY(BaseInferenceMethod):
 
     @copy_doc(ps.SINDy.__init__)
     def __init__(self, 
@@ -16,136 +19,97 @@ class SINDY(ps.SINDy, BaseEstimator):
         feature_names=None,
         t_default=1,
         discrete_time=False,
+        max_sim_val = 10000,
         **kwargs
     ):
-        super().__init__(
+        self.sindy = ps.SINDy(
             optimizer, feature_library, differentiation_method, feature_names, t_default, discrete_time,
         )
-        # self.sindy_model.set_params(**kwargs)
+        self.max_sim_val = max_sim_val
 
 
-    def simulate_counterfactual(
-            self, X, time_points, intervention, max_sim_val=1e6):
-        """Fits and simulates an intervention."""
-
-        # Pass the intervention variable as a control signal
-        endo_X, exog_X = intervention.split_exogeneous(X)
-        self.fit(endo_X, t=time_points, u=exog_X)
-
-        # Create a perfect intervention control signal
-        interv_X = intervention.constants * np.ones_like(exog_X)
-
-        # Initial condition (Exogenous signal removed.)
-        x0 = endo_X[0]
-
-        # Sindy uses scipy.integrate.solve_ivp by default and solve_ivp
-        # uses event functions with assigned attributes as callbacks.
-        # The below code tells scipy to stop integrating when
-        # too_big(t, y) == True.
-        too_big = lambda t, y: np.all(np.abs(y) < max_sim_val)
-        too_big.terminal = True
-
-        # Simulate with intervention
-        sindy_X_do = self.simulate(
-            x0, time_points, u=interv_X, integrator_kws={"events": too_big})
-
-        # Retrive number of successful steps
-        n_steps = sindy_X_do.shape[0]
-        
-        # Reassemble the control and response signals into a single array
-        pred_X_do = intervention.combine_exogeneous(
-            sindy_X_do, interv_X[:n_steps])
-        
-        return pred_X_do
-    
-    def counterfactual_forecast(
+    @copy_doc(BaseInferenceMethod._fit)
+    def _fit(
         self,
-        X_historic: np.ndarray,
-        historic_times: np.ndarray,
-        forecast_times: np.ndarray,
-        intervention: ExogIntervention,
-        max_sim_val=1e6,
+        endog_states: np.ndarray,
+        t: np.ndarray,
+        exog_states: np.ndarray = None
     ):
-        """Makes a forecast in the prescence of an intervention.
+        if np.any(endog_states > self.max_sim_val):
+            raise ValueError("Supplied endogenous states cannot be simulated "
+                f"because they exceed `max_sim_value = {self.max_sim_value}`. "
+                "Reinitialize and set `max_sim_value` greater than "
+                f"`max(endog_states) = {np.max(endog_states)}` before calling "
+                "`fit()`."
+            )
+        
+        self.sindy.fit(endog_states, t, u=exog_states)
 
-        Args:
-            X_historic (np.array): Historic data.
-            historic_times (np.ndarray): Historic time points
-            forecast_times (np.ndarray): Time points to forecast.
-            intervention (ExogIntervention): The intervention to apply at each
-                future time point.
-        """
-        # Pass the intervention variable as a control signal
-        endo_X, exog_X = intervention.split_exogeneous(X_historic)
-        self.fit(endo_X, t=historic_times, u=exog_X)
 
+    @copy_doc(BaseInferenceMethod._predict)
+    def _predict(
+        self,
+        forecast_times: np.ndarray,
+        historic_endog: np.ndarray,
+        historic_times: np.ndarray,
+        exog: Optional[np.ndarray] = None,
+        historic_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE
+    ) -> np.ndarray:
+        
         # Initial condition (Exogenous signal removed.)
-        endo_X0, _ = intervention.split_exogeneous(X_historic[-1, :])
-
-        # Create a perfect intervention control signal
-        interv_X = intervention.eval_at_times(forecast_times)
+        x0 = historic_endog[-1, :]
 
         # Sindy uses scipy.integrate.solve_ivp by default and solve_ivp
         # uses event functions with assigned attributes as callbacks.
         # The below code tells scipy to stop integrating when
         # too_big(t, y) == True.
-        too_big = lambda t, y: np.all(np.abs(y) < max_sim_val)
+        too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_val)
         too_big.terminal = True
 
+        if self.sindy.discrete_time:
+            t = len(forecast_times)
+        else:
+            t = forecast_times
+
         # Simulate with intervention
-        sindy_X_do = self.simulate(
-            endo_X0, forecast_times, u=interv_X,
-            integrator_kws={"events": too_big}
+        endog_pred = self.sindy.simulate(
+            x0, t, u=exog, integrator_kws={"events": too_big}, stop_condition=lambda x: too_big(0, x)
         )
 
-        # Retrive number of successful steps
-        n_steps = sindy_X_do.shape[0]
-        if interv_X is not None:
-            interv_X = interv_X[:n_steps]
+        # Retrive number of successful steps.
+        n_steps = endog_pred.shape[0]
+        n_missing = len(forecast_times) - n_steps
+
+        # When SINDY diverges, repeat the last valid prediction for the
+        # remaining prediction points.
+        endog_pred =  np.vstack(
+            [endog_pred] +  [endog_pred[-1, :] for i in range(n_missing)]
+        )
+        return endog_pred
         
-        # Reassemble the control and response signals into a single array
-        pred_X_do = intervention.combine_exogeneous(sindy_X_do, interv_X)
-        
-        return pred_X_do
 
-        
+    def get_params(self, deep=True):
+        return self.sindy.get_params(deep=deep)
 
-def sindy_perf_interv_extrapolate(
-    X,
-    t,
-    intervention_idx,
-    intervention_value,
-    max_sim_val=1e6,
-):
-    """Predicts the effect of a perfect intervention on the observed system.
-    """
-    # Pass the intervention variable as a control signal
-    u = X[:, intervention_idx]
-    trainingX = np.delete(X, intervention_idx, axis=1)
-    method = ps.SINDy()
-    method.fit(trainingX, t=t, u=u)
 
-    # Create a perfect intervention control signal
-    sindy_interv = intervention_value * np.ones_like(u)
+    def set_params(self, **parameters):
+        return self.sindy.set_params(**parameters)
 
-    # Initial condition (Remove control signal)
-    x0 = np.delete(X[0, :], intervention_idx)
 
-    # Sindy uses scipy.integrate.solve_ivp by default and solve_ivp
-    # uses event functions with assigned attributes as callbacks.
-    # The below code tells scipy to stop integrating when
-    # too_big(t, y) == True.
-    too_big = lambda t, y: np.all(np.abs(y) < max_sim_val)
-    too_big.terminal = True
-
-    # Simulate with intervention
-    sindy_X_do = method.simulate(
-        x0, t, u=sindy_interv, integrator_kws={"events": too_big})
-
-    # Retrive number of successful steps
-    n_steps = sindy_X_do.shape[0]
-    # Reassemble the control and response signals into a single array
-    sindy_all_sigs = np.insert(
-        sindy_X_do, intervention_idx, sindy_interv[:n_steps], axis=1)
+    def get_test_params():
+        return {
+            "differentiation_method": ps.SINDyDerivative(kind='spectral'),
+            "discrete_time": True
+        }
     
-    return sindy_all_sigs
+
+    def get_test_param_grid():
+        return {
+            "optimizer__threshold": [1e-8],
+            "optimizer__alpha": [0.01],
+            "differentiation_method__kwargs": [
+                {'kind': 'trend_filtered', 'order': 0, 'alpha': 1e-2}
+            ],
+            "discrete_time": [True, False]
+        }
