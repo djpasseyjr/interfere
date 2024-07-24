@@ -9,12 +9,14 @@ authors = [
   {name = "DJ Passey", email = "djpassey@unc.edu"}
 ]
 dependencies = [
+    "neuralforecast",
     "numpy",
     "pandas",
     "pyclustering@git+https://github.com/djpasseyjr/pyclustering",
     "pysindy",
     "scikit-learn",
     "sktime",
+    "skforecast",
     "statsmodels",
     "torch",
     "typing_extensions"
