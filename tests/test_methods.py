@@ -2,11 +2,14 @@ from typing import Type
 
 import interfere
 from interfere.methods import BaseInferenceMethod
+from interfere.methods.nixtla_methods.nixtla_adapter import to_nixtla_df
 import numpy as np
 import pytest
+import scipy.stats
+
 
 SEED = 11
-
+PRED_LEN = 10
 
 
 def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=200):
@@ -28,16 +31,74 @@ def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=200):
     historic_times = t[:-n_do]
     forecast_times = t[-n_do:]
     X_historic = X[:-n_do, :]
-    x0_do = X_historic[-1, :]
+    X0_do = X_historic[-lags:, :]
 
-    X_do = model.simulate(x0_do, forecast_times, intervention, rng=rng)
+    # TODO: Fix simulate times -> states mapping w historic times.
+    sim_times = np.hstack([historic_times[-lags:], forecast_times])
+    X_do = model.simulate(
+        X0_do,
+        sim_times,
+        intervention,
+        rng=rng
+    )
+    X_do = X_do[lags:, :]
 
     return X_historic, historic_times, X_do, forecast_times, intervention
 
 
-def standard_inference_method_checks(method_type: BaseInferenceMethod):
-    """Ensures that a method has all of the necessary functionality.
+def fit_predict_checks(method_type: BaseInferenceMethod):
+    """Checks that fit and predict work for all combos of hyper parameters.
     """
+    (X_historic, historic_times, X_do, 
+     forecast_times, intervention) = VARIMA_timeseries()
+
+    # Access test parameters.
+    method_params = method_type.get_test_params()
+    param_grid = method_type.get_test_param_grid()
+
+    # Create time series combonations.
+    historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
+    endo_true, exog = intervention.split_exogeneous(X_do)
+    forecast_times = forecast_times[:PRED_LEN]
+    exog = exog[:PRED_LEN, :]
+
+    # Test fit with and without exog.
+    method = method_type(**method_params)
+    method.fit(historic_endog, historic_times, historic_exog)
+
+    assert method.is_fit
+
+    method = method_type(**method_params)
+    method.fit(historic_endog, historic_times, None)
+
+    assert method.is_fit
+
+    arg_combos = [
+        (forecast_times, historic_endog, exog, historic_times, historic_exog),
+        (forecast_times, historic_endog, None, historic_times, None),
+    ]
+
+    # Initialize method fit to data and predict for each combo of params.
+    for args in arg_combos:
+        ft, he, ex, ht, hex = args
+        method = method_type(**method_params)
+        method.fit(endog_states=he, t=ht, exog_states=hex)
+
+        assert method.is_fit
+
+        endo_pred = method.predict(
+            forecast_times=ft,
+            historic_endog=he,
+            exog=ex,
+            historic_times=ht,
+            historic_exog=hex,
+        )
+
+        assert endo_pred.shape[1] == endo_true.shape[1]
+        assert endo_pred.shape[0] == PRED_LEN
+
+
+def grid_search_checks(method_type: BaseInferenceMethod):
     (X_historic, historic_times, X_do, 
      forecast_times, intervention) = VARIMA_timeseries()
 
@@ -47,27 +108,34 @@ def standard_inference_method_checks(method_type: BaseInferenceMethod):
 
     # Initialize method and tune.
     historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
-    endo_true, exog = intervention.split_exogeneous(X_do)
-
-    method = method_type(**method_params)
-    method.fit(historic_endog, historic_times, historic_exog)
-    assert method.is_fit
-
-    pred_len = 10
-    endo_pred = method.predict(
-        forecast_times=forecast_times[:pred_len],
-        historic_endog=historic_endog,
-        exog=exog[:pred_len, :],
-        historic_times=historic_times,
-        historic_exog=historic_exog,
-    )
-
-    assert endo_pred.shape[1] == endo_true.shape[1]
-    assert endo_pred.shape[0] == pred_len
+    
 
     best_method, gs_results = interfere.benchmarking.grid_search(
-        method_type, method_params, param_grid, historic_endog, historic_times, historic_exog)
+        method_type, method_params, param_grid, historic_endog, historic_times, historic_exog, refit=1)
     
+    # Make sure that at least 3 non NA mean square errors exist.
+    gs_results = gs_results.dropna()
+    assert len(gs_results) > 3
+    
+    # Test that grid search produces a minimum that is much lower than the other
+    # combinations. I facilitate this by providing obviously bad hyper
+    # parameters to the test param grid (method_type.get_test_param_grid())
+    best_mse = gs_results.mean_squared_error.min()
+    other_scores = gs_results.mean_squared_error[
+        gs_results.mean_squared_error != best_mse]
+
+    # Fit a normal distribution to all scores except the best one.
+    probability_of_lowest_score = scipy.stats.norm(
+        np.mean(other_scores),
+        np.std(other_scores)
+    ).cdf(best_mse)
+
+    # Assert that the best score is unlikely to come from the distribution of
+    # other scores. This ensures that a clear minimum exists, and this test only
+    # passes if you purposely provide TERRRIBLE hyper parameters to the test
+    # param grid along with reasonable ones.
+    assert probability_of_lowest_score < 0.25
+
     X_do_pred = best_method.simulate(
         forecast_times,
         X_historic,
@@ -77,8 +145,6 @@ def standard_inference_method_checks(method_type: BaseInferenceMethod):
     )
 
     assert X_do_pred.shape == X_do.shape
-
-    # TODO: Test different combinations of exog and endo for predict.
 
 
 def check_exogeneous_effect(method_type: Type[BaseInferenceMethod]):
@@ -122,33 +188,21 @@ def check_exogeneous_effect(method_type: Type[BaseInferenceMethod]):
     mse_intervened = np.mean((X_do_pred - X_do) ** 2) ** 0.5
     mse_no_intervention = np.mean((X_do_pred - X[-n_do:, :]) ** 2) ** 0.5
     assert mse_intervened < mse_no_intervention
+
+
+def standard_inference_method_checks(method_type: BaseInferenceMethod):
+    """Ensures that a method has all of the necessary functionality.
+    """
+    fit_predict_checks(method_type)
+    grid_search_checks(method_type)
+    check_exogeneous_effect(method_type)
     
 
-def test_average_method():
-    standard_inference_method_checks(interfere.methods.AverageMethod)
-
-
-def test_rescomp():
-    standard_inference_method_checks(interfere.methods.ResComp)
-    check_exogeneous_effect(interfere.methods.ResComp)
-
-
-def test_sindy():
-    standard_inference_method_checks(interfere.methods.SINDY)
-    check_exogeneous_effect(interfere.methods.SINDY)
-
-
-def test_lstm():
-    standard_inference_method_checks(interfere.methods.LSTM)
-    check_exogeneous_effect(interfere.methods.LSTM)
-
-
-def test_neuralforecast_adapter():
+def test_nixtla_converter():
 
     n = 100
     n_endog = 3
     n_exog = 2
-    nf_method = interfere.methods.LSTM()
 
     endog = np.random.rand(n, n_endog) 
     exog = np.random.rand(n, n_exog)
@@ -157,25 +211,24 @@ def test_neuralforecast_adapter():
     default_endog_names = [f"x{i}" for i in range(n_endog)]
     default_exog_names = [f"u{i}" for i in range(n_exog)]
 
-    test_endog_names = [f"y{i}" for i in range(n_endog)]
     test_exog_names = [f"x{i}" for i in range(n_exog)]
 
     with pytest.raises(ValueError):
-        nf_data = nf_method.to_neuralforecast_df(t)
+        nf_data = to_nixtla_df(t)
 
     with pytest.raises(ValueError):
-        nf_data = nf_method.to_neuralforecast_df(
+        nf_data = to_nixtla_df(
             t, exog_state_ids=test_exog_names)
 
     test_unique_ids = ["a1", "a2", "a3"]
-    nf_data = nf_method.to_neuralforecast_df(t, unique_ids=test_unique_ids)
+    nf_data = to_nixtla_df(t, unique_ids=test_unique_ids)
 
     assert nf_data.shape == (n_endog * n, 2)
     assert all([i in test_unique_ids for i in nf_data.unique_id.unique()])
     assert len(test_unique_ids) == len(nf_data.unique_id.unique())
 
 
-    nf_data = nf_method.to_neuralforecast_df(
+    nf_data = to_nixtla_df(
         t, exog_states=exog, unique_ids=test_unique_ids)
     
     assert nf_data.shape == (n_endog * n, 2 + n_exog)
@@ -183,7 +236,7 @@ def test_neuralforecast_adapter():
     assert len(test_unique_ids) == len(nf_data.unique_id.unique())
     assert all([i in nf_data.columns for i in default_exog_names])
 
-    nf_data = nf_method.to_neuralforecast_df(
+    nf_data = to_nixtla_df(
         t, exog_states=exog, endog_states=endog, exog_state_ids=test_exog_names)
     
     assert nf_data.shape == (n_endog * n, 3 + n_exog)
@@ -191,8 +244,27 @@ def test_neuralforecast_adapter():
     assert len(default_endog_names) == len(nf_data.unique_id.unique())
     assert all([i in nf_data.columns for i in test_exog_names])
 
-    nf_data = nf_method.to_neuralforecast_df(t, endog_states=endog)
+    nf_data = to_nixtla_df(t, endog_states=endog)
     
     assert nf_data.shape == (n_endog * n, 3)
     assert all([id in default_endog_names for id in nf_data.unique_id.unique()])
     assert len(default_endog_names) == len(nf_data.unique_id.unique())
+
+
+def test_average_method():
+    fit_predict_checks(interfere.methods.AverageMethod)
+
+
+def test_rescomp():
+    standard_inference_method_checks(interfere.methods.ResComp)
+
+
+def test_sindy():
+    standard_inference_method_checks(interfere.methods.SINDY)
+
+
+def test_lstm():
+    standard_inference_method_checks(interfere.methods.LSTM)
+
+def test_autoarima():
+    standard_inference_method_checks(interfere.methods.AutoARIMA)

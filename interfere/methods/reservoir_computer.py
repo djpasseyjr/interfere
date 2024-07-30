@@ -14,7 +14,7 @@ from scipy.interpolate import CubicSpline
 from scipy import integrate
 from scipy import optimize
 
-from .base import BaseInferenceMethod
+from .base import BaseInferenceMethod, DEFAULT_RANGE
 from ..interventions import ExogIntervention
 
 
@@ -37,7 +37,8 @@ class ResComp(BaseInferenceMethod):
         batchsize=2000,
         map_initial="relax",
         window=None,
-        overlap=0.0
+        overlap=0.0,
+        rng=DEFAULT_RANGE 
     ):
         """Initializes a reservoir computer object.
 
@@ -75,6 +76,7 @@ class ResComp(BaseInferenceMethod):
                 blocks to overlap. The `overlap` variable specifies the percent
                 that each signal window overlaps the previous signal window.
                 Defaults to 0.0.
+            rng (np.random.RandomState): A random number generator.
 
         Notes: `res` properties take precedence over keyword
         arguments. i.e. If `A` is dense, `ResComp(A, sparse_res=True)` will have
@@ -98,6 +100,7 @@ class ResComp(BaseInferenceMethod):
         self.map_initial = map_initial
         self.window = window
         self.overlap = overlap
+        self.rng = rng
 
         # Create random graph adjacency matrix
         n = self.res_sz
@@ -119,10 +122,10 @@ class ResComp(BaseInferenceMethod):
     def set_res_data_members(self, signal_dim, exog_dim):
         """Initialize parameter arrays that will be fit to data."""
         # W_in initialized from a uniform distribution on [-1, 1]
-        self.W_in_ = 2*(np.random.rand(self.res_sz, signal_dim) - 0.5)
+        self.W_in_ = 2*(self.rng.random((self.res_sz, signal_dim)) - 0.5)
 
         # W_exog_ initialized from a uniform distribution on [-1, 1]
-        self.W_exog_ = 2*np.random.rand(self.res_sz, exog_dim) - 1.0
+        self.W_exog_ = 2*self.rng.random((self.res_sz, exog_dim)) - 1.0
 
         # W_out has not yet been computed
         self.W_out_ = np.zeros((signal_dim, self.res_sz))
@@ -226,7 +229,7 @@ class ResComp(BaseInferenceMethod):
         elif self.map_initial == "relax":
 
             fixed_res_ode = lambda t, r: self.res_ode(0, r, u, d)
-            initial = 2*np.random.rand(self.res_sz) - 1
+            initial = 2*self.rng.random(self.res_sz) - 1
             tvals = np.linspace(0, 10000, 100)
             R = integrate.odeint(fixed_res_ode, initial, tvals, tfirst=True)
             r0 = R[-1,:]
@@ -256,9 +259,9 @@ class ResComp(BaseInferenceMethod):
         # Random initial reservoir condition.
         elif self.map_initial == "random":
             if (self.activ_f == np.tanh) or (self.activ_f == np.sin):
-                r0 = 2*np.random.rand(self.res_sz) - 1
+                r0 = 2*self.rng.random(self.res_sz) - 1
             else:
-                r0 = np.random.rand(self.res_sz)
+                r0 = self.rng.random(self.res_sz)
 
         # A simple mapping used here for compatability with old code.
         elif self.map_initial == "W_in":
@@ -277,14 +280,22 @@ class ResComp(BaseInferenceMethod):
         if self.uniform_weights:
             return np.ones(n)
         else:
-            return (self.max_weight-self.min_weight)*np.random.rand(n) + self.min_weight
+            return (self.max_weight-self.min_weight)*self.rng.random(n) + self.min_weight
 
 
     def random_graph(self, n, p):
         """ Create the sparse adj matrix of a random directed graph
             on n nodes with probability of any link equal to p
         """
-        A = sparse.random(n,n, density=p, dtype=float, format="lil", data_rvs=self.weights)
+        A = sparse.random(
+            n,
+            n,
+            density=p,
+            dtype=float,
+            format="lil",
+            data_rvs=self.weights,
+            random_state=self.rng
+        )
         # Remove self edges
         for i in range(n):
              A[i,i] = 0.0
@@ -579,11 +590,12 @@ class ResComp(BaseInferenceMethod):
             batchsize=2000,
             map_initial="relax",
             window=None,
-            overlap=0.0
+            overlap=0.0,
+            rng = np.random.default_rng(11)
         )
     
     def get_test_param_grid():
         return dict(
-            sigma = [0.5, 1.0],
-            gamma = [1.0, 2.0]
+            sigma = [0.001, 10],
+            gamma = [0.01, 10]
         )
