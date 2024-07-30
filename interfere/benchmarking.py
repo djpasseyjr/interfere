@@ -1,5 +1,7 @@
 from abc import ABC
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+)
 from warnings import warn
 
 import numpy as np
@@ -389,6 +391,7 @@ def grid_search(
     exog_states: Optional[np.ndarray] = None,
     initial_train_window_percent: float = 0.2,
     predict_percent: float = 0.2,
+    refit: Union[bool, int] = False
 ) -> Tuple[BaseInferenceMethod, pd.DataFrame]:
     """Tunes hyperparameters using skforecast.
 
@@ -410,6 +413,8 @@ def grid_search(
         predict_percent: A number between zero and one that denotes the 
             percentage of endogenous states that will be predicted for each
             sliding window.
+        refit:
+            Whether to re-fit the forecaster in each iteration. If refit is an integer, the Forecaster will be trained every that number of iterations.
 
     Returns:
         best_method: 
@@ -434,6 +439,7 @@ def grid_search(
         param_grid,
         exog=exog_skf,
         steps=steps,
+        refit=refit,
 
         # This is an important argument and it connects to 
         # ForecasterAutoregMultiSeriesCustom.window_size.
