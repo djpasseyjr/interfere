@@ -596,6 +596,6 @@ class ResComp(BaseInferenceMethod):
     
     def get_test_param_grid():
         return dict(
-            sigma = [0.001, 10],
+            sigma = [0.001, 3, 10],
             gamma = [0.01, 10]
         )

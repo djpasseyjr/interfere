@@ -106,10 +106,13 @@ class SINDY(BaseInferenceMethod):
 
     def get_test_param_grid():
         return {
-            "optimizer__threshold": [1e-8],
-            "optimizer__alpha": [0.01],
+            "optimizer__alpha": [1e-12, 0.01],
             "differentiation_method__kwargs": [
-                {'kind': 'trend_filtered', 'order': 0, 'alpha': 1e-2}
+                {'kind': 'trend_filtered', 'order': 1, 'alpha': 1e-2},
+            ],
+            "feature_library": [
+                ps.feature_library.FourierLibrary(), 
+                ps.feature_library.PolynomialLibrary()
             ],
             "discrete_time": [True, False]
         }

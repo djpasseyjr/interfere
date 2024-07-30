@@ -122,11 +122,17 @@ class NeuralForecastAdapter(BaseInferenceMethod):
             np.arange(1, n_extra_preds + 1) * timestep + forecast_times[-1]
         ])
 
+        if exog is None:
+            exog = np.full(
+                (len(forecast_times), len(exog_state_ids)),
+                np.inf
+            )
+        
         # Repeat last row of exogeneous for any extra predictions required
         # due to forcast horizon window size.
         futr_exog = np.vstack([exog] + [
             exog[-1] for _ in range(n_extra_preds)
-        ])
+        ])  
 
         futr_df = self.to_neuralforecast_df(
             futr_times,
@@ -213,11 +219,11 @@ class NeuralForecastAdapter(BaseInferenceMethod):
             col_names += ["y"]
 
         if exog_states is None:
-            if exog_state_ids is not None:
+            if not ((exog_state_ids is None) or (exog_state_ids == [])):
                 raise ValueError("Exogengous state ids passed without "
                     "accompanying exogeneous states. Supply a value to "
                     "`exog_states` argument.")
-            else:
+            if exog_state_ids is None:
                 exog_state_ids = []
         else:
             # Add exogeneous states to data
