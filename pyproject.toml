@@ -17,6 +17,7 @@ dependencies = [
     "scikit-learn",
     "sktime",
     "skforecast",
+    "statsforecast",
     "statsmodels",
     "torch",
     "typing_extensions"
