@@ -190,9 +190,41 @@ def check_exogeneous_effect(method_type: Type[BaseInferenceMethod]):
     assert mse_intervened < mse_no_intervention
 
 
+def forecast_intervention_check(
+        method_type: interfere.methods.BaseInferenceMethod
+):
+    # Number of predictions to simulate
+    num_sims = 3
+
+    (X_historic, historic_times, X_do, 
+     forecast_times, intervention) = VARIMA_timeseries()
+
+    # Access test parameters.
+    method_params = method_type.get_test_params()
+    param_grid = method_type.get_test_param_grid()
+
+    X_do_preds, best_params = interfere.benchmarking.forecast_intervention(
+        X=np.vstack([X_historic, X_do]),
+        X_do_forecast=X_do, 
+        time_points=np.hstack([historic_times, forecast_times]), 
+        intervention=intervention,
+        method_type=method_type,
+        method_params=method_params,
+        method_param_grid=param_grid,
+        num_intervention_sims=num_sims,
+        best_params=None,
+        rng=np.random.default_rng(SEED)
+    )
+    
+    assert len(X_do_preds) == num_sims
+    assert np.all([X_do.shape == X_do_preds[i].shape for i in range(num_sims)])
+    assert isinstance(best_params, dict)
+
+
 def standard_inference_method_checks(method_type: BaseInferenceMethod):
     """Ensures that a method has all of the necessary functionality.
     """
+    forecast_intervention_check(method_type)
     fit_predict_checks(method_type)
     grid_search_checks(method_type)
     check_exogeneous_effect(method_type)

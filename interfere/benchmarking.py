@@ -417,7 +417,9 @@ def grid_search(
             Whether to re-fit the forecaster in each iteration. If refit is an integer, the Forecaster will be trained every that number of iterations.
 
     Returns:
-        best_method: 
+        best_method: An initialization of the given method with the best       
+            parameters.
+        gs_results: A dataframe of grid search results.
     """
     # Transform interfere time series to skforecast format.
     endog_skf = pd.DataFrame(endog_states)
@@ -591,6 +593,7 @@ def forecast_intervention(
     method_param_grid: Dict[str, Any],
     num_intervention_sims: int,
     best_params: Optional[Dict["str", Any]] = None,
+    rng: np.random.RandomState = DEFAULT_RANGE
 ) -> Tuple[List[float], Dict[str, Any]]:
     """Tunes, fits and forecasts the effect of an intervention with a method.
 
@@ -612,34 +615,57 @@ def forecast_intervention(
         num_intervention_preds (int): The number of interventions to simulate
             with the method. Used for noisy methods.
         best_params (dict): An optional dictionary of the top hyper parameters.
+        rng: An optional numpy random state for reproducibility. (Uses numpy's 
+            mtrand random number generator by default.)
+
+    Returns:
+        X_do_preds: A list of `num_intervention_preds` numpy arrays that are   
+            each are an attempt to predict how the system will behave next in
+            response to the intervention.
+        best_params: A Dict of the best parameters found by the grid search.
     """
     p = X_do_forecast.shape[0]
     historic_times = time_points[:-p]
     forecast_times = time_points[-p:]
-    X_historic = X[:-p, :]
+    X_hist = X[:-p, :]
+
+    historic_endog, historic_exog = intervention.split_exogeneous(X_hist)
 
     if best_params is None:
-        # Perform hyper parameter optimization to find optimal parameters.
-        best_params = tune_method(
+
+        best_method, gs_results = grid_search(
             method_type, method_params, method_param_grid,
-            X_historic, historic_times
+            historic_endog, historic_times, historic_exog,
+            # Uses a moving window of train on 20% of the data, predict next 20%
+            initial_train_window_percent = 0.2,
+            predict_percent = 0.2,
+            # Refits the forecaster every time. This must be set to 1 in order
+            # to use statsforecast models bc they store historic exog during
+            # fit. 
+            refit=1
         )
+
+        best_params = gs_results.params[gs_results.mean_squared_error.argmin()]
 
     # Combine best params with default params. (Items in best_params will
     # overwrite items in method_params if there are duplicates here.)
     sim_params = {**method_params, **best_params}
 
     # Simulate intervention
-    X_do_forecast_predictions = [
-        method_type(**sim_params).counterfactual_forecast(
-            X_historic,
-            historic_times,
+    best_method.fit(historic_endog, historic_times, historic_exog)
+    
+    X_do_preds = [
+        best_method.simulate(
             forecast_times,
-            intervention, 
+            historic_states=X_hist,
+            intervention=intervention,
+            historic_times=historic_times,
+            rng=rng
         )
         for i in range(num_intervention_sims)
     ]
-    return X_do_forecast_predictions, sim_params
+    return X_do_preds, sim_params
+
 
 def score_counterfactual_forecast_method(
     X: np.ndarray,
