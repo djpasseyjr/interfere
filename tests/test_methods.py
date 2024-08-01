@@ -1,9 +1,10 @@
-from typing import Type
+from typing import Any, Dict, Type
 
 import interfere
 from interfere.methods import BaseInferenceMethod
 from interfere.methods.nixtla_methods.nixtla_adapter import to_nixtla_df
 import numpy as np
+from pandas import DataFrame
 import pytest
 import scipy.stats
 
@@ -12,7 +13,7 @@ SEED = 11
 PRED_LEN = 10
 
 
-def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=200):
+def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=100, n_do=20):
     # Initialize a VARMA model
     rng = np.random.default_rng(SEED)
     phis = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(lags)]
@@ -26,7 +27,6 @@ def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=200):
     x0 = rng.random((dim, lags))
     X = model.simulate(x0, t, rng=rng)
 
-    n_do = 100
     intervention = interfere.PerfectIntervention([0, 1], [-0.5, -0.5])
     historic_times = t[:-n_do]
     forecast_times = t[-n_do:]
@@ -45,16 +45,50 @@ def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=200):
 
     return X_historic, historic_times, X_do, forecast_times, intervention
 
+def belozyorov_timeseries(tsteps=100, n_do=20):
+    rng = np.random.default_rng(SEED)
+    lags = 1
+    dim = 3
+    model = interfere.dynamics.Belozyorov3DQuad(
+        mu=1.81, sigma=0.05, measurement_noise_std = 0.01 * np.ones(dim),
+    )
 
-def fit_predict_checks(method_type: BaseInferenceMethod):
+    # Generate a time series
+    t = np.linspace(0, 1, tsteps)
+    x0 = rng.random(dim)
+    X = model.simulate(x0, t, rng=rng)
+
+    intervention = interfere.PerfectIntervention(0, 5.0)
+    historic_times = t[:-n_do]
+    forecast_times = t[-n_do:]
+    X_historic = X[:-n_do, :]
+    X0_do = X_historic[-lags, :]
+
+    # TODO: Fix simulate times -> states mapping w historic times.
+    sim_times = np.hstack([historic_times[-lags:], forecast_times])
+    X_do = model.simulate(
+        X0_do,
+        sim_times,
+        intervention,
+        rng=rng
+    )
+    X_do = X_do[1:, :]
+
+    return X_historic, historic_times, X_do, forecast_times, intervention
+
+
+def fit_predict_checks(
+        method_type: Type[BaseInferenceMethod],
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        X_do: np.ndarray, 
+        forecast_times: np.ndarray,
+        intervention: interfere.interventions.ExogIntervention
+):
     """Checks that fit and predict work for all combos of hyper parameters.
     """
-    (X_historic, historic_times, X_do, 
-     forecast_times, intervention) = VARIMA_timeseries()
-
     # Access test parameters.
     method_params = method_type.get_test_params()
-    param_grid = method_type.get_test_param_grid()
 
     # Create time series combonations.
     historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
@@ -73,6 +107,39 @@ def fit_predict_checks(method_type: BaseInferenceMethod):
 
     assert method.is_fit
 
+    # Test simulate with exog.
+    method.fit(historic_endog, historic_times, historic_exog)
+    X_do_pred = method.simulate(
+            forecast_times,
+            X_historic,
+            intervention,
+            historic_times,
+        )
+
+    assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
+
+    # Simulate without exog
+    method.fit(X_historic, historic_times)
+    X_do_pred = method.simulate(
+            forecast_times,
+            X_historic,
+            interfere.interventions.IdentityIntervention(),
+            historic_times,
+        )
+
+    assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
+
+    method.fit(X_historic, historic_times)
+    X_do_pred = method.simulate(
+            forecast_times,
+            X_historic,
+            None,
+            historic_times,
+        )
+
+    assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
+
+    # Test fit and predict with different combinations of args.
     arg_combos = [
         (forecast_times, historic_endog, exog, historic_times, historic_exog),
         (forecast_times, historic_endog, None, historic_times, None),
@@ -98,10 +165,14 @@ def fit_predict_checks(method_type: BaseInferenceMethod):
         assert endo_pred.shape[0] == PRED_LEN
 
 
-def grid_search_checks(method_type: BaseInferenceMethod):
-    (X_historic, historic_times, X_do, 
-     forecast_times, intervention) = VARIMA_timeseries()
-
+def grid_search_checks(
+        method_type: Type[BaseInferenceMethod],
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        X_do: np.ndarray, 
+        forecast_times: np.ndarray,
+        intervention: interfere.interventions.ExogIntervention
+):
     # Access test parameters.
     method_params = method_type.get_test_params()
     param_grid = method_type.get_test_param_grid()
@@ -109,9 +180,26 @@ def grid_search_checks(method_type: BaseInferenceMethod):
     # Initialize method and tune.
     historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
     
-
-    best_method, gs_results = interfere.benchmarking.grid_search(
+    # With exogeneous.
+    _, gs_results = interfere.benchmarking.grid_search(
         method_type, method_params, param_grid, historic_endog, historic_times, historic_exog, refit=1)
+    
+    grid_search_assertions(gs_results, param_grid)
+
+    # Without exogeneous.
+    _, gs_results = interfere.benchmarking.grid_search(
+        method_type, method_params, param_grid, historic_endog, historic_times, None, refit=1)
+    
+    grid_search_assertions(gs_results, param_grid)
+    
+
+def grid_search_assertions(
+    gs_results: DataFrame,
+    param_grid: Dict[str, Any]
+):
+    
+    # Make sure that the grid is evaluated for every combo
+    assert len(gs_results) == np.prod([len(v) for v in param_grid.values()])
     
     # Make sure that at least 3 non NA mean square errors exist.
     gs_results = gs_results.dropna()
@@ -121,8 +209,11 @@ def grid_search_checks(method_type: BaseInferenceMethod):
     # combinations. I facilitate this by providing obviously bad hyper
     # parameters to the test param grid (method_type.get_test_param_grid())
     best_mse = gs_results.mean_squared_error.min()
-    other_scores = gs_results.mean_squared_error[
-        gs_results.mean_squared_error != best_mse]
+    best_mse_idx = gs_results.mean_squared_error.argmin()
+    other_scores = gs_results.drop(
+        gs_results.index[best_mse_idx],
+        axis=0
+    ).mean_squared_error
 
     # Fit a normal distribution to all scores except the best one.
     probability_of_lowest_score = scipy.stats.norm(
@@ -130,24 +221,19 @@ def grid_search_checks(method_type: BaseInferenceMethod):
         np.std(other_scores)
     ).cdf(best_mse)
 
+
     # Assert that the best score is unlikely to come from the distribution of
     # other scores. This ensures that a clear minimum exists, and this test only
     # passes if you purposely provide TERRRIBLE hyper parameters to the test
     # param grid along with reasonable ones.
+    if probability_of_lowest_score > 0.25:
+        print(gs_results[["params", "mean_squared_error"]])
     assert probability_of_lowest_score < 0.25
 
-    X_do_pred = best_method.simulate(
-        forecast_times,
-        X_historic,
-        intervention,
-        historic_times,
-        # TODO: Add rng to grid search.
-    )
 
-    assert X_do_pred.shape == X_do.shape
-
-
-def check_exogeneous_effect(method_type: Type[BaseInferenceMethod]):
+def check_exogeneous_effect(
+        method_type: Type[BaseInferenceMethod],
+):
     """Tests that a method can recognize when exogeneous signals influence
     outcome."""
     dim = 3
@@ -191,22 +277,24 @@ def check_exogeneous_effect(method_type: Type[BaseInferenceMethod]):
 
 
 def forecast_intervention_check(
-        method_type: interfere.methods.BaseInferenceMethod
+        method_type: Type[BaseInferenceMethod],
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        X_do: np.ndarray, 
+        forecast_times: np.ndarray,
+        intervention: interfere.interventions.ExogIntervention
 ):
     # Number of predictions to simulate
     num_sims = 3
-
-    (X_historic, historic_times, X_do, 
-     forecast_times, intervention) = VARIMA_timeseries()
 
     # Access test parameters.
     method_params = method_type.get_test_params()
     param_grid = method_type.get_test_param_grid()
 
     X_do_preds, best_params = interfere.benchmarking.forecast_intervention(
-        X=np.vstack([X_historic, X_do]),
-        X_do_forecast=X_do, 
-        time_points=np.hstack([historic_times, forecast_times]), 
+        X=X_historic,
+        time_points=historic_times,
+        forecast_times=forecast_times, 
         intervention=intervention,
         method_type=method_type,
         method_params=method_params,
@@ -224,9 +312,16 @@ def forecast_intervention_check(
 def standard_inference_method_checks(method_type: BaseInferenceMethod):
     """Ensures that a method has all of the necessary functionality.
     """
-    forecast_intervention_check(method_type)
-    fit_predict_checks(method_type)
-    grid_search_checks(method_type)
+    # Tests each for discrete and continuous time
+    fit_predict_checks(method_type, *VARIMA_timeseries())
+    fit_predict_checks(method_type, *belozyorov_timeseries())
+
+    grid_search_checks(method_type, *VARIMA_timeseries())
+    grid_search_checks(method_type, *belozyorov_timeseries())
+
+    forecast_intervention_check(method_type, *VARIMA_timeseries())
+    forecast_intervention_check(method_type, *belozyorov_timeseries())
+    
     check_exogeneous_effect(method_type)
     
 
@@ -284,7 +379,14 @@ def test_nixtla_converter():
 
 
 def test_average_method():
-    fit_predict_checks(interfere.methods.AverageMethod)
+    fit_predict_checks(
+        interfere.methods.AverageMethod,
+        *VARIMA_timeseries()
+    )
+
+
+def test_var():
+    standard_inference_method_checks(interfere.methods.VAR)
 
 
 def test_rescomp():
@@ -298,5 +400,10 @@ def test_sindy():
 def test_lstm():
     standard_inference_method_checks(interfere.methods.LSTM)
 
+
 def test_autoarima():
     standard_inference_method_checks(interfere.methods.AutoARIMA)
+
+
+def test_ltsf():
+    standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)

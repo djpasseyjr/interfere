@@ -1,212 +1,107 @@
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
-from statsmodels.tools.validation import array_like, int_like 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.var import VAR as skt_VAR
-from statsmodels.tsa.api import VAR as sm_VAR
 
+from .base import BaseInferenceMethod, DEFAULT_RANGE
 from ..interventions import ExogIntervention
+from ..utils import copy_doc, to_sktime_time_series
 
-class VAR(skt_VAR):
+
+class VAR(BaseInferenceMethod):
     """Wrapper of sktime vector autoregression model.
     """
 
-    def simulate_counterfactual(self, X, time_points, intervention):
-
-        self.fit(X)
-        # Simulate and return averge values of each variable.
-        # TODO Make compatible with multiple signal interventions
-        var_X_do = simulate_perfect_intervention_var(
-            intervention.intervened_idxs[0],
-            intervention.constants[0],
-            self._fitted_forecaster.coefs,
-            self._fitted_forecaster.intercept,
-            self._fitted_forecaster.sigma_u,
-            steps=len(time_points),
-            initial_values=X[0, :]
-        )   
-        return var_X_do 
-    
-    def counterfactual_forecast(
+    @copy_doc(skt_VAR)
+    def __init__(
         self,
-        X_historic: np.ndarray,
-        historic_times: np.ndarray,
-        forecast_times: np.ndarray,
-        intervention: ExogIntervention
+        maxlags: Optional[Any] = 1,
+        method: str = "ols",
+        verbose: bool = False,
+        trend: str = "c",
+        missing: str = "none",
+        dates: Optional[Any] = None,
+        freq: Optional[Any] = None,
+        ic: Optional[Any] = None,
+        random_state: np.random.RandomState = DEFAULT_RANGE
     ):
-        """Makes a forecast in the prescence of an intervention.
+        self.method_params = locals()
+        self.method_params.pop("self")
 
-        Args:
-            X_historic (np.array): Historic data.
-            historic_times (np.ndarray): Historic time points
-            forecast_times (np.ndarray): Time points to forecast.
-            intervention (ExogIntervention): The intervention to apply at each
-                future time point.
-        """
-        # Treat historic signals that will be intervened on as exogenous.
-        X_endo, X_exog = intervention.split_exogeneous(X_historic)
 
-        # Compute the intervention corresponding to the forecast.
-        X_exog_forecast = intervention.eval_at_times(forecast_times)
+    @copy_doc(BaseInferenceMethod._fit)
+    def _fit(
+        self,
+        endog_states: np.ndarray,
+        t: np.ndarray,
+        exog_states: Optional[np.ndarray] = None,
+    ):
+        self.model = skt_VAR(**self.method_params)
 
-        # Predict the response of the non-intervened signals.
-        forecast_horizon = np.arange(len(forecast_times))
-        X_endo_forcast = self.fit_predict(
-            X_endo, X=X_exog, fh=forecast_horizon, X_pred=X_exog_forecast)
-
-        # Recombine intervention and non-intervened.
-        X_do_forecast = intervention.combine_exogeneous(
-            X_endo_forcast, X_exog_forecast)
-        return X_do_forecast 
-
+        y = to_sktime_time_series(t, endog_states)
+        if endog_states is not None:
+            X = to_sktime_time_series(t, exog_states)
+        else:
+            X = None
+        # This uses the skt_VAR fit function.
+        self.model.fit(y, X=X)
     
 
-def simulate_perfect_intervention_var(
-    intervention_idx: int,
-    intervention_value: float,
-    coefs: np.ndarray,
-    intercept: np.ndarray,
-    sig_u: np.ndarray,
-    steps: int=100,
-    initial_values=None,
-    seed=None,
-    nsimulations=None
-
-):
-    """Simulate a perfect intervention applied to a VAR model.
-
-    Args:
-        var_result: The return value of VAR().fit(lags)
-        intervention_idx: The index of the variable where the intervention
-            will be applied.
-        intervention_value: The value that the variable at inter_idx will be
-            pinned to.
-        coefs : ndarray
-            Coefficients for the VAR lags of endog.
-        intercept : None or ndarray 1-D (neqs,) or (steps, neqs)
-            This can be either the intercept for each equation or an offset.
-            If None, then the VAR process has a zero intercept.
-            If intercept is 1-D, then the same (endog specific) intercept is
-            added to all observations. If intercept is 2-D, then it is treated
-            as an offset and is added as an observation specific intercept that
-            may include trend, seasonality, etc., to the autoregression. In
-            this case, the intercept/offset should have same number of rows as
-            steps, and the same number of columns as endogenous variables 
-            (neqs).
-        sig_u : ndarray
-            Covariance matrix of the residuals or innovations.
-            If sig_u is None, then an identity matrix is used.
-        steps : {None, int}
-            number of observations to simulate, this includes the initial
-            observations to start the autoregressive process.
-            If offset is not None, then exog of the model are used if they were
-            provided in the model
-        initial_values : array_like, optional
-            Initial values for use in the simulation. Shape should be
-            (nlags, neqs) or (neqs,). Values should be ordered from less to
-            most recent. Note that this values will be returned by the
-            simulation as the first values of `endog_simulated` and they
-            will count for the total number of steps.
-        seed : {None, int}
-            If seed is not None, then it will be used with for the random
-            variables generated by numpy.random.
-        nsimulations : {None, int}
-            Number of simulations to perform. If `nsimulations` is None it will
-            perform one simulation and return value will have shape (steps, neqs).
-    """
-    p, k, k = coefs.shape
-    # Validate nsimulations
-    nsimulations= int_like(nsimulations, "nsimulations", optional=True)
-    if isinstance(nsimulations, int) and nsimulations <= 0:
-        raise ValueError("nsimulations must be a positive integer if provided")
-    if nsimulations is None:
-        result_shape = (steps, k)
-        nsimulations = 1
-    else:
-        result_shape = (nsimulations, steps, k)
-
-    # Default for covariance
-    if sig_u is None:
-        sig_u = np.eye(k)
-
-    # Default values and validation for intercept
-    if intercept is not None:
-        # intercept can be 2-D like an offset variable
-        if np.ndim(intercept) > 1:
-            if not len(intercept) == ugen.shape[1]:
-                raise ValueError('2-D intercept needs to have length `steps`')
+    @copy_doc(BaseInferenceMethod._predict)
+    def _predict(
+        self,
+        forecast_times: np.ndarray,
+        historic_endog: np.ndarray,
+        historic_times: np.ndarray,
+        exog: Optional[np.ndarray] = None,
+        historic_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
+        
+        X = None
+        if exog is not None:
+            # Collect exogeneous into sktime format.
+            X = to_sktime_time_series(forecast_times, exog)
+        
+        # Predict endog state evolution.
+        endog_pred = self.model.predict(
+            X=X,
+            fh=ForecastingHorizon(
+                [i for i in range(len(forecast_times))],
+                is_relative=True,
+                # Frequency is no used here since we drop the index below
+                freq="s"
+            )
+        )
+        return endog_pred.values
     
-    # Validate initial values
-    initial_values = array_like(
-        initial_values,
-        "initial_values",
-        optional=True,
-        maxdim=2
-    )
-    if initial_values is not None:
-        if not (initial_values.shape == (p, k) or initial_values.shape == (k,)):
-            raise ValueError("initial_values should have shape (p, k) or (k,) where p is the number of lags and k is the number of equations.")
-            
-    # Initialize the random seed
-    rs = np.random.RandomState(seed=seed)
 
-    # Draw noise from multivariate normal (mean zero and cov = sig_u)
-    rmvnorm = rs.multivariate_normal
-    ugen = rmvnorm(np.zeros(len(sig_u)), sig_u, steps*nsimulations)
-    ugen = ugen.reshape(nsimulations, steps, k)
+    @copy_doc(BaseInferenceMethod.get_window_size)
+    def get_window_size(self):
+        return max(2, self.method_params["maxlags"])
+    
 
-    # Initialize empty result array
-    result = np.zeros((nsimulations, steps, k))
-
-    if intercept is not None:
-        # add intercept/offset also to intial values. When initial_values
-        # is none, this makes the initial value equal to the offset
-
-        # When the 
-        result += intercept
-
-    # Prep result array by adding noise before calculating recurrence 
-    result[:,p:] += ugen[:,p:]
-
-    # Set beginning of results equal to initial values
-    if initial_values is not None:
-        result[:,:p] = initial_values
-
-    # Apply the intervention to the initial values
-    result[:, :p, intervention_idx] = intervention_value
-
-    # add in AR terms
-    for t in range(p, steps):
-        ygen = result[:,t]
-        for j in range(p):
-            ygen += np.dot(coefs[j], result[:,t-j-1].T).T
-            # Overwrite ygen with the intervention
-            ygen[:, intervention_idx] = intervention_value
-
-    return result.reshape(result_shape)
+    @copy_doc(BaseInferenceMethod.set_params)
+    def set_params(self, **params):
+        self.method_params = {**self.method_params, **params}
+        self.model = skt_VAR(**self.method_params)
 
 
-def var_perf_interv_extrapolate(
-    X,
-    t,
-    intervention_idx,
-    intervention_value,
-    maxlags=2
-):
-    """Predicts the effect of a perfect intervention on the observed system.
-    """
-    df = pd.DataFrame(X)
-    model = sm_VAR(df)
-    results = model.fit(maxlags)
+    @copy_doc(BaseInferenceMethod.get_params)
+    def get_params(self, deep: bool = True) -> Dict:
+        return self.method_params
+    
 
-    # Simulate and return averge values of each variable.
-    var_X_do= simulate_perfect_intervention_var(
-        intervention_idx,
-        intervention_value,
-        results.coefs,
-        results.intercept,
-        results.sigma_u,
-        steps=len(t),
-        initial_values=X[0, :]
-    )   
-    return var_X_do
+    @copy_doc(BaseInferenceMethod.get_test_param_grid)
+    def get_test_param_grid() -> Dict[str, List[Any]]:
+        return {
+            "maxlags": [1, 2, 10],
+            "trend" : ["ctt", "n"]
+        }
+    
+
+    @copy_doc(BaseInferenceMethod.get_test_params)
+    def get_test_params() -> Dict[str, Any]:
+        return {}

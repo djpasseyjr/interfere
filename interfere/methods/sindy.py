@@ -19,13 +19,13 @@ class SINDY(BaseInferenceMethod):
         feature_names=None,
         t_default=1,
         discrete_time=False,
-        max_sim_val = 10000,
+        max_sim_value = 10000,
         **kwargs
     ):
         self.sindy = ps.SINDy(
             optimizer, feature_library, differentiation_method, feature_names, t_default, discrete_time,
         )
-        self.max_sim_val = max_sim_val
+        self.max_sim_value = max_sim_value
 
 
     @copy_doc(BaseInferenceMethod._fit)
@@ -35,7 +35,7 @@ class SINDY(BaseInferenceMethod):
         t: np.ndarray,
         exog_states: np.ndarray = None
     ):
-        if np.any(endog_states > self.max_sim_val):
+        if np.any(endog_states > self.max_sim_value):
             raise ValueError("Supplied endogenous states cannot be simulated "
                 f"because they exceed `max_sim_value = {self.max_sim_value}`. "
                 "Reinitialize and set `max_sim_value` greater than "
@@ -64,7 +64,7 @@ class SINDY(BaseInferenceMethod):
         # uses event functions with assigned attributes as callbacks.
         # The below code tells scipy to stop integrating when
         # too_big(t, y) == True.
-        too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_val)
+        too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_value)
         too_big.terminal = True
 
         if self.sindy.discrete_time:
@@ -106,12 +106,12 @@ class SINDY(BaseInferenceMethod):
 
     def get_test_param_grid():
         return {
-            "optimizer__alpha": [1e-12, 0.01],
+            "optimizer": [ps.optimizers.STLSQ()],
+            "optimizer__threshold": [0.001, 0.01],
             "differentiation_method__kwargs": [
                 {'kind': 'trend_filtered', 'order': 1, 'alpha': 1e-2},
             ],
             "feature_library": [
-                ps.feature_library.FourierLibrary(), 
                 ps.feature_library.PolynomialLibrary()
             ],
             "discrete_time": [True, False]

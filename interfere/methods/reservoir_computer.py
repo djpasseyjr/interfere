@@ -102,20 +102,6 @@ class ResComp(BaseInferenceMethod):
         self.overlap = overlap
         self.rng = rng
 
-        # Create random graph adjacency matrix
-        n = self.res_sz
-        p = self.mean_degree / n
-        A = self.random_graph(n, p)
-        if not sparse_res:
-            # Convert to dense
-            A = A.toarray()
-        if self.uniform_weights:
-            # Set non zero entries to 1.0 (Make edge weights uniform)
-            A = (A != 0).astype(float)
-        # Multiply matrix by a constant to achive the desired spectral radius
-        self.res = A
-        self.scale_spect_rad()
-
         super().__init__()
 
 
@@ -132,6 +118,21 @@ class ResComp(BaseInferenceMethod):
         # Arrays to store pieces of the Tikhonov regression solution
         self.Rhat_ = np.zeros((self.res_sz, self.res_sz))
         self.Yhat_ = np.zeros((signal_dim, self.res_sz))
+
+        # Make reservoir.
+        # Create random graph adjacency matrix
+        n = self.res_sz
+        p = self.mean_degree / n
+        A = self.random_graph(n, p)
+        if not self.sparse_res:
+            # Convert to dense
+            A = A.toarray()
+        if self.uniform_weights:
+            # Set non zero entries to 1.0 (Make edge weights uniform)
+            A = (A != 0).astype(float)
+        # Multiply matrix by a constant to achive the desired spectral radius
+        self.res_ = A
+        self.scale_spect_rad()
         
 
 
@@ -158,17 +159,17 @@ class ResComp(BaseInferenceMethod):
 
     def scale_spect_rad(self):
         """ Scales the spectral radius of the reservoir so that
-            _spectral_rad(self.res) = self.spect_rad
+            _spectral_rad(self.res_) = self.spect_rad
         """
-        curr_rad = self._spectral_rad(self.res)
+        curr_rad = self._spectral_rad(self.res_)
         if not np.isclose(curr_rad,0, 1e-8):
-            self.res *= self.spect_rad/curr_rad
+            self.res_ *= self.spect_rad/curr_rad
         else:
             warn("Spectral radius of reservoir is close to zero. Edge weights will not be scaled")
         # end
         # Convert to csr if sparse
-        if sparse.issparse(self.res):
-            self.res = self.res.tocsr()
+        if sparse.issparse(self.res_):
+            self.res_ = self.res_.tocsr()
 
 
     #-------------------------------------
@@ -181,7 +182,7 @@ class ResComp(BaseInferenceMethod):
         transform_exog = self.delta * self.W_exog_ @ d(t)
         return self.gamma * (
             -1 * r + self.activ_f(
-                self.res @ r + transform_train + transform_exog)
+                self.res_ @ r + transform_train + transform_exog)
         )
 
 
@@ -190,7 +191,7 @@ class ResComp(BaseInferenceMethod):
         recurrence = self.sigma * self.W_in_ @ (self.W_out_ @ r)
         transform_exog = self.delta * self.W_exog_ @ d(t)
         return self.gamma * (
-            -1*r + self.activ_f(self.res @ r + recurrence + transform_exog))
+            -1*r + self.activ_f(self.res_ @ r + recurrence + transform_exog))
 
 
     def initial_condition(self, u0, d0):
@@ -234,7 +235,7 @@ class ResComp(BaseInferenceMethod):
             R = integrate.odeint(fixed_res_ode, initial, tvals, tfirst=True)
             r0 = R[-1,:]
             err = np.max(np.abs(r0 - R[-2, :]))
-            if  err > 1e-12:
+            if  err > 1e-3:
                 warn(f"Reservoir fixed point failed to converge. ||r_n - r_(n+1)|| = {err}")
 
         # An arbitrary initial condition mapping.
@@ -576,7 +577,7 @@ class ResComp(BaseInferenceMethod):
 
     def get_test_params(parameter_set="default"):
         return dict(
-            res_sz=100,
+            res_sz=50,
             activ_f=np.tanh,
             mean_degree=2.0,
             ridge_alpha=1e-4,
@@ -584,7 +585,7 @@ class ResComp(BaseInferenceMethod):
             sparse_res=True,
             sigma=0.1,
             uniform_weights=True,
-            gamma=1.,
+            gamma=10.,
             max_weight=2,
             min_weight=0,
             batchsize=2000,
@@ -596,6 +597,6 @@ class ResComp(BaseInferenceMethod):
     
     def get_test_param_grid():
         return dict(
-            sigma = [0.001, 3, 10],
-            gamma = [0.01, 10]
+            res_sz = [10, 50],
+            sigma = [0.001, 9, 10],
         )

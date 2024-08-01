@@ -83,6 +83,6 @@ class AutoARIMA(NixtlaAdapter):
     def get_test_param_grid() -> Dict[str, List[Any]]:
         """Returns a parameter grid for testing grid search"""
         return {
-            "max_p": [10, 5, 1],
+            "max_p": [6, 2, 1],
             "max_q": [3, 1]
         }

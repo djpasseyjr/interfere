@@ -300,10 +300,14 @@ class ForecasterAutoregMultiSeriesCustom:
         self._series = series
         self._exog = exog
 
+        exog_states = None
+        if exog is not None:
+            exog_states = exog.values
+
         return self.method.fit(
             endog_states=series.values,
             t=t,
-            exog_states=exog.values
+            exog_states=exog_states
         )
     
 
@@ -336,22 +340,29 @@ class ForecasterAutoregMultiSeriesCustom:
         
         historic_times = last_window.index.values
         historic_endog = last_window.values
+        exog_states = None
+        historic_exog = None
 
-        # Build historic exogeneous array. TODO: Pass true exog states.
-        if set(historic_times).issubset(self._exog.index):        
-            historic_exog = np.vstack([
-                self._exog.loc[ti].values
-                for ti in historic_times
-            ])
-        else:
-            warn("Missing exogeneous data detected in grid gearch."
-                 " Replacing with np.inf values.")
-            # Using np.inf bypasses the neuralforecast missing value checker
-            # but will throw an error if these values are used in computation.
-            # It is unlikely that models will use historic exogenous signals
-            # for prediction and so this is an acceptable solution for now.
-            historic_exog = np.full(
-                (len(historic_times), exog.shape[1]), np.inf)
+        if exog is not None:
+            # If the prediction involves exogeneous data build exog
+            # arrays for interfere methods.
+            exog_states = exog.values
+
+            # Build historic exogeneous array. TODO: Pass true exog states.
+            if set(historic_times).issubset(self._exog.index):        
+                historic_exog = np.vstack([
+                    self._exog.loc[ti].values
+                    for ti in historic_times
+                ])
+            else:
+                warn("Missing exogeneous data detected in grid gearch."
+                    " Replacing with np.inf values.")
+                # Using np.inf bypasses the neuralforecast missing value checker
+                # but will throw an error if these values are used in computation.
+                # It is unlikely that models will use historic exogenous signals
+                # for prediction and so this is an acceptable solution for now.
+                historic_exog = np.full(
+                    (len(historic_times), exog.shape[1]), np.inf)
             
         # Compute timestep size.
         dt = historic_times[1] - historic_times[0]
@@ -366,7 +377,7 @@ class ForecasterAutoregMultiSeriesCustom:
         endog_pred = self.method.predict(
             forecast_times,
             historic_endog,
-            exog.values,
+            exog_states,
             historic_exog=historic_exog,
             historic_times=historic_times,
             rng=DEFAULT_RANGE, # TODO: Figure out randomness.
@@ -424,8 +435,13 @@ def grid_search(
     # Transform interfere time series to skforecast format.
     endog_skf = pd.DataFrame(endog_states)
     endog_skf.set_index(t)
-    exog_skf = pd.DataFrame(exog_states)
-    exog_skf.set_index(t)
+
+    if exog_states is not None:
+        exog_skf = pd.DataFrame(exog_states)
+        exog_skf.set_index(t)
+    
+    else:
+        exog_skf = None
 
     # Initialize the interfere <-> skforecast adapter.
     adapter = ForecasterAutoregMultiSeriesCustom(method_type, method_params)
@@ -585,8 +601,8 @@ def counterfactual_extrapolation_benchmark(
 
 def forecast_intervention(
     X: np.ndarray,
-    X_do_forecast: np.ndarray,
     time_points: np.ndarray,
+    forecast_times: np.ndarray,
     intervention: ExogIntervention,
     method_type: Type,
     method_params: Dict[str, Any],
@@ -600,12 +616,10 @@ def forecast_intervention(
     Args:
         X (np.ndarray): An (m, n) matrix that is interpreted to be a  
             realization of an n dimensional stochastic multivariate timeseries.
-        X_do_forecast (np.ndarray): An (p, n) maxtix. The ground truth 
-            counterfactual, what the last p rows of X would be if the
-            intervention was applied starting at time `time_points[-p]`.
         time_points (np.ndarray): 1D array of time points corresponding to the
-            rows of X. The last p entries correspond to the rows of
-            X_do_forecast.
+            rows of X.
+        forecast_times (np.ndarray): 1D array of time points corresponding to
+            the desired prediction times.
         intervention (interfere.Intervention): The type of the intervention to
             apply.
         method_type (sktime.forecasting.base.BaseForecaster): The method to be
@@ -624,18 +638,26 @@ def forecast_intervention(
             response to the intervention.
         best_params: A Dict of the best parameters found by the grid search.
     """
-    p = X_do_forecast.shape[0]
-    historic_times = time_points[:-p]
-    forecast_times = time_points[-p:]
-    X_hist = X[:-p, :]
 
-    historic_endog, historic_exog = intervention.split_exogeneous(X_hist)
+    historic_endog, historic_exog = intervention.split_exogeneous(X)
+
+    hist_exog_shape = None
+    if historic_exog is not None:
+        hist_exog_shape = historic_exog.shape
+
+    print(f""""
+          
+Grid search split:
+          
+historic_endog: {historic_endog.shape}
+historic_exog: {hist_exog_shape}
+""")
 
     if best_params is None:
 
-        best_method, gs_results = grid_search(
+        _, gs_results = grid_search(
             method_type, method_params, method_param_grid,
-            historic_endog, historic_times, historic_exog,
+            historic_endog, time_points, historic_exog,
             # Uses a moving window of train on 20% of the data, predict next 20%
             initial_train_window_percent = 0.2,
             predict_percent = 0.2,
@@ -652,14 +674,15 @@ def forecast_intervention(
     sim_params = {**method_params, **best_params}
 
     # Simulate intervention
-    best_method.fit(historic_endog, historic_times, historic_exog)
+    method = method_type(**sim_params)
+    method.fit(historic_endog, time_points, historic_exog)
     
     X_do_preds = [
-        best_method.simulate(
+        method.simulate(
             forecast_times,
-            historic_states=X_hist,
+            historic_states=X,
             intervention=intervention,
-            historic_times=historic_times,
+            historic_times=time_points,
             rng=rng
         )
         for i in range(num_intervention_sims)

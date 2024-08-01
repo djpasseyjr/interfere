@@ -22,7 +22,7 @@ class BaseInferenceMethod(BaseEstimator):
         self,
         simulation_times: np.ndarray,
         historic_states: np.ndarray,
-        intervention: ExogIntervention,
+        intervention: Optional[ExogIntervention] = None,
         historic_times: Optional[np.ndarray] = None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE
     ) -> np.ndarray:
@@ -47,9 +47,16 @@ class BaseInferenceMethod(BaseEstimator):
                 endogenous signals. The k exogenous variable indexes are
                 contained in `intervention.intervened_idxs`.
         """
-        historic_endo, historic_exog = intervention.split_exogeneous(
-            historic_states)
-        exog = intervention.eval_at_times(simulation_times)
+        if intervention is not None:
+            historic_endo, historic_exog = intervention.split_exogeneous(
+                historic_states)
+            exog = intervention.eval_at_times(simulation_times)
+
+        else:
+            historic_endo = historic_states
+            historic_exog = None
+            exog = None
+
         endo_pred = self.predict(
             simulation_times,
             historic_endo,
@@ -58,7 +65,13 @@ class BaseInferenceMethod(BaseEstimator):
             historic_times,
             rng
         )
-        simulated_states = intervention.combine_exogeneous(endo_pred, exog)
+
+        simulated_states = endo_pred
+
+        # Optionally intervention to combine exogeneous and endogenous.
+        if intervention is not None:
+            simulated_states = intervention.combine_exogeneous(endo_pred, exog)
+    
         return simulated_states
 
 
@@ -301,7 +314,7 @@ class BaseInferenceMethod(BaseEstimator):
     
 
     @abstractmethod
-    def get_test_param_grid(self) -> Dict[str, List[Any]]:
+    def get_test_param_grid() -> Dict[str, List[Any]]:
         """Returns a dict of hyper parameters for testing grid search.
         
         Should be small and not take a long time to iterate through.
@@ -310,7 +323,7 @@ class BaseInferenceMethod(BaseEstimator):
     
 
     @abstractmethod
-    def get_test_params(self) -> Dict[str, Any]:
+    def get_test_params() -> Dict[str, Any]:
         """Returns initialization parameters for testing. 
         
         Should be condusive to fast test cases."""
