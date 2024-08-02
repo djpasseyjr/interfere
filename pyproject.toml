@@ -16,7 +16,7 @@ dependencies = [
     "pysindy",
     "scikit-learn",
     "sktime",
-    "skforecast",
+    "skforecast==0.12.1",
     "statsforecast",
     "statsmodels",
     "torch",
