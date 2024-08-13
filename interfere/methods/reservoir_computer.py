@@ -68,9 +68,9 @@ class ResComp(BaseInferenceMethod):
                 One of ['fixed point', 'relax', activ_f', 'psuedoinverse',
                 'random', 'W_in'].See documentation of self.initial_condition()
                 for details. Defaults to "relax".
-            window (float): If window is not `None` the reservoir computer will
+            window (float): If window is not `None` the training algorithm will
                 subdivide the input signal into blocks where each block
-                corresponds to `window` seconds of time. Defaults to None.
+                contains `window` seconds of time. Defaults to None.
             overlap (float): Must be less than one and greater or equal to zero.
                 If greater than zero, this will cause subdivided input signal
                 blocks to overlap. The `overlap` variable specifies the percent
@@ -330,6 +330,14 @@ class ResComp(BaseInferenceMethod):
         signal_dim = U.shape[1]
         exog_dim = D.shape[1]
         self.set_res_data_members(signal_dim, exog_dim)
+
+        # Check if window is too small.
+        if self.window is not None:
+            if np.any(np.diff(t) > self.window):
+                warn(f"ResComp.window = {self.window} is too small. Increasing window size.")
+                window = 2 * np.min(np.diff(t))
+            else:
+                window = self.window
 
         idxs = self._partition(t, self.window, self.overlap)
         for start, end in idxs:
