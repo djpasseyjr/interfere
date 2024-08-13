@@ -338,8 +338,10 @@ class ResComp(BaseInferenceMethod):
                 window = 2 * np.min(np.diff(t))
             else:
                 window = self.window
+        else:
+            window = None
 
-        idxs = self._partition(t, self.window, self.overlap)
+        idxs = self._partition(t, window, self.overlap)
         for start, end in idxs:
             ti = t[start:end]
             Ui = U[start:end, :]
