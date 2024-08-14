@@ -166,7 +166,7 @@ class KuramotoSakaguchi(Kuramoto):
         """Initializes a Kuramoto-Sakaguchi SDE with independent noise. 
 
         dtheta_i = 
-            (omega_i + (K/M) sum_j a_{ij} sin(theta_j - theta_i - A_{ij)}) dt
+            (omega_i + (K/M) sum_j a_{ij} sin(theta_j - theta_i - Z_{ij)}) dt
             + sigma dW_i
 
         where M is the number of nodes in the network and Z is the phase
@@ -176,7 +176,9 @@ class KuramotoSakaguchi(Kuramoto):
             omega (np.ndarray): The  natural frequency of each oscilator.
             K (float): The coupling constant.
             adjacency_matrix (np.ndarray): A matrix containing the connectivity.
-            phase_frustration (np.ndarray): 
+                The matrix a_{ij} in the equation above.
+            phase_frustration (np.ndarray): A matrix containing the phase
+                frustration network. Z_{ij} in the equation above.
             sigma (float): Parameter controlling the standard deiation of     
                 system noise.
             measurement_noise_std (ndarray): None, or a vector with shape (n,)
