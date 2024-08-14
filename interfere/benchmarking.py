@@ -444,6 +444,9 @@ def grid_search(
         exog_skf = None
 
     # Initialize the interfere <-> skforecast adapter.
+    # This is a hacky way to use skforecast for other predictive methods.
+    # Scroll up to the definition of the ForecasterAutoregMultiSeriesCustom 
+    # class for more details.
     adapter = ForecasterAutoregMultiSeriesCustom(method_type, method_params)
 
     n_obs = len(endog_skf)
