@@ -164,6 +164,16 @@ def fit_predict_checks(
         assert endo_pred.shape[1] == endo_true.shape[1]
         assert endo_pred.shape[0] == PRED_LEN
 
+    # Test that prediction_max clips correctly
+    method = method_type(**method_params)
+    method.fit(historic_endog, historic_times, historic_exog)
+    endo_pred = method.predict(
+        forecast_times, historic_endog, exog, 
+        historic_exog, historic_times, prediction_max=3.0
+    )
+    
+    assert np.all(endo_pred) <= 3.0
+
 
 def grid_search_checks(
         method_type: Type[BaseInferenceMethod],

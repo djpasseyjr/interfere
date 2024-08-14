@@ -113,6 +113,7 @@ class BaseInferenceMethod(BaseEstimator):
         historic_exog: Optional[np.ndarray] = None,
         historic_times: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
+        prediction_max: float = 1e9,
     ) -> np.ndarray:
         """Runs a simulation of the dynamics of a fitted forcasting method.
 
@@ -147,6 +148,9 @@ class BaseInferenceMethod(BaseEstimator):
                 contains equally spaced points, then `historic_times` is assumed
                 to contain occured at equally spaced points prior to `forecast
                 times`.
+            prediction_max: A threshold for predicted endogeneous values
+                to prevent overflow in predictions. All predictions larger in
+                magnitude will be set equal to `prediction_max`.
             rng: An optional numpy random state for reproducibility. (Uses 
                 numpy's mtrand random number generator by default.)
 
@@ -163,6 +167,15 @@ class BaseInferenceMethod(BaseEstimator):
             for x in [forecast_times, historic_endog, exog, historic_exog]
         ]):
             raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+        
+        if np.any(historic_endog > prediction_max):
+            raise ValueError(
+                f"Historic endogenous contains values ({np.max(historic_endog)}"
+                " that are larger than" 
+                f" `prediction_max = {prediction_max}`, the "
+                "prediction threshold."
+                "Increase `prediction_max` in order to simulate these values."
+            )
         
         # Reshape historic_endog if it was 1D.
         if len(historic_endog.shape) == 1:
@@ -211,7 +224,7 @@ class BaseInferenceMethod(BaseEstimator):
                     " must have the same number of columns.")
 
 
-        return self._predict(
+        endog_pred = self._predict(
             forecast_times=forecast_times,
             historic_endog=historic_endog,
             exog=exog,
@@ -219,6 +232,10 @@ class BaseInferenceMethod(BaseEstimator):
             historic_times=historic_times,
             rng=rng
         )
+
+        endog_pred[np.abs(endog_pred) > prediction_max] = prediction_max
+
+        return endog_pred
     
 
     def get_window_size(self):
