@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional
+from warnings import warn
 
 import numpy as np
 import pysindy as ps
@@ -42,7 +43,7 @@ class SINDY(BaseInferenceMethod):
                 f"`max(endog_states) = {np.max(endog_states)}` before calling "
                 "`fit()`."
             )
-        
+        self.__init__(**self.get_params())
         self.sindy.fit(endog_states, t, u=exog_states)
 
 
@@ -64,7 +65,11 @@ class SINDY(BaseInferenceMethod):
         # uses event functions with assigned attributes as callbacks.
         # The below code tells scipy to stop integrating when
         # too_big(t, y) == True.
-        too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_value)
+        if self.sindy.discrete_time:
+            too_big = lambda t, y: np.any(np.abs(y) > self.max_sim_value)
+        else:
+            too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_value)
+
         too_big.terminal = True
 
         if self.sindy.discrete_time:
@@ -80,6 +85,13 @@ class SINDY(BaseInferenceMethod):
         # Retrive number of successful steps.
         n_steps = endog_pred.shape[0]
         n_missing = len(forecast_times) - n_steps
+
+        # Warn user if SINDY diverges.
+        if n_missing > 0:
+            warn(
+                f"SINDY prediction diverged. Valid prediction for {n_steps} / "
+                f"{len(forecast_times)} time steps."
+            )
 
         # When SINDY diverges, repeat the last valid prediction for the
         # remaining prediction points.
@@ -107,12 +119,14 @@ class SINDY(BaseInferenceMethod):
     def get_test_param_grid():
         return {
             "optimizer": [ps.optimizers.STLSQ()],
-            "optimizer__threshold": [0.001, 0.01],
-            "differentiation_method__kwargs": [
-                {'kind': 'trend_filtered', 'order': 1, 'alpha': 1e-2},
+            "optimizer__threshold": [0.001, 0.1],
+            "differentiation_method": [
+                ps.SINDyDerivative(kind='finite_difference', k=1),
+                ps.SINDyDerivative(kind='spline', s=0.1)
             ],
             "feature_library": [
-                ps.feature_library.PolynomialLibrary()
+                ps.feature_library.PolynomialLibrary(),
+                ps.feature_library.FourierLibrary()
             ],
             "discrete_time": [True, False]
         }

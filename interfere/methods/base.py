@@ -193,7 +193,7 @@ class BaseInferenceMethod(BaseEstimator):
             dt = forecast_times[1] - forecast_times[0]
 
             # Check for equally spaced forecast time points.
-            if not np.all(np.isclose(np.diff(forecast_times)), dt):
+            if not np.all(np.isclose(np.diff(forecast_times), dt)):
                 raise ValueError("The `historic_times` argument not provided"
                 " AND `forecast_times` are equally spaced. Cannot infer "
                 " `historic_times`. Either pass it explicitly or provide "
