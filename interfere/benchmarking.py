@@ -192,6 +192,31 @@ class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
             X_do_resp, pred_X_do_resp, y_train=X_resp)
 
 
+class ValidPredictionTime(CounterfactualForecastingMetric):
+
+    def __init__(self):
+        super().__init__("Valid Prediction Time")
+        self.eps_max = 0.5
+
+
+    @copy_doc(CounterfactualForecastingMetric.__call__)
+    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
+
+        eps_max = kwargs.get("eps_max", eps_max)
+
+        X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
+            intervention_idxs, X_do, X_do_pred)
+        
+        # Compute infinity norm of error for each point in time
+        inf_norm_err = np.max(np.abs(X_do_resp - pred_X_do_resp), axis=1)
+        idxs, = (inf_norm_err > eps_max).nonzero()
+        vpt = idxs.min()
+        return vpt
+        
+
+    
+
+
 def directional_accuracy(X, X_do, pred_X_do, intervention_idx):
     # TODO Fix this docstring
     """Predict the correct directional change of each non intervened signal in
@@ -434,11 +459,11 @@ def grid_search(
     """
     # Transform interfere time series to skforecast format.
     endog_skf = pd.DataFrame(endog_states)
-    endog_skf.set_index(t)
+    endog_skf = endog_skf.set_index(t)
 
     if exog_states is not None:
         exog_skf = pd.DataFrame(exog_states)
-        exog_skf.set_index(t)
+        exog_skf = exog_skf.set_index(t)
     
     else:
         exog_skf = None
