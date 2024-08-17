@@ -202,7 +202,7 @@ class ValidPredictionTime(CounterfactualForecastingMetric):
     @copy_doc(CounterfactualForecastingMetric.__call__)
     def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
 
-        eps_max = kwargs.get("eps_max", eps_max)
+        eps_max = kwargs.get("eps_max", self.eps_max)
 
         X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
             intervention_idxs, X_do, X_do_pred)
@@ -210,6 +210,10 @@ class ValidPredictionTime(CounterfactualForecastingMetric):
         # Compute infinity norm of error for each point in time
         inf_norm_err = np.max(np.abs(X_do_resp - pred_X_do_resp), axis=1)
         idxs, = (inf_norm_err > eps_max).nonzero()
+
+        if len(idxs) == 0:
+            return len(inf_norm_err)
+        
         vpt = idxs.min()
         return vpt
         

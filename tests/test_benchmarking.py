@@ -3,7 +3,8 @@
 from interfere.benchmarking import (
     DirectionalChangeBinary,
     RootMeanStandardizedSquaredError,
-    TTestDirectionalChangeAccuracy
+    TTestDirectionalChangeAccuracy,
+    ValidPredictionTime,
 )
 import numpy as np
 
@@ -70,3 +71,31 @@ def test_ttest_directional():
     assert np.all(estim_chng[:2] == 1)
     assert np.all(estim_chng[2:6] == -1)
     assert np.all(estim_chng[6:] == 0)
+
+
+def test_vpt_all_idxs():
+    vpt = ValidPredictionTime()
+    X_true = np.random.rand(10, 2)
+    assert vpt(None, X_true, X_true, []) == 10
+    assert vpt(None, X_true, X_true, [0]) == 10
+
+
+def test_vpt_middle_idxs():
+    vpt = ValidPredictionTime()
+    X_true = np.random.rand(10, 2)
+    X_pred = X_true.copy()
+    X_pred[5:, :] += 1
+    assert vpt(None, X_true, X_pred, []) == 5
+    assert vpt(None, X_true, X_pred, [0]) == 5
+
+
+def test_vpt_first_idx():
+    vpt = ValidPredictionTime()
+    X_true = np.random.rand(10, 2)
+    X_pred = X_true.copy()
+    X_pred += 1
+    assert vpt(None, X_true, X_pred, []) == 0
+    assert vpt(None, X_true, X_pred, [0]) == 0
+
+
+    
