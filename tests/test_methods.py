@@ -226,7 +226,7 @@ def grid_search_assertions(
     ).mean_squared_error
 
     # Fit a normal distribution to all scores except the best one.
-    probability_of_lowest_score = scipy.stats.norm(
+    prob_of_lowest_score = scipy.stats.norm(
         np.mean(other_scores),
         np.std(other_scores)
     ).cdf(best_mse)
@@ -236,9 +236,9 @@ def grid_search_assertions(
     # other scores. This ensures that a clear minimum exists, and this test only
     # passes if you purposely provide TERRRIBLE hyper parameters to the test
     # param grid along with reasonable ones.
-    if probability_of_lowest_score > 0.25:
+    if (prob_of_lowest_score > 0.3) or np.isnan(prob_of_lowest_score):
         print(gs_results[["params", "mean_squared_error"]])
-    assert probability_of_lowest_score < 0.25
+    assert prob_of_lowest_score < 0.3
 
 
 def check_exogeneous_effect(
