@@ -2,6 +2,7 @@
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Type
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -182,7 +183,7 @@ class BaseInferenceMethod(BaseEstimator):
             historic_endog = np.reshape(historic_endog, 1, -1)
 
         # Gather array shapes
-        p, _ = historic_endog.shape
+        p, k = historic_endog.shape
         (m,) = forecast_times.shape 
 
         if len(forecast_times) < 2:
@@ -209,7 +210,20 @@ class BaseInferenceMethod(BaseEstimator):
                 raise ValueError(f"Number of exogenous observations ({m_exog})"
                 f" does not match the number of forecast_times ({m}).")
 
+        # Compare window size of forecaster with amount of historic data.
+        w = self.get_window_size()
 
+        if w > p:
+            warn(str(type(self)) + f" has window size {w} but only recieved {p}"
+                 " endog observations. Augmenting historic edogenous "
+                 "observations with zeros."
+            )
+
+            historic_endog = np.vstack([
+                np.zeros((w - p, k)),
+                historic_endog
+            ])
+            
         # Check shape of historic exogenous signals.
         if historic_exog is not None:
             p_hexog, k_hexog = historic_exog.shape
@@ -222,6 +236,16 @@ class BaseInferenceMethod(BaseEstimator):
                 if k_hexog != k_exog:
                     raise ValueError("The `historic_exog` and `exog` arguments"
                     " must have the same number of columns.")
+                
+            if w > p_hexog:
+                warn(str(type(self)) + f" has window size {w} but only recieved"
+                     f" {p_hexog} exog observations. Augmenting historic "
+                     "exogenous observations with zeros.")
+
+                historic_exog = np.vstack([
+                    np.zeros((w - p_hexog, k_hexog)),
+                    historic_exog
+                ])
 
 
         endog_pred = self._predict(

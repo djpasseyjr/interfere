@@ -699,7 +699,9 @@ historic_exog: {hist_exog_shape}
             refit=1
         )
 
-        best_params = gs_results.params[gs_results.mean_squared_error.argmin()]
+        best_params = gs_results.params.iloc[
+            gs_results.mean_squared_error.argmin()
+        ]
 
     # Combine best params with default params. (Items in best_params will
     # overwrite items in method_params if there are duplicates here.)

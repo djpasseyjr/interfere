@@ -174,6 +174,44 @@ def fit_predict_checks(
     
     assert np.all(endo_pred) <= 3.0
 
+    # Test that predict raises warning when not enough historic data is passed.
+
+    method = method_type(**method_params)
+    method.fit(historic_endog, historic_times, historic_exog)
+    # Change the window size method. This is a bit hacky and could cause
+    # problems in the future. The real issue here is that window size is not
+    # an attribute and therefore we can't change it. It is computed from the
+    # internal method parameters which we have no knowledge of at this scope.
+    # Therefore this hack is used instead of reconfiguring the test API and
+    # requring each method to provide parameters that lead to a window size
+    # greater than 2. Additionally a window size smaller than 2 will throw an
+    # error and some methods don't have parameters that generate a window size
+    # bigger than 2. So a hack is where we are at for now. The point is just to
+    # ensure that the warning is raised correctly.
+    w_old = method.get_window_size()
+    method.get_window_size = lambda : w_old + 1
+
+
+    with pytest.warns(UserWarning, match=str(type(method)) + " has window size "
+        f"{w_old + 1} but only recieved {w_old} "
+        "endog observations. Augmenting historic edogenous "
+        "observations with zeros."
+    ):
+        endo_pred = method.predict(
+            forecast_times, historic_endog[:w_old, :], exog, 
+            historic_exog[:w_old, :], historic_times, prediction_max=3.0
+        )
+
+    with pytest.warns(UserWarning, match=str(type(method)) + " has window size"
+        f" {w_old + 1} but only recieved {w_old} exog observations. "
+        "Augmenting historic exogenous observations with zeros."
+    ):
+        endo_pred = method.predict(
+            forecast_times, historic_endog[:w_old, :], exog, 
+            historic_exog[:w_old, :], historic_times, prediction_max=3.0
+        )
+    # Clean up method so that bad window size doesn't break things.
+    method = None
 
 def grid_search_checks(
         method_type: Type[BaseInferenceMethod],

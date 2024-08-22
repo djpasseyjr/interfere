@@ -408,7 +408,8 @@ class ResComp(BaseInferenceMethod):
         """
         #Check that Rhat and Yhat aren't overflowed
         if not (np.all(np.isfinite(self.Rhat_)) and np.all(np.isfinite(self.Yhat_))):
-            raise OverflowError('overflow occurred while computing regression')
+            warn('Overflow occurred while computing ResComp regression.')
+
         try:
             W_out = self.Yhat_ @ np.linalg.inv(self.Rhat_ + self.ridge_alpha * np.eye(self.res_sz))
         except np.linalg.LinAlgError:
