@@ -20,30 +20,29 @@ def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=100, n_do=20):
     thetas = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(noise_lags)]
     sigma = rng.random((dim, dim))
     sigma += sigma.T
-    model = interfere.dynamics.VARMA_Dynamics(phis, [], sigma)
+    model = interfere.dynamics.VARMA_Dynamics(phis, thetas, sigma)
 
+    max_lags = max(lags, noise_lags)
     # Generate a time series
     t = np.arange(tsteps)
-    x0 = rng.random((dim, lags))
-    X = model.simulate(x0, t, rng=rng)
+    prior_states = rng.random((max_lags, dim))
+    X = model.simulate(t, prior_states, rng=rng)
 
     intervention = interfere.PerfectIntervention([0, 1], [-0.5, -0.5])
-    historic_times = t[:-n_do]
-    forecast_times = t[-n_do:]
-    X_historic = X[:-n_do, :]
-    X0_do = X_historic[-lags:, :]
+    historic_t = t[:-n_do]
+    historic_X = X[:-n_do, :]
+    t_do = t[(-n_do - 1):]
 
-    # TODO: Fix simulate times -> states mapping w historic times.
-    sim_times = np.hstack([historic_times[-lags:], forecast_times])
     X_do = model.simulate(
-        X0_do,
-        sim_times,
-        intervention,
+        t_do,
+        historic_X,
+        prior_t=historic_t,
+        intervention=intervention,
         rng=rng
     )
     X_do = X_do[lags:, :]
 
-    return X_historic, historic_times, X_do, forecast_times, intervention
+    return historic_X, historic_t, X_do, t_do, intervention
 
 def belozyorov_timeseries(tsteps=100, n_do=20):
     rng = np.random.default_rng(SEED)
@@ -56,20 +55,20 @@ def belozyorov_timeseries(tsteps=100, n_do=20):
     # Generate a time series
     t = np.linspace(0, 1, tsteps)
     x0 = rng.random(dim)
-    X = model.simulate(x0, t, rng=rng)
+    X = model.simulate(t, x0, rng=rng)
 
     intervention = interfere.PerfectIntervention(0, 5.0)
     historic_times = t[:-n_do]
-    forecast_times = t[-n_do:]
     X_historic = X[:-n_do, :]
+    forecast_times = t[(-n_do - 1):]
     X0_do = X_historic[-lags, :]
 
     # TODO: Fix simulate times -> states mapping w historic times.
     sim_times = np.hstack([historic_times[-lags:], forecast_times])
     X_do = model.simulate(
-        X0_do,
         sim_times,
-        intervention,
+        X0_do,
+        intervention=intervention,
         rng=rng
     )
     X_do = X_do[1:, :]
@@ -80,7 +79,7 @@ def belozyorov_timeseries(tsteps=100, n_do=20):
 def fit_predict_checks(
         method_type: Type[BaseInferenceMethod],
         X_historic: np.ndarray,
-        historic_times: np.ndarray,
+        prior_t: np.ndarray,
         X_do: np.ndarray, 
         forecast_times: np.ndarray,
         intervention: interfere.interventions.ExogIntervention
@@ -91,74 +90,73 @@ def fit_predict_checks(
     method_params = method_type.get_test_params()
 
     # Create time series combonations.
-    historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
+    prior_endog_states, prior_exog_states = intervention.split_exogeneous(X_historic)
     endo_true, exog = intervention.split_exogeneous(X_do)
     forecast_times = forecast_times[:PRED_LEN]
     exog = exog[:PRED_LEN, :]
 
     # Test fit with and without exog.
     method = method_type(**method_params)
-    method.fit(historic_endog, historic_times, historic_exog)
+    method.fit(prior_t, prior_endog_states, prior_exog_states)
 
     assert method.is_fit
 
     method = method_type(**method_params)
-    method.fit(historic_endog, historic_times, None)
+    method.fit(prior_t, prior_endog_states, None)
 
     assert method.is_fit
 
     # Test simulate with exog.
-    method.fit(historic_endog, historic_times, historic_exog)
+    method.fit(prior_t, prior_endog_states,  prior_exog_states)
     X_do_pred = method.simulate(
-            forecast_times,
-            X_historic,
-            intervention,
-            historic_times,
+            t=forecast_times,
+            prior_states=X_historic,
+            prior_t=prior_t,
+            intervention=intervention,
         )
 
     assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
 
     # Simulate without exog
-    method.fit(X_historic, historic_times)
+    method.fit(prior_t, X_historic)
     X_do_pred = method.simulate(
-            forecast_times,
-            X_historic,
-            interfere.interventions.IdentityIntervention(),
-            historic_times,
-        )
+        t=forecast_times,
+        prior_states=X_historic,
+        prior_t=prior_t,
+        intervention=interfere.interventions.IdentityIntervention(),
+    )
 
     assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
 
-    method.fit(X_historic, historic_times)
+    method.fit(prior_t, X_historic)
     X_do_pred = method.simulate(
-            forecast_times,
-            X_historic,
-            None,
-            historic_times,
+            t=forecast_times,
+            prior_states=X_historic,
+            prior_t=prior_t,
         )
 
     assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
 
     # Test fit and predict with different combinations of args.
     arg_combos = [
-        (forecast_times, historic_endog, exog, historic_times, historic_exog),
-        (forecast_times, historic_endog, None, historic_times, None),
+        (forecast_times, prior_endog_states, exog, prior_t, prior_exog_states),
+        (forecast_times, prior_endog_states, None, prior_t, None),
     ]
 
     # Initialize method fit to data and predict for each combo of params.
     for args in arg_combos:
-        ft, he, ex, ht, hex = args
+        ft, pe, ex, pt, pex = args
         method = method_type(**method_params)
-        method.fit(endog_states=he, t=ht, exog_states=hex)
+        method.fit(t=pt, endog_states=pe, exog_states=pex)
 
         assert method.is_fit
 
         endo_pred = method.predict(
-            forecast_times=ft,
-            historic_endog=he,
-            exog=ex,
-            historic_times=ht,
-            historic_exog=hex,
+            t=ft,
+            prior_endog_states=pe,
+            prior_exog_states=pex,
+            prior_t=pt,
+            prediction_exog=ex,
         )
 
         assert endo_pred.shape[1] == endo_true.shape[1]
@@ -166,18 +164,24 @@ def fit_predict_checks(
 
     # Test that prediction_max clips correctly
     method = method_type(**method_params)
-    method.fit(historic_endog, historic_times, historic_exog)
+    method.fit(prior_t, prior_endog_states, prior_exog_states)
+
+    prediction_max = max(np.max(prior_endog_states), np.max(prior_exog_states))
     endo_pred = method.predict(
-        forecast_times, historic_endog, exog, 
-        historic_exog, historic_times, prediction_max=3.0
+        t=forecast_times,
+        prior_endog_states=prior_endog_states,
+        prior_exog_states=prior_exog_states,
+        prior_t=prior_t,
+        prediction_exog=exog,
+        prediction_max=prediction_max
     )
     
-    assert np.all(endo_pred) <= 3.0
+    assert np.all(endo_pred) <= prediction_max
 
     # Test that predict raises warning when not enough historic data is passed.
 
     method = method_type(**method_params)
-    method.fit(historic_endog, historic_times, historic_exog)
+    method.fit(prior_t, prior_endog_states, prior_exog_states)
     # Change the window size method. This is a bit hacky and could cause
     # problems in the future. The real issue here is that window size is not
     # an attribute and therefore we can't change it. It is computed from the
@@ -198,8 +202,12 @@ def fit_predict_checks(
         "observations with zeros."
     ):
         endo_pred = method.predict(
-            forecast_times, historic_endog[:w_old, :], exog, 
-            historic_exog[:w_old, :], historic_times, prediction_max=3.0
+            forecast_times,
+            prior_endog_states=prior_endog_states[:w_old, :],
+            prior_exog_states=prior_exog_states[:w_old, :],
+            prior_t=prior_t, 
+            prediction_exog=exog,
+            prediction_max=3.0
         )
 
     with pytest.warns(UserWarning, match=str(type(method)) + " has window size"
@@ -207,8 +215,12 @@ def fit_predict_checks(
         "Augmenting historic exogenous observations with zeros."
     ):
         endo_pred = method.predict(
-            forecast_times, historic_endog[:w_old, :], exog, 
-            historic_exog[:w_old, :], historic_times, prediction_max=3.0
+            t=forecast_times,
+            prior_endog_states=prior_endog_states[:w_old, :],
+            prior_exog_states=prior_exog_states[:w_old, :],
+            prior_t=prior_t,
+            prediction_exog=exog, 
+            prediction_max=3.0
         )
     # Clean up method so that bad window size doesn't break things.
     method = None
@@ -226,17 +238,17 @@ def grid_search_checks(
     param_grid = method_type.get_test_param_grid()
 
     # Initialize method and tune.
-    historic_endog, historic_exog = intervention.split_exogeneous(X_historic)
+    prior_endog_states, prior_exog_states = intervention.split_exogeneous(X_historic)
     
     # With exogeneous.
     _, gs_results = interfere.benchmarking.grid_search(
-        method_type, method_params, param_grid, historic_endog, historic_times, historic_exog, refit=1)
+        method_type, method_params, param_grid, prior_endog_states, historic_times, prior_exog_states, refit=1)
     
     grid_search_assertions(gs_results, param_grid)
 
     # Without exogeneous.
     _, gs_results = interfere.benchmarking.grid_search(
-        method_type, method_params, param_grid, historic_endog, historic_times, None, refit=1)
+        method_type, method_params, param_grid, prior_endog_states, historic_times, None, refit=1)
     
     grid_search_assertions(gs_results, param_grid)
     
@@ -310,13 +322,13 @@ def check_exogeneous_effect(
     method = method_type(**method_type.get_test_params())
 
     endo, exog = intervention.split_exogeneous(X_historic)
-    method.fit(endo, historic_times, exog)
+    method.fit(historic_times, endo, exog)
 
     X_do_pred = method.simulate(
-        forecast_times,
-        X_historic,
-        intervention,
-        historic_times,
+        t=forecast_times,
+        prior_states=X_historic,
+        prior_t=historic_times,
+        intervention=intervention
     )
 
     mse_intervened = np.mean((X_do_pred - X_do) ** 2) ** 0.5
