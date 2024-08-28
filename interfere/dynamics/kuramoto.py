@@ -14,10 +14,8 @@ from typing import Optional, Callable
 from warnings import warn
 
 import numpy as np
-from pyclustering.nnet.fsync import fsync_network
 
 from .base import StochasticDifferentialEquation, DEFAULT_RANGE
-from .pyclustering_utils import CONN_TYPE_MAP
 from ..utils import copy_doc
 
 
@@ -35,7 +33,7 @@ def kuramoto_intervention_wrapper(
         kuramoto_intervention (callable): arcsin(intervention(x, t)).
     """
     
-    def kuramoto_intervention(x: np.array, t: float):
+    def kuramoto_intervention(x: np.ndarray, t: float) -> np.ndarray:
         """Wraps intervention in arcsin(x)"""
         x_do = intervention(x, t)
         altered = x_do != x
@@ -94,15 +92,19 @@ class Kuramoto(StochasticDifferentialEquation):
         super().__init__(dim, measurement_noise_std)
 
 
-    @copy_doc(StochasticDifferentialEquation.simulate)
-    def simulate(
+    @copy_doc(StochasticDifferentialEquation._simulate)
+    def _simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         dW: Optional[np.ndarray] = None,
-    ) -> np.ndarray:        
+    ) -> np.ndarray:
+        
+        initial_condition = prior_states[-1:, :]
+
         # Check initial condition.
         if np.any(np.abs(initial_condition) > 1):
             warn("Kuramoto Models require initial conditions in "
@@ -121,9 +123,10 @@ class Kuramoto(StochasticDifferentialEquation):
         measurement_noise_std = self.measurement_noise_std
         self.measurement_noise_std = None
 
-        X_do = super().simulate(
+        X_do = super()._simulate(
+            t,
             theta0,
-            time_points,
+            prior_t=prior_t,
             intervention=intervention,
             rng=rng,
             dW=dW
@@ -139,7 +142,7 @@ class Kuramoto(StochasticDifferentialEquation):
         return X_do
 
 
-    def drift(self, theta: np.ndarray, t: float):
+    def drift(self, theta: np.ndarray, t: float) -> np.ndarray:
         one = np.ones(self.dim)
         prefactor = self.K / self.dim
         theta_j = np.outer(one, theta)
@@ -148,7 +151,7 @@ class Kuramoto(StochasticDifferentialEquation):
         return self.omega + prefactor * (
             self.adjacency_matrix * np.sin(theta_j - theta_i)).dot(one)
         
-    def noise(self, theta: np.ndarray, t):
+    def noise(self, theta: np.ndarray, t) -> np.ndarray:
         return self.Sigma
 
 
@@ -193,7 +196,7 @@ class KuramotoSakaguchi(Kuramoto):
         super().__init__(
             omega, K, adjacency_matrix, sigma, measurement_noise_std)
 
-    def drift(self, theta: np.ndarray, t: float):
+    def drift(self, theta: np.ndarray, t: float) -> np.ndarray:
         one = np.ones(self.dim)
         prefactor = self.K / self.dim
         theta_j = np.outer(one, theta)
@@ -202,133 +205,3 @@ class KuramotoSakaguchi(Kuramoto):
         return self.omega + prefactor * (
             self.adjacency_matrix * np.sin(
                 theta_j - theta_i - self.phase_frustration)).dot(one)
-
-
-class StuartLandauKuramoto(StochasticDifferentialEquation):
-
-    def __init__(
-        self,
-        omega: np.ndarray,
-        rho: np.ndarray,
-        K: float,
-        sigma: float = 0,
-        type_conn = "all_to_all",
-        convert_to_real = True,
-        measurement_noise_std: Optional[np.ndarray] = None
-    ):
-        """
-        Model of an oscillatory network that uses Landau-Stuart oscillator and Kuramoto model as a synchronization mechanism.
-    
-        The dynamics of each oscillator in the network is described by following differential Landau-Stuart equation with feedback:
-    
-        dz_j/dt = (i omega_j + rho_j^2 - |z_j|^2) z_j  # Stuart-landau part
-                + (K/N) sum_{k=0}^N A_jk (z_k - z_j)  # Kuramoto part
-    
-        where i is the complex number, omega_j is the natural frequency, rho_j
-        is the radius.
-
-        Args:
-            omega (np.ndarray): 1D array of natural frequencies
-            rho (np.ndarray): Radius of oscillators that affects amplitude. 1D
-                array with the same length as omega
-            K (float): Coupling strength between oscillators.
-            sigma (float): Scale of the brownian increments. Model is
-                deterministic when sigma == 0.
-            type_conn (str): Type of connection between oscillators. One
-                of ["all_to_all", "grid_four", "grid_eight", "list_bdir",
-                "dynamic"]. See pyclustering.nnet.__init__::conn_type for
-                details.
-            convert_to_real (bool): If true, self.simulate returns only the 
-                real part or the time series.
-            measurement_noise_std (ndarray): None, or a vector with shape (n,)
-                where each entry corresponds to the standard deviation of the
-                measurement noise for that particular dimension of the dynamic
-                model. For example, if the dynamic model had two variables x1
-                and x2 and measurement_noise_std = [1, 10], then independent
-                gaussian noise with standard deviation 1 and 10 will be added to
-                x1 and x2 respectively at each point in time. 
-    """
-        dim = len(omega)
-        if len(rho) != dim:
-            raise ValueError("omega and rho arguments must have the same size.")
-        
-        self.omega = omega
-        self.rho = rho
-        self.K = K
-        self.sigma = sigma
-        self.type_conn = type_conn
-        self.convert_to_real = convert_to_real
-
-        # Make independent noise matrix.
-        self.Sigma = sigma * np.diag(np.ones(dim))
-
-        # Initialize the pyclustering model.
-        self.pyclustering_model = fsync_network(
-            dim, omega, rho, K, CONN_TYPE_MAP[type_conn])
-        
-        super().__init__(dim, measurement_noise_std)
-
-    @copy_doc(StochasticDifferentialEquation.simulate)
-    def simulate(
-        self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
-        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
-        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        dW: Optional[np.ndarray] = None,
-    ) -> np.ndarray:
-        # Must have a complex initial condition.
-        z0 = np.array(initial_condition, dtype=np.complex128)
-        Z_do = super().simulate(
-            z0,
-            time_points,
-            intervention=intervention,
-            rng=rng,
-            dW=dW
-        )
-        if self.convert_to_real:
-            Z_do = np.real(Z_do)
-        return Z_do
-
-    def drift(self, z: np.ndarray, t: float):
-        """Deterministic part of Stuart-Landau-Kuramoto dynamics.
-        
-        The pyclustering.nnet.fsync model uses an internal amplitude attribute
-        (which is the observed node states) to compute the kuramoto
-        synchronization. This internal amplitude is only
-        updated on observed timesteps, however, the ode solver is used at a
-        small scale to perform updates BETWEEN timesteps with neighbor amplitude
-        held constant and equal to the stored amplitude.
-         
-        We overwrite fsync_network.__amplitude here to compute instinataneous
-        dynamics without the update delay that is built into the pyclustering
-        model.
-
-        Args:
-            z (complex np.ndarray): 1d array of current state. Complex numbers.
-            t (float): Current time.
-        """
-        z_column = z.reshape(-1, 1)
-        # In pyclustering.nnet.fysnc.fsync_dynamic.simulate 
-        self.pyclustering_model._fsync_dynamic__amplitude = z_column
-
-        # The function _fsync_network__calculate_amplitude accepts and returns
-        # 2 float64s  to represent the complex numbers. We convert
-        # the imaginary numbers to 2 floats before passing to the function.
-        z_2d_float = z_column.view(np.float64)
-        
-        # We call the function on each node. Then we stack the 2D outputs into
-        # A (self.dim x 2) array.
-        dz_2d = np.vstack([
-            self.pyclustering_model._fsync_network__calculate_amplitude(
-                z_2d_float[node_index, :], t, node_index)
-            for node_index in range(self.dim)
-        ])
-
-        # Last we convert the real representation to a 1D imaginary array
-        dz = dz_2d.view(np.complex128)[:, 0]
-        return dz
-    
-    def noise(self, x: np.ndarray, t: float):
-        """Independent noise matrix scaled by scalar sigma in self.__init__."""
-        return self.Sigma

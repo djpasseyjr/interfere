@@ -1,7 +1,5 @@
 from .base import (
-    DynamicModel, 
-    generate_counterfactual_dynamics,
-    generate_counterfactual_forecasts
+    DynamicModel
 )
 from . import benchmarking
 from . import dynamics

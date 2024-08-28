@@ -70,7 +70,7 @@ def check_simulate_method(
 
     # Check output shape
     rng = np.random.default_rng(10)
-    X = model.simulate(x0, t, rng=rng)
+    X = model.simulate(t, x0, rng=rng)
     assert X.shape == (m, n), (
         f"Output is the wrong shape"" for {model}.")
 
@@ -87,17 +87,17 @@ def check_simulate_method(
 
     # Check that random state works correctly
     rng = np.random.default_rng(10)
-    X_rerun = model.simulate(x0, t, rng=rng)
+    X_rerun = model.simulate(t, x0, rng=rng)
     assert np.all(X == X_rerun), (
         f"Random state does not preserve noise for {model}.")
     
     # Check that model is not deterministic
-    X_new_realization = model.simulate(x0, t, rng=rng)
+    X_new_realization = model.simulate(t, x0, rng=rng)
     assert not np.all(X == X_new_realization)
 
     # Apply an intervention
     rng = np.random.default_rng(10)
-    X_do = model.simulate(x0, t, intervention=g, rng=rng)
+    X_do = model.simulate(t, x0, intervention=g, rng=rng)
     assert X_do.shape == (m, n), (
         f"Incorrect output size after intervention for {model}.")
     
@@ -106,7 +106,7 @@ def check_simulate_method(
 
     # Make sure that random state works for interventions
     rng = np.random.default_rng(10)
-    X_do_rerun = model.simulate(x0, t, intervention=g, rng=rng)
+    X_do_rerun = model.simulate(t, x0, intervention=g, rng=rng)
     assert np.allclose(X_do, X_do_rerun), (f"Random state does not preserve "
                                           "values after intervention for "
                                           " {model}.")
@@ -153,12 +153,12 @@ def test_lotka_voltera():
     # Test that for both interventions, the interfere API
     # correctly matches the ground truth system.
     true_perf_X = integrate.odeint(perf_int_true_deriv, x0, t)
-    interfere_perf_X = model.simulate(x0, t, perf_interv)
+    interfere_perf_X = model.simulate(t, x0, intervention=perf_interv)
     assert np.allclose(true_perf_X, interfere_perf_X)
 
     x0[interv_idx] = np.sin(t[0])
     true_sin_X = integrate.odeint(sin_int_true_deriv, x0, t)
-    interfere_sin_X = model.simulate(x0, t, sin_interv)
+    interfere_sin_X = model.simulate(t, x0, intervention=sin_interv)
     assert np.allclose(true_sin_X, interfere_sin_X)
 
     # Standard checks for intervene.base.DynamicModel objects
@@ -187,7 +187,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
     # Check that the model.simulate API Euler Maruyama integrator is correct
     Xtrue = sdeint.itoEuler(model.drift, model.noise, x0, tspan, dW = dW)
-    Xsim = model.simulate(x0, tspan, dW=dW)
+    Xsim = model.simulate(tspan, x0, dW=dW)
     assert np.mean((Xtrue - Xsim) ** 2) < 0.01
 
     # Check that using the same generator corresponds exactly with sdeint
@@ -197,7 +197,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
     seed = 11
     rng = np.random.default_rng(seed)
-    Xsim = model.simulate(x0, tspan, rng=rng)
+    Xsim = model.simulate(tspan, x0, rng=rng)
 
     assert np.mean((Xtrue - Xsim) ** 2) < 0.01
 
@@ -230,8 +230,8 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
     rng = np.random.default_rng(seed)
     X_perf_inter_sim = model.simulate(
-        x0,
         tspan,
+        x0,
         intervention=intervention,
         rng=rng,
         dW=dW
@@ -254,23 +254,19 @@ def test_coupled_logistic_map():
 
 def test_coupled_map_lattice():
 
-    rng = np.random.default_rng(10)
-    ndims = 10
-
+    ndims = 4
     for cml in COUPLED_MAP_LATTICES:
         model = cml(ndims)
-        x0 = rng.random(10)
         # Standard checks for intervene.base.DynamicModel objects
         check_simulate_method(model)
 
 
 def test_stochastic_coupled_map_lattice():
 
-    rng = np.random.default_rng(10)
-    ndims = 10
+    ndims = 4
 
     for cml in COUPLED_MAP_LATTICES:
-        model = cml(ndims, sigma=0.1)
+        model = cml(ndims, sigma=0.01)
         # Standard checks for intervene.base.DynamicModel objects
         check_simulate_method(model)
 
@@ -331,7 +327,7 @@ def test_geometric_brownian_motion():
     time_points = np.linspace(0, 10, m)
     x0 = np.ones(n)
     dW = np.random.randn(m, n)
-    X = model.simulate(x0, time_points, rng=rng, dW=dW)
+    X = model.simulate(time_points, x0, rng=rng, dW=dW)
 
     assert X.shape == (m, n)
 
@@ -340,7 +336,7 @@ def test_geometric_brownian_motion():
     assert np.all(np.abs(diff) < 0.25)
 
     f = interfere.perfect_intervention(0, 10)
-    Xdo = model.simulate(x0, time_points, f, rng=rng, dW=dW)
+    Xdo = model.simulate(time_points, x0, intervention=f, rng=rng, dW=dW)
 
     assert np.any(Xdo != X)
     assert np.all(Xdo[:, 1:] == X[:, 1:])
@@ -379,8 +375,11 @@ def test_varma():
         theta_matrices=[np.zeros((3,3))],
         sigma=sigma
     )
+
+    t = np.arange(steps)
+
     varma_sim = np.stack([
-        model.simulate(initial_vals, time_points=np.arange(steps))
+        model.simulate(t, initial_vals)
         for i in range(nsims)
     ], axis=0)
     # Average over the 10000 simulations to compute the expected trajectory.
@@ -425,3 +424,5 @@ def test_hodgkin_huxley():
     sigma = 0.1
     model = interfere.dynamics.HodgkinHuxleyPyclustering(stimulus, sigma)
     check_simulate_method(model)
+
+test_coupled_map_lattice()

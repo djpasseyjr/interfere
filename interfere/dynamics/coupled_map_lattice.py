@@ -18,17 +18,18 @@ import numpy as np
 
 from .base import DiscreteTimeDynamics
 from ..base import DEFAULT_RANGE
+from ..utils import copy_doc
 
 
-def logistic_map(x: np.ndarray, alpha: float = 3.72):
+def logistic_map(x: np.ndarray, alpha: float = 3.72) -> float:
     return alpha * x * (1 - x)
 
 
-def quadradic_map(x: np.ndarray, alpha:float = 1.45):
+def quadradic_map(x: np.ndarray, alpha:float = 1.45) -> float:
     return 1 - alpha * x ** 2
 
 
-def mod_interval(x: np.ndarray, a: float, b: float):
+def mod_interval(x: np.ndarray, a: float, b: float) -> float:
     """Applies the mod operation to ensure each element of x is in (a, b).
 
     Uses
@@ -106,7 +107,9 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         super().__init__(self.adjacency_matrix.shape[0], measurement_noise_std)
 
     
-    def step(self, x: np.ndarray, t: float, rng: np.random.mtrand.RandomState):
+    def step(
+        self, x: np.ndarray, time: float, rng: np.random.mtrand.RandomState
+    ) -> np.ndarray:
         """One step forward in time for a coupled map lattice
 
         A coupled map lattice where coupling is determined by
@@ -120,63 +123,44 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         x_next /= self.row_sums
         return x_next
     
-
-    def simulate(
+    @copy_doc(DiscreteTimeDynamics._simulate)
+    def _simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
-        """Runs a simulation of a coupled map lattice.
-
-        Args:
-            initial_condition (ndarray): A (m,) array of the initial
-                condition of the dynamic model.
-            time_points (ndarray): A (n,) array of the time points where the   
-                dynamic model will be simulated. Must be integers
-            intervention (callable): A function that accepts (1) a vector of the
-                current state of the dynamic model and (2) the current time. It should return a modified state. The function will be used in the
-                following way: 
-                    
-                If the dynamic model without the intervention can be described 
-                as
-                    x(t+dt) = F(x(t))
-
-                where dt is the timestep size, x(t) is the trajectory, and F is
-                the function that uses the current state to compute the state at
-                the next timestep. Then the intervention function will be used
-                to simulate the system
-
-                    z(t+dt) = F(g(z(t), t), t)
-                    x_do(t) = g(z(t), t)
-
-                where x_do is the trajectory of the intervened system and g is 
-                the intervention function.
-            rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
-                random number generator by default.)
-
-        Returns:
-            X: An (n, m) array containing a realization of the trajectory of 
-                the m dimensional system corresponding to the n times in 
-                `time_points`. The first p rows contain the initial condition/
-                history of the system and count towards n.
-        """
+        initial_condition = prior_states[-1:, :]
+        
         if self.tsteps_btw_obs == 1:
-            return super().simulate(
-                initial_condition, time_points, intervention, rng)
+            return super()._simulate(
+                t, prior_states, prior_t, intervention, rng)
         else:
             # Simulate longer and then down sample.
             warn("Intervention is ambiguous for downsampled systems. Current "
                  "implementation freezes time between observations.")
             obs = [initial_condition]
-            for t in time_points[1:]:
+            t_prev = t[0]
+            for ti in t[1:]:
                 # Use the last observation as initial condition.
-                x_i = obs[-1]
-                frozen_times = t * np.ones(self.tsteps_btw_obs + 1)
-                Xstep = super().simulate(x_i, frozen_times, intervention, rng)
-                # The last state is the next obersved state.
-                obs += [Xstep[-1, :]]
+                xi = obs[-1]
+                frozen_times = np.hstack([
+                    [t_prev],
+                    ti * np.ones(self.tsteps_btw_obs + 1)
+                ])
+                Xstep = super()._simulate(
+                    frozen_times,
+                    xi,
+                    prior_t=np.array([t_prev]),
+                    intervention=intervention,
+                    rng=rng
+                )
+                # The last state is the next observed state.
+                obs += [Xstep[-1:, :]]
+                # Current time will be previous time in next iteration.
+                t_prev = ti
 
             X = np.vstack(obs)
             return X
@@ -257,7 +241,9 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
 
 
     
-    def step(self, x: np.ndarray, t: float, rng: np.random.mtrand.RandomState):
+    def step(
+        self, x: np.ndarray, time: float, rng: np.random.mtrand.RandomState
+    ) -> np.ndarray:
         """One step forward in time for a stochastic coupled map lattice.
 
         A stochastic coupled map lattice where coupling is determined by
@@ -268,19 +254,19 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         where w[n] ~ N(0, sigma) and x_i is constrained to be in the interval
         (self.x_min, self.x_max).
         """
-        x_next = super().step(x, t, rng) 
+        x_next = super().step(x, time, rng) 
 
         # This check enables sigma == 0.0 to generate deterministic dynamics.
         if self.sigma != 0.0:
             x_next += rng.normal(0, self.sigma, size=self.dim)
 
-            # See if the state is within boundary and apply appropriate transform. 
-            if self.boundary_condition == "mod":
-                x_next = mod_interval(x_next, self.x_min, self.x_max)
+        # See if the state is within boundary and apply appropriate transform. 
+        if self.boundary_condition == "mod":
+            x_next = mod_interval(x_next, self.x_min, self.x_max)
 
-            elif self.boundary_condition == "truncate":
-                x_next[x_next < self.x_min] = self.x_min
-                x_next[x_next > self.x_max] = self.x_max
+        elif self.boundary_condition == "truncate":
+            x_next[x_next < self.x_min] = self.x_min
+            x_next[x_next > self.x_max] = self.x_max
 
         return x_next
 
@@ -291,7 +277,7 @@ def coupled_logistic_map(
     eps=0.5,
     sigma=0.0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Initializes an N-dimensional coupled logistic map model.
     
     A coupled map lattice where coupling is determined by the passed
@@ -338,7 +324,7 @@ def stochastic_coupled_map_1dlattice(
     sigma: float = 0.0,
     tsteps_btw_obs: int = 1,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific CoupledMapLattice where the lattice is 1D.
 
     The dynamics are governed by the following equation:
@@ -350,7 +336,7 @@ def stochastic_coupled_map_1dlattice(
     sigma = 0 will result in a deterministic system.
 
     Args:
-        ndmis: The number of nodes in the 1D lattice.
+        dim: The number of nodes in the 1D lattice.
         alpha: The quadratic map parameter (1 - alpha * x^2)
         eps: The lattice coupling parameter.
         sigma (float): The standard deviation of the additive gaussian noise
@@ -382,9 +368,10 @@ def stochastic_coupled_map_1dlattice(
 
 
 def coupled_map_1dlattice_frozen_chaos(
-    dim: int=10, sigma: float=0,
+    dim: int=10,
+    sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -400,7 +387,7 @@ def coupled_map_1dlattice_frozen_chaos(
         alpha = 1.45
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim: The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -412,13 +399,13 @@ def coupled_map_1dlattice_frozen_chaos(
             will be added to x1 and x2 respectively at each point in time.
     """
     return stochastic_coupled_map_1dlattice(
-        dim, 1.45, 0.2, measurement_noise_std=measurement_noise_std)
+        dim, 1.45, 0.2, sigma, measurement_noise_std=measurement_noise_std)
 
     
 def coupled_map_1dlattice_pattern_selection(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -434,7 +421,7 @@ def coupled_map_1dlattice_pattern_selection(
         alpha = 1.71
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -446,12 +433,12 @@ def coupled_map_1dlattice_pattern_selection(
             will be added to x1 and x2 respectively at each point in time.
     """
     return stochastic_coupled_map_1dlattice(
-        dim, 1.71, 0.4, measurement_noise_std=measurement_noise_std)
+        dim, 1.71, 0.4, sigma, measurement_noise_std=measurement_noise_std)
 
 def coupled_map_1dlattice_chaotic_brownian(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -467,7 +454,7 @@ def coupled_map_1dlattice_chaotic_brownian(
         alpha = 1.85
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -479,14 +466,13 @@ def coupled_map_1dlattice_chaotic_brownian(
             will be added to x1 and x2 respectively at each point in time.
     """
     return stochastic_coupled_map_1dlattice(
-        dim, 1.85, 0.1, sigma=sigma,
-        measurement_noise_std=measurement_noise_std)
+        dim, 1.85, 0.1, sigma, measurement_noise_std=measurement_noise_std)
 
 
 def coupled_map_1dlattice_defect_turbulence(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -502,7 +488,7 @@ def coupled_map_1dlattice_defect_turbulence(
         alpha = 1.895
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -521,7 +507,7 @@ def coupled_map_1dlattice_defect_turbulence(
 def coupled_map_1dlattice_spatiotemp_intermit1(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -538,7 +524,7 @@ def coupled_map_1dlattice_spatiotemp_intermit1(
         and only observed every 12 time steps.
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -557,7 +543,7 @@ def coupled_map_1dlattice_spatiotemp_intermit1(
 def coupled_map_1dlattice_spatiotemp_intermit2(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -573,7 +559,7 @@ def coupled_map_1dlattice_spatiotemp_intermit2(
         alpha = 1.75
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -592,7 +578,7 @@ def coupled_map_1dlattice_spatiotemp_intermit2(
 def coupled_map_1dlattice_spatiotemp_chaos(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -608,7 +594,7 @@ def coupled_map_1dlattice_spatiotemp_chaos(
         alpha = 2.0
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -627,7 +613,7 @@ def coupled_map_1dlattice_spatiotemp_chaos(
 def coupled_map_1dlattice_traveling_wave(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -644,7 +630,7 @@ def coupled_map_1dlattice_traveling_wave(
         and only observed every 2000 time steps.
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)
@@ -663,7 +649,7 @@ def coupled_map_1dlattice_traveling_wave(
 def coupled_map_1dlattice_chaotic_traveling_wave(
     dim: int=10, sigma: float=0,
     measurement_noise_std: Optional[np.ndarray] = None
-):
+) -> StochasticCoupledMapLattice:
     """Intitializes a specific parameterization of a CoupledMapLattice.
 
     Parameters taken from S2.3.1 of the supplimental material of
@@ -680,7 +666,7 @@ def coupled_map_1dlattice_chaotic_traveling_wave(
         and only observed every 5000 time steps.
 
     Args:
-        ndmis: The number of nodes in the model.
+        dim (int): The number of nodes in the model.
         sigma (float): The standard deviation of the additive gaussian noise
             in the model.
         measurement_noise_std (ndarray): None, or a vector with shape (n,)

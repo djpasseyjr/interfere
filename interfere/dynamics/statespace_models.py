@@ -26,13 +26,14 @@ class VARMA_Dynamics(DynamicModel):
         See S2.2 of the supplimental material in Cliff et. al 2023, "Unifying pairwise..."
 
         Args:
-            phi_matrices: A list of p (nxn) numpy arrays. The autoregressive
-                components of the model. The ith array corresponds to phi_i in the formula above.
-            theta_matrices: A list of q (nxn) numpy arrays. The moving average
-                component of the model. The ith array corresponds to theta_i in
-                the formula above.
-            sigma: A (nxn) symmetric positive definite numpy array. The
-                covariance of the noise.
+            phi_matrices (ndarray): A list of p (nxn) numpy arrays. The 
+                autoregressive components of the model. The ith array 
+                corresponds to phi_i in the formula above.
+            theta_matrices (ndarray): A list of q (nxn) numpy arrays. The moving
+                average component of the model. The ith array corresponds to
+                theta_i in the formula above.
+            sigma (ndarray): A (nxn) symmetric positive definite numpy array.
+                The covariance of the noise.
             measurement_noise_std (ndarray): None, or a vector with shape (n,)
                 where each entry corresponds to the standard deviation of the
                 measurement noise for that particular dimension of the dynamic
@@ -54,28 +55,41 @@ class VARMA_Dynamics(DynamicModel):
         self.sigma = sigma
         super().__init__(n, measurement_noise_std)
 
-    def simulate(
+    def _simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
-        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]=None,
-        rng: np.random.mtrand.RandomState = DEFAULT_RANGE
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
+        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+        **kwargs
     ) -> np.ndarray:
         """Simulates the VARMA model with arbitrary interventions.
 
         Args:
-            initial_condition (ndarray): A (p, m) array of the initial
-                condition of the dynamic model.
-            time_points (ndarray): A (n,) array of the time points where the   
-                dynamic model will be simulated. Must be integers
+            t (ndarray): A (n,) array of the time points where the   
+                dynamic model will be simulated. The first entry of `t` must
+                equal the last entry of `prior_t`. If `prior_t` is None, then
+                the values of `prior_t` will be assumed to be evenly spaced time
+                values ending with the first entry of `t`. If `t` does not
+                contain evenly spaced time values, then the inference of
+                `prior_t` will throw an error.
+            prior_states (ndarray): A (m,) or (p, m) array of the initial
+                condition or the prior states of the system.
+            prior_t (ndarray): A time array with shape (p,) corresponding to the
+                rows of `prior_states`. The last entry of `prior_t` must equal
+                the first entry of `t`. If `prior_t` is None, then
+                the values of `prior_t` will be assumed to be evenly spaced time
+                values ending with the first entry of `t`. If `t` does not
+                contain evenly spaced time values, then the inference of
+                `prior_t` will throw an error.
             intervention (callable): A function that accepts (1) a vector of the
                 current state of the dynamic model and (2) the current time. It should return a modified state. The function will be used in the
-                following way: 
-                    
-                If the dynamic model without the intervention can be described 
+                following way. If the dynamic model without the intervention can be described 
                 as
-                    x(t+dt) = F(x(t))
-
+                
+                x(t+dt) = F(x(t))
+                
                 where dt is the timestep size, x(t) is the trajectory, and F is
                 the function that uses the current state to compute the state at
                 the next timestep. Then the intervention function will be used
@@ -86,20 +100,20 @@ class VARMA_Dynamics(DynamicModel):
 
                 where x_do is the trajectory of the intervened system and g is 
                 the intervention function.
-            rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
-                random number generator by default.)
-        
+            rng (RandomState): A numpy random state for reproducibility. (Uses 
+                numpy's mtrand random number generator by default.)
+
         Returns:
-            X: An (n, m) array containing a realization of the trajectory of 
-                the m dimensional system corresponding to the n times in 
-                `time_points`. The first p rows contain the initial condition/
-                history of the system and count towards n.
+            X (ndarray): An (n, m) array containing a realization of the   
+                trajectory of the m dimensional system corresponding to the n
+                times in `t`. The first row of X contains the last row of 
+                `prior_states`.
         """
+        initial_condition = prior_states
         p = len(self.phi_matrices)
         q = len(self.theta_matrices)
         _, m = self.phi_matrices[0].shape
 
-        initial_condition = initial_condition.reshape(-1, m)
         n_initial_obs, _ = initial_condition.shape
 
         if n_initial_obs < max(p, q):
@@ -107,11 +121,11 @@ class VARMA_Dynamics(DynamicModel):
             time_steps_needed = max(p, q) - n_initial_obs
             initial_condition = np.vstack([
                     np.zeros(m) for i in range(time_steps_needed)
-                ] + [initial_condition]
+                ] + [prior_states]
             )
         
         
-        n = len(time_points)
+        n = len(t)
         X = np.zeros((n, m))
 
         # Assign initial condition
@@ -142,7 +156,7 @@ class VARMA_Dynamics(DynamicModel):
 
             # Optional intervention
             if intervention is not None:
-                x_next = intervention(x_next, time_points[i])
+                x_next = intervention(x_next, t[i])
 
             X[p+i, :] = x_next
 

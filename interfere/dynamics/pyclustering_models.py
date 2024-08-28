@@ -3,12 +3,22 @@ from typing import Callable, Optional
 import numpy as np
 from pyclustering.nnet.hhn import hhn_network, hhn_parameters
 from pyclustering.nnet.legion import legion_network, legion_parameters
+from pyclustering.nnet import conn_type
+from pyclustering.nnet.fsync import fsync_network
 
 from .base import (
     StochasticDifferentialEquation, DEFAULT_RANGE, DiscreteTimeDynamics
 )
-from .pyclustering_utils import CONN_TYPE_MAP
 from ..utils import copy_doc
+
+# Maps string arguments to pyclustering arguments
+CONN_TYPE_MAP = {
+    "all_to_all": conn_type.ALL_TO_ALL,
+    "grid_four": conn_type.GRID_FOUR,
+    "grid_eight": conn_type.GRID_EIGHT,
+    "list_bdir": conn_type.LIST_BIDIR,
+    "dynamic": conn_type.DYNAMIC
+}
 
 # Default LEGION parameters
 DEFAULT_LEGION_PARAMETERS = legion_parameters()
@@ -133,15 +143,19 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         
         super().__init__(dim, measurement_noise_std)
 
-    @copy_doc(StochasticDifferentialEquation.simulate)
-    def simulate(
+    @copy_doc(StochasticDifferentialEquation._simulate)
+    def _simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         dW: Optional[np.ndarray] = None,
     ) -> np.ndarray:
+
+        # Model expects 1D initial condition.
+        initial_condition = prior_states[-1, :]
         
         # Initialize pyclustering model.
         self.hhn_model = hhn_network(
@@ -159,14 +173,14 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         ]
 
         # Allocate array to hold observed states.
-        m = len(time_points)
+        m = len(t)
         X_do = np.zeros((m, self.dim), dtype=initial_condition.dtype)
 
         # Optionally apply intervention to initial condition
         if intervention is not None:
             initial_condition = intervention(
                 initial_condition.copy(),
-                time_points[0]
+                t[0]
             )
         X_do[0, :] = initial_condition
 
@@ -174,7 +188,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         self.hhn_model._membrane_potential = list(initial_condition)
 
         # Compute timestep size.
-        dt = (time_points[-1] - time_points[0]) / m
+        dt = (t[-1] - t[0]) / m
 
         if dW is None:
             # Generate sequence of weiner increments
@@ -188,15 +202,15 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
             self.hhn_model._central_element)
         N = np.zeros((num_neurons, 4))
 
-        for i, t in zip(range(m - 1), time_points):
+        for i, ti in zip(range(m - 1), t):
             # Current state of the model.
             x = X_do[i, :]
 
             # Noise differential.
-            dw = self.noise(x, t) @ dW[i, :]
+            dw = self.noise(x, i) @ dW[i, :]
 
             # Deterministic change in neuron states.
-            dN = self.drift(N, t) * dt
+            dN = self.drift(N, ti) * dt
 
             # Add noise (to membrane potential only).
             dN[:self.dim, 0] += dw
@@ -207,7 +221,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
             # Optionally apply the intervention (to membrane potential only).
             if intervention is not None:
                 next_N[:self.dim, 0] = intervention(
-                    next_N[:self.dim, 0], time_points[i + 1])
+                    next_N[:self.dim, 0], t[i + 1])
                 
                 # Intervene on pyclustering model internal potential
                 self.hhn_model._membrane_potential = list(next_N[:self.dim, 0])
@@ -216,7 +230,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
             X_do[i + 1, :] = next_N[:self.dim, 0]
 
             # Update internal model neuron states
-            self.step(next_N, t, dt, rng)
+            self.step(next_N, ti, dt, rng)
 
             # Update neuron state array.
             N = next_N
@@ -229,7 +243,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         
         
     def step(
-        self, N: np.ndarray, t: float, dt: float, rng: np.random.RandomState):
+        self, N: np.ndarray, ti: float, dt: float, rng: np.random.RandomState):
         """Discrete time dynamics, to be computed after continuous time updates.
 
         Args:
@@ -253,14 +267,14 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
         # Updating states of peripheral neurons
         self.hhn_model._hhn_network__update_peripheral_neurons(
-            t, dt, *N[:num_periph, :].T)
+            ti, dt, *N[:num_periph, :].T)
         
         # Updation states of central neurons
         self.hhn_model._hhn_network__update_central_neurons(
-            t, *N[num_periph:, :].T)
+            ti, *N[num_periph:, :].T)
 
 
-    def drift(self, N, t):
+    def drift(self, N: np.ndarray, ti: float) -> np.ndarray:
         """Computes the deterministic derivative of the model."""
 
         num_neurons = self.hhn_model._num_osc + len(
@@ -284,7 +298,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
             ]
 
             # Compute the derivative of each state.
-            dN[i] = self.hhn_model.hnn_state(neuron_state, t, i)
+            dN[i] = self.hhn_model.hnn_state(neuron_state, ti, i)
 
         # Central neuron derivatives.
         for i in range(len(self.hhn_model._central_element)):
@@ -299,13 +313,13 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
             # Compute the derivative of each state.
             dN[self.hhn_model._num_osc + i] = self.hhn_model.hnn_state(
-                central_neuron_state, t, self.hhn_model._num_osc + i
+                central_neuron_state, ti, self.hhn_model._num_osc + i
             )
 
         return dN
 
 
-    def noise(self, x: np.ndarray, t: float):
+    def noise(self, x: np.ndarray, ti: float) -> np.ndarray:
         return self.Sigma
 
 
@@ -352,14 +366,19 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         super().__init__(num_neurons, measurement_noise_std)
 
 
-    @copy_doc(DiscreteTimeDynamics.simulate)
-    def simulate(
+    @copy_doc(DiscreteTimeDynamics._simulate)
+    def _simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-    ):
+        dW: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        
+        initial_condition = prior_states[-1:, :]
+
         self.legion_model = legion_network(
             self.dim // 2,
             self.parameters,
@@ -367,20 +386,25 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
             ccore=False
         )
         # Assumes equally spaced time points.
-        self.dt = (time_points[-1] - time_points[0]) / len(time_points)
+        self.dt = (t[-1] - t[0]) / len(t)
 
 
-        X_do = super().simulate(
-            initial_condition, time_points, intervention, rng)
+        X_do = super()._simulate(
+            t,
+            initial_condition,
+            intervention=intervention,
+            rng=rng
+        )
         return X_do
     
 
+    @copy_doc(DiscreteTimeDynamics.step)
     def step(
         self,
         x: np.ndarray,
-        t: float = None,
+        time: float = None,
         rng: np.random.RandomState = None,
-    ):
+    ) -> np.ndarray:
 
         # Unpack the state of the excitatory and inhibitory neurons
         x_excite = x[:self.num_excite]
@@ -391,7 +415,7 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         self.legion_model._global_inhibitor = list(x_inhib)
 
         # Calulate next states and extract them.
-        self.legion_model._calculate_states(0, t, self.dt, self.dt/10)
+        self.legion_model._calculate_states(0, time, self.dt, self.dt/10)
         x_next = np.hstack([
             self.legion_model._excitatory, self.legion_model._global_inhibitor
         ])
@@ -401,3 +425,137 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
             x_next +=  self.Sigma @ rng.normal(0.0, np.sqrt(self.dt))
 
         return x_next
+    
+
+class StuartLandauKuramoto(StochasticDifferentialEquation):
+
+    def __init__(
+        self,
+        omega: np.ndarray,
+        rho: np.ndarray,
+        K: float,
+        sigma: float = 0,
+        type_conn = "all_to_all",
+        convert_to_real = True,
+        measurement_noise_std: Optional[np.ndarray] = None
+    ):
+        """
+        Model of an oscillatory network that uses Landau-Stuart oscillator and Kuramoto model as a synchronization mechanism.
+    
+        The dynamics of each oscillator in the network is described by following differential Landau-Stuart equation with feedback:
+    
+        dz_j/dt = (i omega_j + rho_j^2 - |z_j|^2) z_j  # Stuart-landau part
+                + (K/N) sum_{k=0}^N A_jk (z_k - z_j)  # Kuramoto part
+    
+        where i is the complex number, omega_j is the natural frequency, rho_j
+        is the radius.
+
+        Args:
+            omega (np.ndarray): 1D array of natural frequencies.
+            rho (np.ndarray): Radius of oscillators that affects amplitude. 1D
+                array with the same length as omega.
+            K (float): Coupling strength between oscillators.
+            sigma (float): Scale of the brownian increments. Model is
+                deterministic when sigma == 0.
+            type_conn (str): Type of connection between oscillators. One
+                of ["all_to_all", "grid_four", "grid_eight", "list_bdir",
+                "dynamic"]. See pyclustering.nnet.__init__::conn_type for
+                details.
+            convert_to_real (bool): If true, self.simulate returns only the 
+                real part or the time series.
+            measurement_noise_std (ndarray): None, or a vector with shape (n,)
+                where each entry corresponds to the standard deviation of the
+                measurement noise for that particular dimension of the dynamic
+                model. For example, if the dynamic model had two variables x1
+                and x2 and measurement_noise_std = [1, 10], then independent
+                gaussian noise with standard deviation 1 and 10 will be added to
+                x1 and x2 respectively at each point in time. 
+    """
+        dim = len(omega)
+        if len(rho) != dim:
+            raise ValueError("omega and rho arguments must have the same size.")
+        
+        self.omega = omega
+        self.rho = rho
+        self.K = K
+        self.sigma = sigma
+        self.type_conn = type_conn
+        self.convert_to_real = convert_to_real
+
+        # Make independent noise matrix.
+        self.Sigma = sigma * np.diag(np.ones(dim))
+
+        # Initialize the pyclustering model.
+        self.pyclustering_model = fsync_network(
+            dim, omega, rho, K, CONN_TYPE_MAP[type_conn])
+        
+        super().__init__(dim, measurement_noise_std)
+
+
+    @copy_doc(StochasticDifferentialEquation._simulate)
+    def _simulate(
+        self,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
+        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+        dW: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        initial_condition = prior_states[-1:, :]
+        # Must have a complex initial condition.
+        z0 = np.array(initial_condition, dtype=np.complex128)
+        Z_do = super()._simulate(
+            t,
+            z0,
+            prior_t,
+            intervention=intervention,
+            rng=rng,
+            dW=dW
+        )
+        if self.convert_to_real:
+            Z_do = np.real(Z_do)
+        return Z_do
+
+    def drift(self, z: np.ndarray, t: float) -> np.ndarray:
+        """Deterministic part of Stuart-Landau-Kuramoto dynamics.
+        
+        The pyclustering.nnet.fsync model uses an internal amplitude attribute
+        (which is the observed node states) to compute the kuramoto
+        synchronization. This internal amplitude is only
+        updated on observed timesteps, however, the ode solver is used at a
+        small scale to perform updates BETWEEN timesteps with neighbor amplitude
+        held constant and equal to the stored amplitude.
+         
+        We overwrite fsync_network.__amplitude here to compute instinataneous
+        dynamics without the update delay that is built into the pyclustering
+        model.
+
+        Args:
+            z (complex np.ndarray): 1d array of current state. Complex numbers.
+            t (float): Current time.
+        """
+        z_column = z.reshape(-1, 1)
+        # In pyclustering.nnet.fysnc.fsync_dynamic.simulate 
+        self.pyclustering_model._fsync_dynamic__amplitude = z_column
+
+        # The function _fsync_network__calculate_amplitude accepts and returns
+        # 2 float64s  to represent the complex numbers. We convert
+        # the imaginary numbers to 2 floats before passing to the function.
+        z_2d_float = z_column.view(np.float64)
+        
+        # We call the function on each node. Then we stack the 2D outputs into
+        # A (self.dim x 2) array.
+        dz_2d = np.vstack([
+            self.pyclustering_model._fsync_network__calculate_amplitude(
+                z_2d_float[node_index, :], t, node_index)
+            for node_index in range(self.dim)
+        ])
+
+        # Last we convert the real representation to a 1D imaginary array
+        dz = dz_2d.view(np.complex128)[:, 0]
+        return dz
+    
+    def noise(self, x: np.ndarray, t: float) -> np.ndarray:
+        """Independent noise matrix scaled by scalar sigma in self.__init__."""
+        return self.Sigma

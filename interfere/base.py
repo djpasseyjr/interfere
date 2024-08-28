@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import Callable, Optional
 
 import numpy as np
-from numpy.random import Generator
+
+from .utils import copy_doc
 
 # Default range for random number generation.
-DEFAULT_RANGE = generator = np.random.default_rng()
+DEFAULT_RANGE = np.random.default_rng()
 
 
 class DynamicModel(ABC):
@@ -14,6 +15,8 @@ class DynamicModel(ABC):
     Any dynamic model that implements an appropriate `simulate` method
     can be used for dynamic counterfactual analysis. 
     """
+
+
     def __init__(
         self,
         dim: int, 
@@ -35,29 +38,42 @@ class DynamicModel(ABC):
         self.dim = dim
         self.measurement_noise_std = measurement_noise_std
 
-    @abstractmethod
+
     def simulate(
         self,
-        initial_condition: np.ndarray,
-        time_points: np.ndarray,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+        **kwargs
     ) -> np.ndarray:
         """Runs a simulation of the dynamic model.
 
         Args:
-            initial_condition (ndarray): A (m,) or (p, m) array of the initial
-                condition or the historical conditions of the dynamic model.
-            time_points (ndarray): A (n,) array of the time points where the   
-                dynamic model will be simulated.
+            t (ndarray): A (n,) array of the time points where the   
+                dynamic model will be simulated. The first entry of `t` must
+                equal the last entry of `prior_t`. If `prior_t` is None, then
+                the values of `prior_t` will be assumed to be evenly spaced time
+                values ending with the first entry of `t`. If `t` does not
+                contain evenly spaced time values, then the inference of
+                `prior_t` will throw an error.
+            prior_states (ndarray): A (m,) or (p, m) array of the initial
+                condition or the prior states of the system.
+            prior_t (ndarray): A time array with shape (p,) corresponding to the
+                rows of `prior_states`. The last entry of `prior_t` must equal
+                the first entry of `t`. If `prior_t` is None, then
+                the values of `prior_t` will be assumed to be evenly spaced time
+                values ending with the first entry of `t`. If `t` does not
+                contain evenly spaced time values, then the inference of
+                `prior_t` will throw an error.
             intervention (callable): A function that accepts (1) a vector of the
                 current state of the dynamic model and (2) the current time. It should return a modified state. The function will be used in the
-                following way: 
-                    
-                If the dynamic model without the intervention can be described 
+                following way. If the dynamic model without the intervention can be described 
                 as
-                    x(t+dt) = F(x(t))
-
+                
+                x(t+dt) = F(x(t))
+                
                 where dt is the timestep size, x(t) is the trajectory, and F is
                 the function that uses the current state to compute the state at
                 the next timestep. Then the intervention function will be used
@@ -68,18 +84,58 @@ class DynamicModel(ABC):
 
                 where x_do is the trajectory of the intervened system and g is 
                 the intervention function.
-                TODO: Make notation inclusive of time delays.
-            rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
-                random number generator by default.)
+            rng (RandomState): A numpy random state for reproducibility. (Uses 
+                numpy's mtrand random number generator by default.)
 
         Returns:
-            X: An (n, m) array containing a realization of the trajectory of 
-                the m dimensional system corresponding to the n times in 
-                `time_points`. The first p rows contain the initial condition/
-                history of the system and count towards n.
+            X (ndarray): An (n, m) array containing a realization of the   
+                trajectory of the m dimensional system corresponding to the n
+                times in `t`. The first row of X contains the last row of 
+                `prior_states`.
         """
-        raise NotImplementedError
+        # Must provide at least one unseen simulation time.
+        if len(t) < 2:
+            raise ValueError(f"len(t) = {len(t)} but at least two time points must be provided to simulate.")
+        
+        # Reshape prior_states to ensure they are 2D
+        prior_states = np.reshape(prior_states, (-1, prior_states.shape[-1]))
+        p, _ = prior_states.shape     
+
+        if prior_t is not None:
+            p_prior_t, = prior_t.shape
+
+            if p_prior_t != p:
+                raise ValueError(f"The length of `prior_t` ({p_prior_t}) must "
+                    f"be equal to the number of rows ({p}) in prior_states. "
+                )
+            
+            if prior_t[-1] != t[0]:
+                raise ValueError(f"The last prior time, `prior_t[-1]` "
+                    f"({prior_t[-1]})must equal the first simulation time "
+                    f"({t[0]})."
+                )
+            
+        else:
+            # No prior times provided. We infer prior times.
+            dt = t[1] - t[0]
+            if not np.allclose(np.diff(t) - dt, 0.0):
+                raise ValueError(
+                    "Attempted to infer `prior_t` but `t` does not "
+                    "have evenly spaced time points. Use evenly spaced `t` or "
+                    "pass `prior_t` explicitly."
+                )
+
+            start_time = t[0]
+            # Evenly spaced prior times ending at the start of t.
+            prior_t = np.arange(start_time - p * dt, start_time + dt, dt)
+
+        return self._simulate(
+            t, prior_states, prior_t, intervention, rng, **kwargs)
+                
+
+            
     
+
     def add_measurement_noise(
         self,
         X: np.ndarray,
@@ -110,6 +166,20 @@ class DynamicModel(ABC):
             return X
         
         return X + rng.standard_normal(X.shape) * self.measurement_noise_std
+    
+
+    @abstractmethod
+    @copy_doc(simulate)
+    def _simulate(
+        self,
+        t: np.ndarray,
+        prior_states: np.ndarray,
+        prior_t: Optional[np.ndarray] = None,
+        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+        **kwargs
+    ) -> np.ndarray:
+        raise NotImplementedError
 
 
 class Intervention(ABC):
@@ -118,147 +188,3 @@ class Intervention(ABC):
     @abstractmethod
     def __call__():
         raise NotImplementedError
-    
-
-def generate_counterfactual_dynamics(
-    model_type: Optional[Type[DynamicModel]] = None,
-    model_params: Optional[Dict[str, Any]] = None,
-    intervention_type: Optional[
-        Callable[[np.ndarray, float], np.ndarray]] = None,
-    intervention_params: Optional[Dict[str, Any]] = None,
-    initial_condition_iter: Optional[Iterable[np.ndarray]] = None,
-    time_points_iter: Optional[Iterable[np.ndarray]] = None,
-    rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-):
-    """Generates trajectories and corresponding counterfactual trajectories.
-
-    Args:
-        model (Type[DynamicModel]): The type of the dynamic model to simulate
-            with and without interventions.
-        model_params (Dict[str, Any]): The initialization parameters of the    
-            dynamic model.
-        intervention_type (Type[Intervention]): The type of the intervention to
-            apply.
-        intervention_params (Dict[str, Any]): The initialization parameters of
-            the intervention.
-        initial_condition_iter (Iterable[np.ndarray]): An iterable containing
-            initial conditions that conform to the conditions on the 
-            `initial_condition` argument in the
-            `model(**model_parameters).simulate` function.
-        time_points_iter (Iterable[np.ndarray]): An iterable containing arrays
-            of time points that conform to the conditions on the `time_points` 
-            argument in the `model(**model_parameters).simulate` function.
-        rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
-            random number generator by default.)
-            
-    Returns:
-        observations: An list of arrays where the ith array represents a
-            realization of a trajectory of the dynamic model when the initial
-            condition is initial_condition_iter[i]. The ith array has dimensions
-            (n_i, m) where  `n_i = len(time_points_iter[i])` and m is the
-            dimensionality of the system.
-        counterfactuals: A list of arrays corresponding exactly to observations
-            except that the supplied intervention was applied.    
-    """
-    model = model_type(**model_params)
-    intervention = intervention_type(**intervention_params)
-    observations = [
-        model.simulate(
-            initial_condition=ic,
-            time_points=t,
-            intervention=None,
-
-            rng=rng,
-        )
-        for ic, t in zip(initial_condition_iter, time_points_iter)
-    ]
-
-    counterfactuals = [
-        model.simulate(
-            initial_condition=ic,
-            time_points=t,
-            intervention=intervention,
-            rng=rng,
-        )
-        for ic, t in zip(initial_condition_iter, time_points_iter)
-    ]
-    return observations, counterfactuals
-
-
-def generate_counterfactual_forecasts(
-    model_type: Optional[Type[DynamicModel]] = None,
-    model_params: Optional[Dict[str, Any]] = None,
-    intervention_type: Optional[
-        Callable[[np.ndarray, float], np.ndarray]] = None,
-    intervention_params: Optional[Dict[str, Any]] = None,
-    initial_conds: Optional[Iterable[np.ndarray]] = None,
-    start_time: Optional[float] = None,
-    end_time: Optional[float] = None,
-    dt: Optional[float] = None,
-    train_per: Optional[float] = 0.8,
-    reps: Optional[int] = 1,
-    rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-):
-    """Generates trajectories and corresponding counterfactual trajectories.
-
-    Args:
-        model (Type[DynamicModel]): The type of the dynamic model to simulate
-            with and without interventions.
-        model_params (Dict[str, Any]): The initialization parameters of the    
-            dynamic model.
-        intervention_type (Type[Intervention]): The type of the intervention to
-            apply.
-        intervention_params (Dict[str, Any]): The initialization parameters of
-            the intervention.
-        initials_conds (List[np.ndarray]): A list of initial conditions to use
-            to run the simulations.
-        start_time (float): The time to start each simulation.
-        end_time (float): The time to end each simulation.
-        dt (float): The timestep size for the numerical solver.
-        train_per (float): Percent of time points to use as training data. Must
-            be between zero and one.
-        rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
-            random number generator by default.)
-            
-    Returns:
-        observation: An list of arrays where the ith array represents a
-            realization of a trajectory of the dynamic model when the initial
-            condition is initial_condition_iter[i]. The ith array has dimensions
-            (n_i, m) where  `n_i = len(time_points_iter[i])` and m is the
-            dimensionality of the system.
-        counterfactual: A list of arrays corresponding exactly to observations
-            except that the supplied intervention was applied.  
-        time_points: The time points corresponding to each row of a particular 
-            observation. 
-    """
-    model = model_type(**model_params)
-    intervention = intervention_type(**intervention_params)
-    time_points = np.arange(start_time, end_time + dt, dt)
-
-    observations = [
-        model.simulate(
-            initial_condition=ic,
-            time_points=time_points,
-            intervention=None,
-            rng=rng,
-        )
-        for ic in initial_conds
-    ]
-
-    # Collect intervention points and time scales.
-    counterf_init_cond = []
-    for X in observations:
-        test_idx = int(len(time_points) * train_per)
-        counterf_init_cond.append(X[test_idx, :])
-
-    # Simulate the intervention.
-    counterfactual_forecasts = [
-        model.simulate(
-            initial_condition=ic,
-            time_points=time_points[test_idx:],
-            intervention=intervention,
-            rng=rng,
-        )
-        for ic in counterf_init_cond
-    ]
-    return observations, counterfactual_forecasts, time_points
