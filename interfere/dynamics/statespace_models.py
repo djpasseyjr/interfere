@@ -114,22 +114,23 @@ class VARMA_Dynamics(DynamicModel):
         q = len(self.theta_matrices)
         _, m = self.phi_matrices[0].shape
 
+        max_lags = max(p, q)
+
         n_initial_obs, _ = initial_condition.shape
 
-        if n_initial_obs < max(p, q):
+        if n_initial_obs < max_lags:
             warn("Historic timesteps not found in initial condition. Replacing with zeros")
-            time_steps_needed = max(p, q) - n_initial_obs
+            time_steps_needed = max_lags - n_initial_obs
             initial_condition = np.vstack([
                     np.zeros(m) for i in range(time_steps_needed)
                 ] + [prior_states]
             )
         
-        
         n = len(t)
         X = np.zeros((n, m))
 
         # Assign initial condition
-        X[:max(p, q), :] = initial_condition
+        X[:max_lags, :] = initial_condition[-max_lags:, :]
         
         # Initialize noise
         noise_vecs = rng.multivariate_normal(
@@ -163,7 +164,7 @@ class VARMA_Dynamics(DynamicModel):
         if self.measurement_noise_std is not None:
             X = self.add_measurement_noise(X, rng)
             # Preserve initial conditions.
-            X[:max(p, q), :] = initial_condition
+            X[:max_lags, :] = initial_condition[-max_lags:, :]
 
         return X
 

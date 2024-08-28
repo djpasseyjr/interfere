@@ -467,3 +467,5 @@ def test_autoarima():
 
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
+
+test_average_method()

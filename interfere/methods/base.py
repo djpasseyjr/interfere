@@ -103,7 +103,7 @@ class BaseInferenceMethod(BaseEstimator):
         
 
         self.is_fit = True
-        return self._fit(endog_states, t, exog_states)
+        return self._fit(t, endog_states, exog_states)
     
 
     def predict(
@@ -295,7 +295,7 @@ class BaseInferenceMethod(BaseEstimator):
 
 
     @abstractmethod
-    def fit(
+    def _fit(
         self,
         t: np.ndarray,
         endog_states: np.ndarray,

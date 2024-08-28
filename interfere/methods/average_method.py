@@ -1,9 +1,10 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
 from ..base import DEFAULT_RANGE
 from .base import BaseInferenceMethod
+from ..utils import copy_doc
 
 
 class AverageMethod(BaseInferenceMethod):
@@ -15,8 +16,8 @@ class AverageMethod(BaseInferenceMethod):
     
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
         self.avgs = np.mean(endog_states, axis=0)
@@ -24,15 +25,15 @@ class AverageMethod(BaseInferenceMethod):
 
     def _predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: np.ndarray = None,
-        historic_exog: np.ndarray = None,
-        rng = DEFAULT_RANGE
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         return np.vstack(
-            [self.avgs for t in forecast_times]
+            [self.avgs for ti in t]
         )
     
     def get_test_param_grid() -> Dict[str, List[Any]]:
