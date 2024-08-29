@@ -34,8 +34,8 @@ class VAR(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: Optional[np.ndarray] = None,
     ):
         self.model = skt_VAR(**self.method_params)
@@ -52,26 +52,26 @@ class VAR(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def _predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: Optional[np.ndarray] = None,
-        historic_exog: Optional[np.ndarray] = None,
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
         X = None
-        if exog is not None:
+        if prediction_exog is not None:
             # Collect exogeneous into sktime format.
-            X = to_sktime_time_series(forecast_times, exog)
+            X = to_sktime_time_series(t, prediction_exog)
         
         # Predict endog state evolution.
         endog_pred = self.model.predict(
             X=X,
             fh=ForecastingHorizon(
-                [i for i in range(len(forecast_times))],
+                [i for i in range(len(t))],
                 is_relative=True,
-                # Frequency is no used here since we drop the index below
+                # Frequency is not used here since we drop the index below
                 freq="s"
             )
         )

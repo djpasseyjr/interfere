@@ -10,11 +10,7 @@ import scipy as sp
 from skforecast.model_selection_multiseries import grid_search_forecaster_multiseries
 from sktime.performance_metrics.forecasting import mean_squared_scaled_error
 
-from .base import (
-    generate_counterfactual_dynamics,
-    generate_counterfactual_forecasts,
-    DEFAULT_RANGE
-)
+from .base import DynamicModel, DEFAULT_RANGE
 from .interventions import ExogIntervention
 from .utils import copy_doc
 from .methods import BaseInferenceMethod
@@ -334,8 +330,8 @@ class ForecasterAutoregMultiSeriesCustom:
             exog_states = exog.values
 
         return self.method.fit(
-            endog_states=series.values,
             t=t,
+            endog_states=series.values,
             exog_states=exog_states
         )
     
@@ -367,21 +363,21 @@ class ForecasterAutoregMultiSeriesCustom:
             " a time window size of two or more so that the timestep can be "
             "determined from the passed historic time series.")
         
-        historic_times = last_window.index.values
-        historic_endog = last_window.values
-        exog_states = None
-        historic_exog = None
+        prior_t = last_window.index.values
+        prior_endog_states = last_window.values
+        prediction_exog = None
+        prior_exog_states = None
 
         if exog is not None:
             # If the prediction involves exogeneous data build exog
             # arrays for interfere methods.
-            exog_states = exog.values
+            prediction_exog = exog.values
 
             # Build historic exogeneous array. TODO: Pass true exog states.
-            if set(historic_times).issubset(self._exog.index):        
-                historic_exog = np.vstack([
+            if set(prior_t).issubset(self._exog.index):        
+                prior_exog_states = np.vstack([
                     self._exog.loc[ti].values
-                    for ti in historic_times
+                    for ti in prior_t
                 ])
             else:
                 warn("Missing exogeneous data detected in grid gearch."
@@ -390,25 +386,25 @@ class ForecasterAutoregMultiSeriesCustom:
                 # but will throw an error if these values are used in computation.
                 # It is unlikely that models will use historic exogenous signals
                 # for prediction and so this is an acceptable solution for now.
-                historic_exog = np.full(
-                    (len(historic_times), exog.shape[1]), np.inf)
+                prior_exog_states = np.full(
+                    (len(prior_t), exog.shape[1]), np.inf)
             
         # Compute timestep size.
-        dt = historic_times[1] - historic_times[0]
+        dt = prior_t[1] - prior_t[0]
 
-        if not np.all(np.isclose(np.diff(historic_times), dt)):
+        if not np.all(np.isclose(np.diff(prior_t), dt)):
                 raise ValueError(
                     "`last_window` must have equally spaced time values.")
             
-        forecast_times = np.arange(0, steps) * dt + historic_times[-1]
+        forecast_times = np.arange(0, steps) * dt + prior_t[-1]
 
 
         endog_pred = self.method.predict(
-            forecast_times,
-            historic_endog,
-            exog_states,
-            historic_exog=historic_exog,
-            historic_times=historic_times,
+            t=forecast_times,
+            prior_endog_states=prior_endog_states,
+            prior_exog_states=prior_exog_states,
+            prior_t=prior_t,
+            prediction_exog=prediction_exog,
             rng=DEFAULT_RANGE, # TODO: Figure out randomness.
         )
         preds = pd.DataFrame(endog_pred)
@@ -426,8 +422,8 @@ def grid_search(
     method_type: Type[BaseInferenceMethod],
     method_params: Dict[str, Any],
     param_grid: Dict[str, List[Any]],
-    endog_states: np.ndarray,
     t: np.ndarray,
+    endog_states: np.ndarray,
     exog_states: Optional[np.ndarray] = None,
     initial_train_window_percent: float = 0.2,
     predict_percent: float = 0.2,
@@ -440,21 +436,21 @@ def grid_search(
             used for prediction.
         method_params (dict): A dictionary of default parameters for the method.
         param_grid (dict): The parameter grid for a skforecast grid search.
-        endog_states: An (m, n) array of endogenous signals. Sometimes
-            called Y. Rows are observations and columns are variables. Each
-            row corresponds to the times in `t`.
-        t: An (m,) array of time points.
-        exog_states: An (m, k) array of exogenous signals. Sometimes called
-            X. Rows are observations and columns are variables. Each row 
-            corresponds to the times in `t`.
-        initial_train_window_percent: A number between zero and one that denotes
-            the percentage of endogenous states that will be used for the first
-            moving window.
-        predict_percent: A number between zero and one that denotes the 
+        t (ndarray): An array of time points with shape (m,).
+        endog_states (ndarray): An array of endogenous signals with shape 
+            (m, p). Rows are observations and columns are variables. Rows
+            correspond to the times in `t`. Optional.
+        exog_states (ndarray): An array of exogenous signals. with shape (m, k).
+            Rows are observations and columns are variables. Rows correspond to
+            the times in `t`. 
+        initial_train_window_percent (float): A number between zero and one that
+            denotes the percentage of endogenous states that will be used for the first moving window.
+        predict_percent (float): A number between zero and one that denotes the 
             percentage of endogenous states that will be predicted for each
             sliding window.
-        refit:
-            Whether to re-fit the forecaster in each iteration. If refit is an integer, the Forecaster will be trained every that number of iterations.
+        refit (bool): Whether to re-fit the forecaster in each iteration. If
+            refit is an integer, the Forecaster will be trained every that
+            number of iterations. 
 
     Returns:
         best_method: An initialization of the given method with the best       
@@ -510,126 +506,87 @@ def grid_search(
 
 
 ###############################################################################
-# Historic Counterfactuals.
-###############################################################################
-
-def score_counterfactual_extrapolation_method(
-    X: np.ndarray,
-    X_do: np.ndarray,
-    time_points: np.ndarray,
-    intervention: ExogIntervention,
-    method_type: Type,
-    method_params: Dict[str, Any],
-    method_param_grid: Dict[str, Any],
-    num_intervention_sims: int,
-    score_function: Callable,
-    score_function_args: Dict[str, Any]
-) -> Tuple[List[float], Dict[str, Any]]:
-    """Scores a method's ability to extrapolate about interventions.
-
-    Args:
-        X (np.ndarray): An (m, n) matrix that is interpreted to be a  
-            realization of an n dimensional stochastic multivariate timeseries.
-        X_do (np.ndarray): The ground truth counterfactual, what X would look
-            like, if the intervention had been applied.
-        time_point (np.ndarray): 1D array of time points corresponding to the
-            rows of X and X_do.
-        intervention (interfere.Intervention): The type of the intervention to
-            apply.
-        method_type (sktime.forecasting.base.BaseForecaster): The method to be
-            used for prediction.
-        method_params (dict): A dictionary of default parameters for the method.
-        method_param_grid (dict): The parameter grid for a sklearn grid search.
-        num_intervention_preds (int): The number of interventions to simulate
-            with the method. Used for noisy methods.
-        score_function (Callable): Must be able to accept the followin
-            combinations of parameters: 
-                score_function(X, X_do, X_do_pred, **score_function_args)
-            and return a single float.
-        score_function_args: A dictionary of keywords args for the score
-            function.
-
-    Returns:
-        scores: A list with num_intervention_preds entries containing the score for each
-        intervention simulation.
-        best_params: A dictionary of the best hyper parameters found.
-    """
-
-    # Perform hyper parameter optimization to find optimal parameters.
-    best_params = tune_method(
-        method_type, method_params, method_param_grid, X, time_points)
-
-    # Combine best params with default params. (Items in best_params will
-    # overwrite items in method_params if there are duplicates here.)
-    sim_params = {**method_params, **best_params}
-
-    # Simulate intervention
-    X_do_predictions = [
-        method_type(**sim_params).simulate_counterfactual(
-            X,    
-            time_points,
-            intervention, 
-        )
-        for i in range(num_intervention_sims)
-    ]
-
-    # Score the responses predicted by the mehtod
-    scores = [
-        score_function(X, X_do, X_do_pred, **score_function_args)
-        for X_do_pred in X_do_predictions
-    ]
-
-    return scores, best_params, X_do_predictions
-
-
-def counterfactual_extrapolation_benchmark(
-    gen_cntftl_args: Dict[str, Any],  score_cntftl_method_args: Dict[str, Any]):
-    """Scores if inference method can simulate a counterfactual scenario.
-
-    This asks the question: "What would have happened in the past if an
-    intervention had taken place?". How would this differ from what was
-    observed. It tests the ability of the inference method to extapolate
-    outside the bounds of what was observed.
-
-    Args:
-        gen_cntftl_args (Dict[str, Any]): Contains all arguments for the
-            function `interfere.base.generate_counterfactual_dynamics`.
-        score_cntftl_method_args (Dict[str, Any]): Contains the following
-            arguments for the function 
-            `interfere.benchmarking.score_counterfactual_extrapolation_method`
-            * method_type: Type,
-            * method_params: Dict[str, Any],
-            * method_param_grid: Dict[str, Any],
-            * num_intervention_sims: int,
-            * score_function: Callable,
-            * score_function_args: Dict[str, Any]
-    """
-    obs, cntrfactuals = generate_counterfactual_dynamics(**gen_cntftl_args)
-    all_scores = []
-    all_best_ps = []
-    all_X_do_preds = []
-
-    intervention=gen_cntftl_args["intervention_type"](
-            **gen_cntftl_args["intervention_params"])
-    
-    for i in range(len(obs)):
-        score, best_ps, X_do_pred = score_counterfactual_extrapolation_method(
-            obs[i],
-            cntrfactuals[i],
-            gen_cntftl_args["time_points_iter"][i],
-            intervention,
-            **score_cntftl_method_args
-        )
-        all_scores.append(score)
-        all_best_ps.append(best_ps)
-        all_X_do_preds.append(X_do_pred)
-
-    return all_scores, all_best_ps, all_X_do_preds
-
-
-###############################################################################
 # Counterfactual Forecasts
 ###############################################################################
+
+def generate_counterfactual_forecasts(
+    model_type: Optional[Type[DynamicModel]] = None,
+    model_params: Optional[Dict[str, Any]] = None,
+    intervention_type: Optional[
+        Callable[[np.ndarray, float], np.ndarray]] = None,
+    intervention_params: Optional[Dict[str, Any]] = None,
+    initial_conds: Optional[Iterable[np.ndarray]] = None,
+    start_time: Optional[float] = None,
+    end_time: Optional[float] = None,
+    dt: Optional[float] = None,
+    train_per: Optional[float] = 0.8,
+    reps: Optional[int] = 1,
+    rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+):
+    """Generates trajectories and corresponding counterfactual trajectories.
+
+    Args:
+        model (Type[DynamicModel]): The type of the dynamic model to simulate
+            with and without interventions.
+        model_params (Dict[str, Any]): The initialization parameters of the    
+            dynamic model.
+        intervention_type (Type[Intervention]): The type of the intervention to
+            apply.
+        intervention_params (Dict[str, Any]): The initialization parameters of
+            the intervention.
+        initials_conds (List[np.ndarray]): A list of initial conditions to use
+            to run the simulations.
+        start_time (float): The time to start each simulation.
+        end_time (float): The time to end each simulation.
+        dt (float): The timestep size for the numerical solver.
+        train_per (float): Percent of time points to use as training data. Must
+            be between zero and one.
+        rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
+            random number generator by default.)
+            
+    Returns:
+        observation: An list of arrays where the ith array represents a
+            realization of a trajectory of the dynamic model when the initial
+            condition is initial_condition_iter[i]. The ith array has dimensions
+            (n_i, m) where  `n_i = len(time_points_iter[i])` and m is the
+            dimensionality of the system.
+        counterfactual: A list of arrays corresponding exactly to observations
+            except that the supplied intervention was applied.  
+        time_points: The time points corresponding to each row of a particular 
+            observation. 
+    """
+    model = model_type(**model_params)
+    intervention = intervention_type(**intervention_params)
+    time_points = np.arange(start_time, end_time + dt, dt)
+
+    observations = [
+        model.simulate(
+            t=time_points,
+            prior_states=ic,
+            intervention=None,
+            rng=rng,
+        )
+        for ic in initial_conds
+    ]
+
+    # Collect intervention points and time scales.
+    counterf_init_cond = []
+    for X in observations:
+        test_idx = int(len(time_points) * train_per)
+        counterf_init_cond.append(X[test_idx, :])
+
+    # Simulate the intervention.
+    counterfactual_forecasts = [
+        model.simulate(
+            t=time_points[test_idx:],
+            prior_states=ic,
+            intervention=intervention,
+            rng=rng,
+        )
+        for ic in counterf_init_cond
+    ]
+    return observations, counterfactual_forecasts, time_points
+
 
 def forecast_intervention(
     X: np.ndarray,
@@ -671,25 +628,17 @@ def forecast_intervention(
         best_params: A Dict of the best parameters found by the grid search.
     """
 
-    historic_endog, historic_exog = intervention.split_exogeneous(X)
-
-    hist_exog_shape = None
-    if historic_exog is not None:
-        hist_exog_shape = historic_exog.shape
-
-    print(f""""
-          
-Grid search split:
-          
-historic_endog: {historic_endog.shape}
-historic_exog: {hist_exog_shape}
-""")
+    prior_endog_states, prior_exog_states = intervention.split_exogeneous(X)
 
     if best_params is None:
 
         _, gs_results = grid_search(
-            method_type, method_params, method_param_grid,
-            historic_endog, time_points, historic_exog,
+            method_type,
+            method_params,
+            method_param_grid,
+            t=time_points,
+            endog_states=prior_endog_states,
+            exog_states=prior_exog_states,
             # Uses a moving window of train on 20% of the data, predict next 20%
             initial_train_window_percent = 0.2,
             predict_percent = 0.2,
@@ -709,130 +658,20 @@ historic_exog: {hist_exog_shape}
 
     # Simulate intervention
     method = method_type(**sim_params)
-    method.fit(historic_endog, time_points, historic_exog)
+    method.fit(
+        t=time_points,
+        endog_states=prior_endog_states,
+        exog_states=prior_exog_states
+    )
     
     X_do_preds = [
         method.simulate(
             forecast_times,
-            historic_states=X,
+            prior_states=X,
+            prior_t=time_points,
             intervention=intervention,
-            historic_times=time_points,
             rng=rng
         )
         for i in range(num_intervention_sims)
     ]
     return X_do_preds, sim_params
-
-
-def score_counterfactual_forecast_method(
-    X: np.ndarray,
-    X_do_forecast: np.ndarray,
-    time_points: np.ndarray,
-    intervention: ExogIntervention,
-    method_type: Type,
-    method_params: Dict[str, Any],
-    method_param_grid: Dict[str, Any],
-    num_intervention_sims: int,
-    score_function: Callable,
-    score_function_args: Dict[str, Any]
-) -> Tuple[List[float], Dict[str, Any]]:
-    """Scores a method's ability to extrapolate about interventions.
-
-    Args:
-        X (np.ndarray): An (m, n) matrix that is interpreted to be a  
-            realization of an n dimensional stochastic multivariate timeseries.
-        X_do_forecast (np.ndarray): An (p, n) maxtix. The ground truth 
-            counterfactual, what the last p rows of X would be if the
-            intervention was applied starting at time `time_points[-p]`.
-        time_points (np.ndarray): 1D array of time points corresponding to the
-            rows of X. The last p entries correspond to the rows of
-            X_do_forecast.
-        intervention (interfere.Intervention): The type of the intervention to
-            apply.
-        method_type (sktime.forecasting.base.BaseForecaster): The method to be
-            used for prediction.
-        method_params (dict): A dictionary of default parameters for the method.
-
-        method_param_grid (dict): The parameter grid for a sklearn grid search.
-        num_intervention_preds (int): The number of interventions to simulate
-            with the method. Used for noisy methods.
-        score_function (Callable): Must be able to accept the followin
-            combinations of parameters: 
-                score_function(X, X_do, X_do_pred, **score_function_args)
-            and return a single float.
-        score_function_args: A dictionary of keywords args for the score
-            function.
-
-    Returns:
-        scores: A list with num_intervention_preds entries containing the score for each
-        intervention simulation.
-        best_params: A dictionary of the best hyper parameters found.
-    """
-    # Simulate intervention
-    X_do_forecast_predictions, best_params = forecast_intervention(
-        X,
-        X_do_forecast,
-        time_points,
-        intervention,
-        method_type,
-        method_params,
-        method_param_grid,
-        num_intervention_sims
-    )
-    
-    p = X_do_forecast.shape[0]
-    X_forecast = X[-p:, :]
-
-    # Score the responses predicted by the method
-    scores = [
-        score_function(
-            X_forecast, X_do_forecast, X_do_forecast_pred, **score_function_args)
-        for X_do_forecast_pred in X_do_forecast_predictions
-    ]
-
-    return scores, best_params, X_do_forecast_predictions
-    
-
-def counterfactual_forecast_benchmark(
-        gen_cntftl_args: Dict[str, Any], score_cntftl_method_args: Dict[str, Any]):
-    """Scores if inference method can simulate a counterfactual forecast.
-
-    This asks the question: "What will happened next if an
-    intervention is applied?". How will this differ from what would have
-    happened without the intervention. This tests the ability of the inference
-    method to extapolate correctly about probable futures.
-
-    Args:
-        gen_cntftl_args (Dict[str, Any]): Contains all arguments for the
-            function `interfere.base.generate_counterfactual_dynamics`.
-        score_cntftl_method_args (Dict[str, Any]): Contains the following
-            arguments for the function 
-            `interfere.benchmarking.score_counterfactual_forecast_method`
-            * method_type: Type,
-            * method_params: Dict[str, Any],
-            * method_param_grid: Dict[str, Any],
-            * num_intervention_sims: int,
-            * score_function: Callable,
-            * score_function_args: Dict[str, Any]
-    """
-    obs, cntftl_forecasts, time_points = generate_counterfactual_forecasts(**gen_cntftl_args)
-    all_scores = []
-    all_best_ps = []
-    all_X_do_preds = []
-
-    intervention=gen_cntftl_args["intervention_type"](
-            **gen_cntftl_args["intervention_params"])
-    
-    for i in range(len(obs)):
-        score, best_ps, X_do_pred = score_counterfactual_forecast_method(
-            obs[i],
-            cntftl_forecasts[i],
-            time_points,
-            intervention,
-            **score_cntftl_method_args
-        )
-        all_scores.append(score)
-        all_best_ps.append(best_ps)
-        all_X_do_preds.append(X_do_pred)
-
-    return all_scores, all_best_ps, all_X_do_preds

@@ -304,12 +304,13 @@ class BaseInferenceMethod(BaseEstimator):
         """Fits the method using the passed data.
         
         Args:
-            t: An (m,) array of time points.
-            endog_states: An (m, n) array of endogenous signals. Rows are observations and columns are variables. Each
+            t (ndarray): An array of time points with shape (m,).
+            endog_states (ndarray): An array of endogenous signals with shape
+                (m, n). Rows are  observations and columns are variables. Each
                 row corresponds to the times in `t`.
-            exog_states: An (m, k) array of exogenous signals. Rows are
-                observations and columns are variables. Each row corresponds to
-                the times in `t`.
+            exog_states (ndarray): An array of exogenous signals with shape  
+                (m, k). Rows are observations and columns are variables. Each
+                row corresponds to the times in `t`.
         """
         raise NotImplementedError()
     
@@ -332,28 +333,17 @@ class BaseInferenceMethod(BaseEstimator):
             t (ndarray): An array of the time points with shape (m,) for the
                 method to simulate.
             prior_endog_states (ndarray): Aa array of historic observations of
-                the n ENDOGENOUS signals with shape  (p, n). Rows represent 
+                the n endogeneous signals with shape (p, n). Rows represent 
                 observations and columns represent variables This is used as the
-                initial condition data or lagged initial conditions. It is NOT
-                used to fit the method. If `prior_t` is not provided and
-                `t` contains equally spaced points, the `prior_endog_states` are
-                assumed to  have occured at equally spaced points prior to `t`.
-                Additionally, the last row of `prior_endog_states` must
-                be an observation that  occured at the time `t[0]`. When
-                `prior_t` is provided it is assumed that the rows of
-                `prior_endog_states` were observed at the times contained in
-                `prior_t`.
+                initial condition data or time lag information. It is not
+                used to fit the method. IMPORTANT: It is assumed that the last
+                row in this array was observed at time `t[0]`.
             prior_exog_states: An optional array of historic observations of the
-                k EXOGENOUS signals with shape (p, k). Rows contain observations
+                k exogenous signals with shape (p, k). Rows contain observations
                 and columns contain variables. This is used for the
                 initial condition data and lag information. It is NOT used to
-                fit the method. If `prior_t` is not provided and
-                `t` contains equally spaced points, the `prior_exog_states` are
-                assumed to  have occured at equally spaced points prior to `t`.
-                Additionally, the last row of `prior_enxog_states` must
-                be an observation that  occured at the time `t[0]`. When `prior_t` is provided it is assumed
-                that the rows of `prior_endog_states` were observed at the times
-                contained in `prior_t`.
+                fit the method. IMPORTANT: It is assumed that the last
+                row in this array was observed at time `t[0]`.
             prior_t (ndarray): An optional array with shape (p,) of times
                 corresponding to the rows of `prior_endog_states` and `prior_exog_states`. If `prior_t` is not provided and `t`
                 contains equally spaced points, then `prior_t` is assumed
@@ -370,7 +360,18 @@ class BaseInferenceMethod(BaseEstimator):
         Returns:
             X_sim: A (m, n) array of containing a multivariate time series. The
             rows are observations correstponding to entries in `time_points` and
-            the columns correspod to the endogenous variables in the forecasting method.
+            the columns correspod to the endogenous variables in the forecasting
+            method.
+            
+        Notes:
+            When `prior_t` is provided it is assumed that the rows of
+            `prior_endog_states` and `prior_exog_states` were observed at the
+            times contained in `prior_t`.If `prior_t` is not provided and `t`
+            contains equally spaced points, then `prior_endog_states` and
+            `prior_exog_states` are assumed to have occured at equally spaced
+            times before `t[0]`. Additionally, the last rows of
+            `prior_endog_states` and `prior_exog_states` must be an observation
+            that  occured at the time `t[0]`.
         """
         raise NotImplementedError()
     

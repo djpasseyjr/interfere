@@ -3,6 +3,7 @@ from typing import Any, Dict, Type
 import interfere
 from interfere.methods import BaseInferenceMethod
 from interfere.methods.nixtla_methods.nixtla_adapter import to_nixtla_df
+from interfere.benchmarking import generate_counterfactual_forecasts
 import numpy as np
 from pandas import DataFrame
 import pytest
@@ -63,10 +64,8 @@ def belozyorov_timeseries(tsteps=100, n_do=20):
     forecast_times = t[(-n_do - 1):]
     X0_do = X_historic[-lags, :]
 
-    # TODO: Fix simulate times -> states mapping w historic times.
-    sim_times = np.hstack([historic_times[-lags:], forecast_times])
     X_do = model.simulate(
-        sim_times,
+        forecast_times,
         X0_do,
         intervention=intervention,
         rng=rng
@@ -242,13 +241,26 @@ def grid_search_checks(
     
     # With exogeneous.
     _, gs_results = interfere.benchmarking.grid_search(
-        method_type, method_params, param_grid, prior_endog_states, historic_times, prior_exog_states, refit=1)
+        method_type,
+        method_params,
+        param_grid,
+        t=historic_times,
+        endog_states=prior_endog_states,
+        exog_states=prior_exog_states,
+        refit=1
+    )
     
     grid_search_assertions(gs_results, param_grid)
 
     # Without exogeneous.
     _, gs_results = interfere.benchmarking.grid_search(
-        method_type, method_params, param_grid, prior_endog_states, historic_times, None, refit=1)
+        method_type,
+        method_params,
+        param_grid,
+        t=historic_times,
+        endog_states=prior_endog_states,
+        refit=1
+    )
     
     grid_search_assertions(gs_results, param_grid)
     
@@ -311,7 +323,7 @@ def check_exogeneous_effect(
         rng = np.random.default_rng(SEED)
     )
 
-    Xs, X_dos, t = interfere.generate_counterfactual_forecasts(**params)
+    Xs, X_dos, t = generate_counterfactual_forecasts(**params)
     X, X_do = Xs[0], X_dos[0]
 
     n_do, _ = X_do.shape
@@ -365,7 +377,10 @@ def forecast_intervention_check(
     )
     
     assert len(X_do_preds) == num_sims
-    assert np.all([X_do.shape == X_do_preds[i].shape for i in range(num_sims)])
+    assert np.all([
+        (len(forecast_times), X_do.shape[1]) == X_do_preds[i].shape 
+        for i in range(num_sims)
+    ])
     assert isinstance(best_params, dict)
 
 
@@ -468,4 +483,3 @@ def test_autoarima():
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
 
-test_average_method()
