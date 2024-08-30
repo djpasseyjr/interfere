@@ -57,8 +57,8 @@ class NixtlaAdapter(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
         
@@ -88,37 +88,37 @@ class NixtlaAdapter(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def _predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: Optional[np.ndarray] = None,
-        historic_exog: Optional[np.ndarray] = None,
-        rng: np.random.RandomState = DEFAULT_RANGE
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
-        if len(historic_times) < self.get_window_size():
+        if len(t) < self.get_window_size():
             raise ValueError("Not enough context provided for to make a "
-                f"prediction. {len(historic_times)} obs provided, need "
+                f"prediction. {len(t)} obs provided, need "
                 f"{self.get_window_size()}."
             )
         
         if isinstance(self.nixtla_forecaster, neuralforecast.NeuralForecast):
             return self.neuralforecast_predict(
-                forecast_times,
-                historic_endog,
-                historic_times,
-                exog,
-                historic_exog,
+                t,
+                prior_endog_states,
+                prior_exog_states,
+                prior_t,
+                prediction_exog,
                 rng,
             )
         
         if isinstance(self.nixtla_forecaster, statsforecast.StatsForecast):
             return self.statsforecast_predict(
-                forecast_times,
-                historic_endog,
-                historic_times,
-                exog,
-                historic_exog,
+                t,
+                prior_endog_states,
+                prior_exog_states,
+                prior_t,
+                prediction_exog,
                 rng,
             )
 
@@ -126,15 +126,15 @@ class NixtlaAdapter(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def neuralforecast_predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: Optional[np.ndarray] = None,
-        historic_exog: Optional[np.ndarray] = None,
-        rng: np.random.RandomState = DEFAULT_RANGE
-    ):
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
         # Total number of predictions times.
-        m_pred = len(forecast_times)
+        m_pred = len(t)
 
         # Internal forecasting method's prediction horizon.
         h = self.get_horizon()
@@ -148,35 +148,35 @@ class NixtlaAdapter(BaseInferenceMethod):
         n_extra_preds = n_steps * h - m_pred + 1
 
         # Timestep size
-        timestep = forecast_times[1] - forecast_times[0]
+        timestep = t[1] - t[0]
 
         # Names of exogeneous variables.
         exog_state_ids = self.exog_state_ids
 
         # Initial historical context DataFrame.
         df = to_nixtla_df(
-            historic_times,
-            historic_endog,
-            historic_exog,
+            prior_t,
+            prior_endog_states,
+            prior_exog_states,
             exog_state_ids=exog_state_ids
         )
         
         # Build times and signals for the exogeneous input data frame.
         futr_times = np.hstack([
-            forecast_times,
-            np.arange(1, n_extra_preds + 1) * timestep + forecast_times[-1]
+            t,
+            np.arange(1, n_extra_preds + 1) * timestep + t[-1]
         ])
 
-        if exog is None:
-            exog = np.full(
-                (len(forecast_times), len(exog_state_ids)),
+        if prediction_exog is None:
+            prediction_exog = np.full(
+                (len(t), len(exog_state_ids)),
                 np.inf
             )
         
         # Repeat last row of exogeneous for any extra predictions required
         # due to forcast horizon window size.
-        futr_exog = np.vstack([exog] + [
-            exog[-1] for _ in range(n_extra_preds)
+        futr_exog = np.vstack([prediction_exog] + [
+            prediction_exog[-1] for _ in range(n_extra_preds)
         ])  
 
         futr_df = to_nixtla_df(
@@ -206,7 +206,7 @@ class NixtlaAdapter(BaseInferenceMethod):
         )
 
         # Remove historic observations
-        endog_pred = endog_pred[len(historic_times):, :]
+        endog_pred = endog_pred[len(prior_t):, :]
         # Remove extra predictions.
         endog_pred = endog_pred[:m_pred, :]
         return endog_pred
@@ -215,36 +215,37 @@ class NixtlaAdapter(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def statsforecast_predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: Optional[np.ndarray] = None,
-        historic_exog: Optional[np.ndarray] = None,
-        rng: np.random.RandomState = DEFAULT_RANGE
-    ):
-        h = len(forecast_times)
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
+    ) -> np.ndarray:
+        
+        h = len(t)
         lag = self.get_window_size()
 
         # Grab only the neccesary number of historic obs.
-        historic_times = historic_times[-lag:]
-        historic_endog = historic_endog[-lag:, :]
+        prior_t = prior_t[-lag:]
+        prior_endog_states = prior_endog_states[-lag:, :]
 
-        if historic_exog is not None:
-            historic_exog = historic_exog[-lag:, :]
+        if prior_exog_states is not None:
+            prior_exog_states = prior_exog_states[-lag:, :]
 
         #  Historical context DataFrame.
         df = to_nixtla_df(
-            historic_times,
-            historic_endog,
-            historic_exog,
+            prior_t,
+            prior_endog_states,
+            prior_exog_states,
             exog_state_ids=self.exog_state_ids
         )
 
-        if exog is not None:
+        if prediction_exog is not None:
             # Translate exogeneous data to a dataframe.
             X_df = to_nixtla_df(
-                forecast_times,
-                exog_states=exog,
+                t,
+                exog_states=prediction_exog,
                 exog_state_ids=self.exog_state_ids,
                 unique_ids=[id for id in df.unique_id.unique()]
             )

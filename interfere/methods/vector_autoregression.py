@@ -40,6 +40,9 @@ class VAR(BaseInferenceMethod):
     ):
         self.model = skt_VAR(**self.method_params)
 
+        # Adjust tags to avoid errors on univariate series.
+        self.model._tags["scitype:y"] = "both"
+
         y = to_sktime_time_series(t, endog_states)
         if endog_states is not None:
             X = to_sktime_time_series(t, exog_states)

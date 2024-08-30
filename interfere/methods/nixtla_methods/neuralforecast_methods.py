@@ -64,8 +64,8 @@ class LSTM(NixtlaAdapter):
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
         
@@ -77,7 +77,7 @@ class LSTM(NixtlaAdapter):
         # Assign names to internal exogeneous variables.
         self.set_params(futr_exog_list=default_exog_names(k))
 
-        super()._fit(endog_states, t, exog_states)
+        super()._fit(t, endog_states, exog_states)
 
 
     def get_window_size(self):
@@ -96,7 +96,7 @@ class LSTM(NixtlaAdapter):
             scaler_type='robust',
             encoder_n_layers=2,
             encoder_hidden_size=64,
-            context_size=10,
+            context_size=4,
             decoder_hidden_size=64,
             decoder_layers=2,
             max_steps=50,

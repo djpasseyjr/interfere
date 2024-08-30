@@ -32,8 +32,8 @@ class SINDY(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
         if np.any(endog_states > self.max_sim_value):
@@ -50,47 +50,47 @@ class SINDY(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def _predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: Optional[np.ndarray] = None,
-        historic_exog: Optional[np.ndarray] = None,
-        rng: np.random.RandomState = DEFAULT_RANGE
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
         # Initial condition (Exogenous signal removed.)
-        x0 = historic_endog[-1, :]
+        x0 = prior_endog_states[-1, :]
 
         # Sindy uses scipy.integrate.solve_ivp by default and solve_ivp
         # uses event functions with assigned attributes as callbacks.
         # The below code tells scipy to stop integrating when
         # too_big(t, y) == True.
         if self.sindy.discrete_time:
-            too_big = lambda t, y: np.any(np.abs(y) > self.max_sim_value)
+            too_big = lambda ti, y: np.any(np.abs(y) > self.max_sim_value)
         else:
-            too_big = lambda t, y: np.all(np.abs(y) < self.max_sim_value)
+            too_big = lambda ti, y: np.all(np.abs(y) < self.max_sim_value)
 
         too_big.terminal = True
 
         if self.sindy.discrete_time:
-            t = len(forecast_times)
+            sindy_t = len(t)
         else:
-            t = forecast_times
+            sindy_t = t
 
         # Simulate with intervention
         endog_pred = self.sindy.simulate(
-            x0, t, u=exog, integrator_kws={"events": too_big}, stop_condition=lambda x: too_big(0, x)
+            x0, sindy_t, u=prediction_exog, integrator_kws={"events": too_big}, stop_condition=lambda x: too_big(0, x)
         )
 
         # Retrive number of successful steps.
         n_steps = endog_pred.shape[0]
-        n_missing = len(forecast_times) - n_steps
+        n_missing = len(t) - n_steps
 
         # Warn user if SINDY diverges.
         if n_missing > 0:
             warn(
                 f"SINDY prediction diverged. Valid prediction for {n_steps} / "
-                f"{len(forecast_times)} time steps."
+                f"{len(t)} time steps."
             )
 
         # When SINDY diverges, repeat the last valid prediction for the

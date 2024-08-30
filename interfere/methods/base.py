@@ -94,12 +94,20 @@ class BaseInferenceMethod(BaseEstimator):
                 observations and columns are variables. Each row corresponds to
                 the times in `t`.
         """
+        if len(t.shape) != 1:
+            raise ValueError(
+                f"The `t` arg to {str(type(self).__name__)}.fit is not 1D.")
+                
         # Make sure no Pandas DataFrames are passed in.
         if any([
             isinstance(x, pd.DataFrame) 
             for x in [endog_states, t, exog_states]
         ]):
             raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+        
+        # Make sure time points are monotonic.
+        if np.any(np.diff(t) <= 0):
+            raise ValueError(f"Time points passed to {str(type(self).__name__)}.fit must be strictly increasing.")
         
 
         self.is_fit = True
@@ -167,11 +175,22 @@ class BaseInferenceMethod(BaseEstimator):
         if not self.is_fit:
             raise ValueError("Call self.fit(...) before self.predict(...).")
         
+        if len(t.shape) != 1:
+            raise ValueError(
+                f"The `t` arg to {str(type(self).__name__)}.predict is not 1D.")
+                
         if any([
             isinstance(x, pd.DataFrame) 
             for x in [t, prior_endog_states, prior_exog_states, prior_t, prediction_exog]
         ]):
             raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+        
+        # Make sure time points are monotonic.
+        if np.any(np.diff(t) <= 0):
+            raise ValueError(
+                f"Time points passed to the {str(type(self).__name__)}.predict "
+                "`t` argument must be strictly increasing."
+            )
         
         if np.any(prior_endog_states > prediction_max):
             raise ValueError(
@@ -184,28 +203,18 @@ class BaseInferenceMethod(BaseEstimator):
         
         # Reshape prior_endog_states if it was 1D.
         if len(prior_endog_states.shape) == 1:
-            prior_endog_states = np.reshape(prior_endog_states, 1, -1)
+            prior_endog_states = np.reshape(prior_endog_states, (1, -1))
 
         # Gather array shapes
         p, k = prior_endog_states.shape
         (m,) = t.shape 
 
         if len(t) < 2:
-            raise ValueError("Since the first timestep is assumed to be the " "current time, and correspond to the last row of `prior_endog_states`," " the `t` must have at least two time values.")
-        
-        # Create prior_t assuming equal time step size.
-        if prior_t is None:
-            dt = t[1] - t[0]
-
-            # Check for equally spaced forecast time points.
-            if not np.all(np.isclose(np.diff(t), dt)):
-                raise ValueError("The `prior_t` argument not provided"
-                " AND `t` are equally spaced. Cannot infer "
-                " `prior_t`. Either pass it explicitly or provide "
-                " equally spaced time `t`.")
-            
-            prior_t = np.arange(-p, 1) * dt + t[0]
-
+            raise ValueError(
+                f" For {str(type(self).__name__)}.predict, the first timestep in `t` is assumed to be the current time, and correspond to the last row "
+                "of `prior_endog_states`, the `t` argument must have at least "
+                "two time values."
+            )
 
         # Check shape of exogenous signals.
         if prediction_exog is not None:
@@ -218,7 +227,7 @@ class BaseInferenceMethod(BaseEstimator):
         w = self.get_window_size()
 
         if w > p:
-            warn(str(type(self)) + f" has window size {w} but only recieved {p}"
+            warn(str(type(self).__name__) + f" has window size {w} but only recieved {p}"
                  " endog observations. Augmenting historic edogenous "
                  "observations with zeros."
             )
@@ -242,7 +251,7 @@ class BaseInferenceMethod(BaseEstimator):
                     " must have the same number of columns.")
                 
             if w > p_hexog:
-                warn(str(type(self)) + f" has window size {w} but only recieved"
+                warn(str(type(self).__name__) + f" has window size {w} but only recieved"
                      f" {p_hexog} exog observations. Augmenting historic "
                      "exogenous observations with zeros.")
 
@@ -251,6 +260,78 @@ class BaseInferenceMethod(BaseEstimator):
                     prior_exog_states
                 ])
 
+        # Create prior_t assuming equal time step size.
+        num_prior_endog, _ = prior_endog_states.shape
+
+        if prior_t is None:
+            dt = t[1] - t[0]
+
+            # Check for equally spaced forecast time points.
+            if not np.all(np.isclose(np.diff(t), dt)):
+                raise ValueError("The `prior_t` argument not provided"
+                " AND `t` is not equally spaced. Cannot infer "
+                " `prior_t`. Either pass it explicitly or provide "
+                " equally spaced time `t`.")
+            prior_t = np.arange(-num_prior_endog, 1) * dt + t[0]
+
+        if prior_t[-1] != t[0]:
+            raise ValueError(
+                f"For {str(type(self).__name__)}.predict, the last prior time, "
+                f"`prior_t[-1]`={prior_t[-1]} must equal the first simulation "
+                f"time t[0]={t[0]}."
+            )
+
+        num_prior_times, = prior_t.shape
+
+        # If the user provided prior_t and it is greater or equal to
+        # num_prior_endog, then we trim it to size.
+        if num_prior_times > num_prior_endog:
+            warn(f"{str(type(self).__name__)}.predict was passed too many"
+                 f"({num_prior_times}) prior time points. Using only the last "
+                 f"{num_prior_endog} time points.")
+            prior_t = prior_t[-num_prior_endog:]
+
+        # If the user did not pass enough prior_t, check for equally spaced time
+        # points and infer.
+        if num_prior_times < num_prior_endog:
+
+            # Check if equally spaced.
+            warn(
+                "Inferring additional `prior_t` values. Assuming `prior_t` has"
+                " the same equally spaced timestep size as `t`"
+            )
+            dt = t[1] - t[0]
+            if not np.all(np.isclose(np.diff(prior_t), dt)):
+
+                # When prior_endog_states were not augmented with zeros raise a
+                # normal value error. 
+                if num_prior_endog == p:
+                    raise ValueError(
+                        f"{str(type(self).__name__)}.predict was passed {p} "
+                        "prior_endog_states but there are only "
+                        f"{num_prior_times} entries in `prior_t`."
+                    )
+                
+                # When prior_endog_states were augmented with zeros, give
+                # instructions on how to augment.
+                if num_prior_endog > p:
+                    raise ValueError(
+                        f"{str(type(self).__name__)}.predict augmented "
+                        "`prior_endog_states` with zeros but `prior_t` was not "
+                        "equally spaced so it was not possible to infer "
+                        "additional prior times. \n\nTo solve, pass at least "
+                        f"({num_prior_endog}) previous time values or use "
+                        "equally spaced `prior_t`."
+                    )
+            extra_prior_t = np.arange(
+                num_prior_times - num_prior_endog, 0) * dt + prior_t[0]
+            prior_t = np.hstack([extra_prior_t, prior_t])
+
+        if np.any(np.diff(prior_t) <= 0):
+            raise ValueError(
+                f"Prior time points passed to {str(type(self).__name__)}."
+                "predict must be strictly increasing."
+            )        
 
         endog_pred = self._predict(
             t=t,
