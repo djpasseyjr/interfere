@@ -43,8 +43,8 @@ class LTSFLinearForecaster(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
         self,
-        endog_states: np.ndarray,
         t: np.ndarray,
+        endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
         self.model = sktime_LTSFLinearForecaster(
@@ -65,24 +65,24 @@ class LTSFLinearForecaster(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod._predict)
     def _predict(
         self,
-        forecast_times: np.ndarray,
-        historic_endog: np.ndarray,
-        historic_times: np.ndarray,
-        exog: np.ndarray = None,
-        historic_exog: np.ndarray = None,
-        rng: np.random.RandomState = DEFAULT_RANGE
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
         X = None
-        if exog is not None:
-            X = to_sktime_time_series(forecast_times, exog)
+        if prediction_exog is not None:
+            X = to_sktime_time_series(t, prediction_exog)
 
         # Save original stored endogeneous.
         _y_orig = self.model._y
 
         futr_endo = []
 
-        for i in range(len(forecast_times)):
+        for i in range(len(t)):
             y_next = self.model.predict(X=X, fh=self.fh).iloc[0:1, :]
             self.model._y = pd.concat([self.model._y.iloc[1:, :], y_next])
             futr_endo.append(y_next)

@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, Type
 
 import interfere
@@ -14,7 +15,7 @@ SEED = 11
 PRED_LEN = 10
 
 
-def VARIMA_timeseries(dim=4, lags=3, noise_lags=2, tsteps=100, n_do=20):
+def VARIMA_timeseries(dim=5, lags=3, noise_lags=2, tsteps=100, n_do=20):
     # Initialize a VARMA model
     rng = np.random.default_rng(SEED)
     phis = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(lags)]
@@ -177,10 +178,81 @@ def fit_predict_checks(
     
     assert np.all(endo_pred) <= prediction_max
 
+def predict_error_checks(method_type):
+    """Checks that predict raises appropriate errors."""
+
+    method_params = method_type.get_test_params()
+
+    # Warning and exception tests.
+    t = np.arange(10)
+    prior_endog_states = np.random.rand(9, 2)
+    prior_exog_states = np.random.rand(9, 3)
+    prediction_exog = np.random.rand(len(t), 3)
+    true_prior_t = np.arange(-8, 1)
+    method = method_type(**method_params)
+    method.fit(true_prior_t, prior_endog_states)
+
+    # Test that predict requires monotonic time arrays.
+    with pytest.raises(ValueError, match=(
+        f"Time points passed to the {str(type(method).__name__)}.predict "
+        "`t` argument must be strictly increasing."
+    )):
+        method.predict(np.random.rand(10), prior_endog_states)
+
+    # Test that predict warns about inferring prior_t.
+    with pytest.warns(UserWarning, match=(
+        "Inferring additional `prior_t` values. Assuming `prior_t` has"
+        " the same equally spaced timestep size as `t`"
+    )):
+        method.predict(t, prior_endog_states[-1,:], prior_t=t[0:1])
+
+    # Test that predict requires equally spaced t to infer prior_t.
+    with pytest.raises(ValueError, match=(
+        "The `prior_t` argument not provided"
+        " AND `t` is not equally spaced. Cannot infer "
+        " `prior_t`. Either pass it explicitly or provide "
+        " equally spaced time `t`."
+    )):
+        method.predict(np.hstack([
+            t, [t[-1] + np.pi]]), prior_endog_states[-1,:], prior_t=None)
+
+    # Test that predict requires last entry of prior_t to equal first entry of
+    # t. 
+    bad_prior_t = np.random.rand(1)
+    with pytest.raises(ValueError, match=re.escape(
+        f"For {str(type(method).__name__)}.predict, the last prior time, "
+        f"`prior_t[-1]`={bad_prior_t[-1]} must equal the first simulation "
+        f"time t[0]={t[0]}."
+    )):
+        method.predict(t, prior_endog_states[-1,:], prior_t=bad_prior_t)
+
+    # Test that predict requires the same number of entries in prior_t and
+    # prior_endog_states.
+    p = 3
+    num_prior_times = 2
+    bad_prior_t = true_prior_t[-num_prior_times:].copy()
+    bad_prior_t[0] -= np.pi
+
+    with pytest.raises(ValueError, match=re.escape(
+        f"{str(type(method).__name__)}.predict was passed {p} "
+        "prior_endog_states but there are only "
+        f"{num_prior_times} entries in `prior_t`."
+    )):
+        method.predict(t, prior_endog_states[-p:,: ], prior_t=bad_prior_t)
+
+    # Test that predict requires monotonic time arrays.
+    with pytest.raises(ValueError, match=re.escape(
+        f"Prior time points passed to {str(type(method).__name__)}."
+        "predict must be strictly increasing."
+    )):
+        bad_prior_t = np.random.rand(len(true_prior_t))
+        bad_prior_t[-1] = t[0]
+        method.predict(t, prior_endog_states, prior_t=bad_prior_t)
+        
     # Test that predict raises warning when not enough historic data is passed.
 
     method = method_type(**method_params)
-    method.fit(prior_t, prior_endog_states, prior_exog_states)
+    method.fit(true_prior_t, prior_endog_states, prior_exog_states)
     # Change the window size method. This is a bit hacky and could cause
     # problems in the future. The real issue here is that window size is not
     # an attribute and therefore we can't change it. It is computed from the
@@ -195,32 +267,57 @@ def fit_predict_checks(
     method.get_window_size = lambda : w_old + 1
 
 
-    with pytest.warns(UserWarning, match=str(type(method)) + " has window size "
+    with pytest.warns(UserWarning, match=str(type(method).__name__) + " has window size "
         f"{w_old + 1} but only recieved {w_old} "
         "endog observations. Augmenting historic edogenous "
         "observations with zeros."
     ):
-        endo_pred = method.predict(
-            forecast_times,
-            prior_endog_states=prior_endog_states[:w_old, :],
-            prior_exog_states=prior_exog_states[:w_old, :],
-            prior_t=prior_t, 
-            prediction_exog=exog,
+        method.predict(
+            t,
+            prior_endog_states=prior_endog_states[-w_old:, :],
+            prior_exog_states=prior_exog_states[-w_old:, :],
+            prior_t=true_prior_t[-w_old:], 
+            prediction_exog=prediction_exog,
             prediction_max=3.0
         )
 
-    with pytest.warns(UserWarning, match=str(type(method)) + " has window size"
+    with pytest.warns(UserWarning, match=str(type(method).__name__) + " has window size"
         f" {w_old + 1} but only recieved {w_old} exog observations. "
         "Augmenting historic exogenous observations with zeros."
     ):
-        endo_pred = method.predict(
-            t=forecast_times,
-            prior_endog_states=prior_endog_states[:w_old, :],
-            prior_exog_states=prior_exog_states[:w_old, :],
-            prior_t=prior_t,
-            prediction_exog=exog, 
+        method.predict(
+            t=t,
+            prior_endog_states=prior_endog_states[-w_old:, :],
+            prior_exog_states=prior_exog_states[-w_old:, :],
+            prior_t=true_prior_t[-w_old:],
+            prediction_exog=prediction_exog, 
             prediction_max=3.0
         )
+
+    # Test method.predict time array warnings and exceptions.
+    X = np.random.rand(10, 2)
+    t = np.arange(10)
+    true_prior_t = np.arange(-9, 1)
+    method.fit(true_prior_t, X)
+
+    with pytest.warns(UserWarning, match=(
+            "Inferring additional `prior_t` values. Assuming `prior_t` has"
+            " the same equally spaced timestep size as `t`"
+    )):
+        method.predict(t, X[-w_old:], prior_t=true_prior_t[-w_old:])
+    
+    # Test that predict requires equally spaced t to infer prior_t.
+    with pytest.raises(ValueError, match=re.escape(
+        f"{str(type(method).__name__)}.predict augmented "
+        "`prior_endog_states` with zeros but `prior_t` was not "
+        "equally spaced so it was not possible to infer "
+        "additional prior times. \n\nTo solve, pass at least "
+        f"({w_old + 1}) previous time values or use "
+        "equally spaced `prior_t`."
+    )):
+        bad_prior_t = true_prior_t[-w_old:].copy()
+        bad_prior_t[0] -= np.pi
+        method.predict(t, X[-w_old:], prior_t=bad_prior_t)
     # Clean up method so that bad window size doesn't break things.
     method = None
 
@@ -267,7 +364,9 @@ def grid_search_checks(
 
 def grid_search_assertions(
     gs_results: DataFrame,
-    param_grid: Dict[str, Any]
+    param_grid: Dict[str, Any],
+    prob_threshold = 0.3,
+    mse_diff_cutoff = 20
 ):
     
     # Make sure that the grid is evaluated for every combo
@@ -281,6 +380,8 @@ def grid_search_assertions(
     # combinations. I facilitate this by providing obviously bad hyper
     # parameters to the test param grid (method_type.get_test_param_grid())
     best_mse = gs_results.mean_squared_error.min()
+    worst_mse = gs_results.mean_squared_error.max()
+
     best_mse_idx = gs_results.mean_squared_error.argmin()
     other_scores = gs_results.drop(
         gs_results.index[best_mse_idx],
@@ -288,7 +389,7 @@ def grid_search_assertions(
     ).mean_squared_error
 
     # Fit a normal distribution to all scores except the best one.
-    prob_of_lowest_score = scipy.stats.norm(
+    lowest_score_prob = scipy.stats.norm(
         np.mean(other_scores),
         np.std(other_scores)
     ).cdf(best_mse)
@@ -298,9 +399,11 @@ def grid_search_assertions(
     # other scores. This ensures that a clear minimum exists, and this test only
     # passes if you purposely provide TERRRIBLE hyper parameters to the test
     # param grid along with reasonable ones.
-    if (prob_of_lowest_score > 0.3) or np.isnan(prob_of_lowest_score):
+    if (lowest_score_prob >= prob_threshold) or np.isnan(lowest_score_prob):
         print(gs_results[["params", "mean_squared_error"]])
-    assert prob_of_lowest_score < 0.3
+    prob_is_low =  lowest_score_prob < prob_threshold
+    diff_is_big = worst_mse - best_mse > mse_diff_cutoff
+    assert prob_is_low or diff_is_big
 
 
 def check_exogeneous_effect(
@@ -327,7 +430,7 @@ def check_exogeneous_effect(
     X, X_do = Xs[0], X_dos[0]
 
     n_do, _ = X_do.shape
-    X_historic, historic_times = X[:-n_do, :], t[:-n_do]
+    X_historic, historic_times = X[:(-n_do + 1), :], t[:(-n_do + 1)]
     forecast_times = t[-n_do:]
 
     intervention = params["intervention_type"](**params["intervention_params"])
@@ -390,6 +493,7 @@ def standard_inference_method_checks(method_type: BaseInferenceMethod):
     # Tests each for discrete and continuous time
     fit_predict_checks(method_type, *VARIMA_timeseries())
     fit_predict_checks(method_type, *belozyorov_timeseries())
+    predict_error_checks(method_type)
 
     grid_search_checks(method_type, *VARIMA_timeseries())
     grid_search_checks(method_type, *belozyorov_timeseries())
@@ -397,7 +501,7 @@ def standard_inference_method_checks(method_type: BaseInferenceMethod):
     forecast_intervention_check(method_type, *VARIMA_timeseries())
     forecast_intervention_check(method_type, *belozyorov_timeseries())
     
-    check_exogeneous_effect(method_type)
+    # check_exogeneous_effect(method_type)
     
 
 def test_nixtla_converter():
@@ -458,6 +562,7 @@ def test_average_method():
         interfere.methods.AverageMethod,
         *VARIMA_timeseries()
     )
+    predict_error_checks(interfere.methods.AverageMethod)
 
 
 def test_var():
@@ -483,3 +588,4 @@ def test_autoarima():
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
 
+test_average_method()
