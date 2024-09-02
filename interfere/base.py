@@ -110,9 +110,9 @@ class DynamicModel(ABC):
                 )
             
             if prior_t[-1] != t[0]:
-                raise ValueError(f"The last prior time, `prior_t[-1]` "
-                    f"({prior_t[-1]})must equal the first simulation time "
-                    f"({t[0]})."
+                raise ValueError(f"The last prior time, `prior_t[-1] "
+                    f"= {prior_t[-1]}` must equal the first simulation time "
+                    f"`t[0] = {t[0]}`."
                 )
             
         else:
