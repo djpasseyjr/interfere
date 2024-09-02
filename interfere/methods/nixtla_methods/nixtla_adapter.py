@@ -61,18 +61,29 @@ class NixtlaAdapter(BaseInferenceMethod):
         endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
-        
+        self.dt_ = t[1] - t[0]
+
+        if not np.allclose(np.diff(t), self.dt_, atol=1e9):
+            raise ValueError(
+                "Nixtla forecasters require evenly spaced time points.")
+
         if exog_states is not None:
             _, k = exog_states.shape
         else:
             k = 0
     
         # Assign names to exogeneous variables.
-        self.exog_state_ids = default_exog_names(k) 
+        self.exog_state_ids = default_exog_names(k)
+
+        # Convert time to discrete.
+        discrete_t = self.to_discrete(t)
 
         # Create a neuralforecast compatible DataFrame.
         train_df = to_nixtla_df(
-            t, endog_states, exog_states, exog_state_ids=self.exog_state_ids
+            discrete_t,
+            endog_states,
+            exog_states,
+            exog_state_ids=self.exog_state_ids
         )
         
         # Initialize model.
@@ -100,6 +111,13 @@ class NixtlaAdapter(BaseInferenceMethod):
             raise ValueError("Not enough context provided for to make a "
                 f"prediction. {len(t)} obs provided, need "
                 f"{self.get_window_size()}."
+            )
+        
+        pred_dt = t[1] - t[0]
+        if not np.allclose(self.dt_, pred_dt, atol=1e9):
+            raise ValueError(
+                f"{str(type(self).__name__)}.predict() times must have the same"
+                " step size as the time values passed to .fit()"
             )
         
         if isinstance(self.nixtla_forecaster, neuralforecast.NeuralForecast):
@@ -133,8 +151,12 @@ class NixtlaAdapter(BaseInferenceMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
+        
+        # Convert to discrete time.
+        discrete_t = self.to_discrete(t)
+
         # Total number of predictions times.
-        m_pred = len(t)
+        m_pred = len(discrete_t)
 
         # Internal forecasting method's prediction horizon.
         h = self.get_horizon()
@@ -147,15 +169,12 @@ class NixtlaAdapter(BaseInferenceMethod):
         # Add one because no prediction is needed for the first timestep.
         n_extra_preds = n_steps * h - m_pred + 1
 
-        # Timestep size
-        timestep = t[1] - t[0]
-
         # Names of exogeneous variables.
         exog_state_ids = self.exog_state_ids
 
         # Initial historical context DataFrame.
         df = to_nixtla_df(
-            prior_t,
+            self.to_discrete(prior_t),
             prior_endog_states,
             prior_exog_states,
             exog_state_ids=exog_state_ids
@@ -163,13 +182,13 @@ class NixtlaAdapter(BaseInferenceMethod):
         
         # Build times and signals for the exogeneous input data frame.
         futr_times = np.hstack([
-            t,
-            np.arange(1, n_extra_preds + 1) * timestep + t[-1]
+            discrete_t,
+            np.arange(1, n_extra_preds + 1) + discrete_t[-1]
         ])
 
         if prediction_exog is None:
             prediction_exog = np.full(
-                (len(t), len(exog_state_ids)),
+                (len(discrete_t), len(exog_state_ids)),
                 np.inf
             )
         
@@ -265,6 +284,25 @@ class NixtlaAdapter(BaseInferenceMethod):
             unique_ids=[id for id in pred_df.unique_id.unique()]
         )
         return endog_pred
+    
+    def to_discrete(self, t: np.ndarray):
+        """Converts an evenly spaced time array to discrete time."""
+        dt = t[1] - t[0]
+
+        if not np.allclose(np.diff(t), dt, atol=1e9):
+            raise ValueError("Nixtla Forecasters require evenly spaced times.")
+        
+        if not np.allclose(self.dt_, dt, atol=1e9):
+            raise ValueError(
+                "The step size of the time array passed to "
+                f"{type(self).__name__}.fit() must be the same as the time step"
+                f" of the time arrays passed to {(self).__name__}.predict()."
+            )
+        
+        start_int = np.round(t[0] / dt, decimals=0)
+        end_int = start_int + len(t)
+        discrete_t = np.arange(start_int, end_int)
+        return discrete_t
 
 
     def set_params(self, **params):

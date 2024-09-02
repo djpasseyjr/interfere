@@ -77,7 +77,6 @@ class BaseInferenceMethod(BaseEstimator):
         return simulated_states
 
 
-# TODO Change order of t and endog. Consider new name for t.
     def fit(
         self,
         t: np.ndarray,

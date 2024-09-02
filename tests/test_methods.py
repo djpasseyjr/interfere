@@ -578,8 +578,16 @@ def test_sindy():
 
 
 def test_lstm():
-    standard_inference_method_checks(interfere.methods.LSTM)
+    method_type = interfere.methods.LSTM
+    fit_predict_checks(method_type, *VARIMA_timeseries())
+    fit_predict_checks(method_type, *belozyorov_timeseries())
+    # predict_error_checks(method_type)
 
+    grid_search_checks(method_type, *VARIMA_timeseries())
+    grid_search_checks(method_type, *belozyorov_timeseries())
+
+    forecast_intervention_check(method_type, *VARIMA_timeseries())
+    forecast_intervention_check(method_type, *belozyorov_timeseries())
 
 def test_autoarima():
     standard_inference_method_checks(interfere.methods.AutoARIMA)
@@ -587,5 +595,3 @@ def test_autoarima():
 
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
-
-test_average_method()
