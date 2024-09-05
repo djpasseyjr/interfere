@@ -23,7 +23,7 @@ from .decoupled_noise_dynamics import (
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi
 from .lotka_voltera import LotkaVoltera, LotkaVolteraSDE
-from .method_models import MethodModel
+from .generative_forecasters import GenerativeForecaster
 from .planted_aquarium import PlantedTankNitrogenCycle
 from .pyclustering_models import (
     HodgkinHuxleyPyclustering, LEGIONPyclustering, StuartLandauKuramoto
