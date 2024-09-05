@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import numpy as np
 from scipy import integrate
@@ -176,6 +176,53 @@ class StochasticDifferentialEquation(DynamicModel):
     ) -> np.ndarray:
         return super().simulate(
             t, prior_states, prior_t, intervention, rng, dW=dW)
+    
+
+    def build_stochastic_noise_matrix(
+            self, sigma: Union[float, np.ndarray]) -> np.ndarray:
+        """Helper function that creates a fixed noise rescaling matrix.
+
+        If sigma is a float, returns a diagonal matrix with sigma on diagonal.
+        If sigma is a 1D array, returns a diagonal matrix with diagonal equal to
+        sigma. If sigma is a 2D array, checks dimension and returns sigma.
+
+        Args:
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
+
+        Returns:
+            A numpy array with shape (self.dim, self.dim).
+        """
+        # If sigma is a float, make a diagnonal matrix.
+        if isinstance(sigma, (float, int)):
+            return np.eye(self.dim) * sigma
+        
+        # If sigma is a 1D array, check dimension and put it on the diagonal.
+        elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 1:
+
+            if sigma.shape[0] != self.dim:
+                raise ValueError(
+                    f"The stochastic noise parameter for {type(self).__name__} "
+                    f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
+                    f"Pass a float or `sigma` with shape ({self.dim},) or "
+                    "({self.dim}, {self.dim}).")
+            
+            return np.diag(sigma)
+        
+        elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 2:
+            if sigma.shape != (self.dim, self.dim):
+                raise ValueError(
+                    f"The stochastic noise parameter for {type(self).__name__} "
+                    f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
+                    f"Pass a float or `sigma` with shape ({self.dim},) or "
+                    "({self.dim}, {self.dim}).")
+            return sigma
+        else:
+            raise ValueError(
+                f"The stochastic noise parameter for {type(self).__name__}"
+                " must be a float or a 1 or 2 dimensional numpy array."
+            )
 
 
     @abstractmethod
@@ -184,7 +231,7 @@ class StochasticDifferentialEquation(DynamicModel):
 
         The assumed form of the SDE is
 
-            dX = a(x_t, t)dt + b(x_t, y)dW_t
+            dX = a(x_t, t)dt + b(x_t, t)dW_t
 
         Where x_t is a vector, t is a scalar and dW_t is a vector of normally
         distributed realizations of independed Weiner increments.
@@ -193,7 +240,7 @@ class StochasticDifferentialEquation(DynamicModel):
 
         Args:
             x (ndarray): A vector with shape (self.dim, ) containing the current
-            state of the SDE.
+                state of the SDE.
             t (float): The current time.
 
         Returns:
@@ -214,11 +261,11 @@ class StochasticDifferentialEquation(DynamicModel):
         distributed realizations of independed Weiner increments.
 
         This function, `noise`, should implement b(x, t) and should 
-        map R^n x R -> R^n x R^n.
+        map R^n x R -> R^(n x n).
 
         Args:
             x (ndarray): A vector with shape (self.dim, ) containing the current
-            state of the SDE.
+                state of the SDE.
             t (float): The current time.
 
         Returns:
