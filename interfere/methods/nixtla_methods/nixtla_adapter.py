@@ -107,9 +107,9 @@ class NixtlaAdapter(BaseInferenceMethod):
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
-        if len(t) < self.get_window_size():
+        if len(prior_t) < self.get_window_size():
             raise ValueError("Not enough context provided for to make a "
-                f"prediction. {len(t)} obs provided, need "
+                f"prediction. {len(prior_t)} obs provided, need "
                 f"{self.get_window_size()}."
             )
         
@@ -402,7 +402,8 @@ def to_nixtla_df(
     )
 
     # Translate float time to datetime.
-    nf_data.ds = pd.to_datetime(nf_data.ds, unit='s', errors='coerce')
+    nf_data.ds = pd.to_datetime(
+        pd.to_numeric(nf_data.ds), unit='s', errors='coerce')
 
     # Transform numeric columns.
     for c in nf_data.columns:
