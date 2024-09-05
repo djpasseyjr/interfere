@@ -53,7 +53,8 @@ def to_sktime_time_series(time_points: np.ndarray, X: np.ndarray):
             Columns are variables and rows are observations.
 
     """
-    index = pd.to_datetime(time_points, unit='s', errors='coerce')
+    index = pd.to_datetime(
+        pd.to_numeric(time_points), unit='s', errors='coerce')
     sktime_X = pd.DataFrame(X, index=index)
     return sktime_X
 
