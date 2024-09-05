@@ -1,5 +1,6 @@
 # VS Code
 *.code-workspace
+.vscode
 
 # iOS
 .DS_Store
