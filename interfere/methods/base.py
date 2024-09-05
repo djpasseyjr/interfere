@@ -95,8 +95,44 @@ class BaseInferenceMethod(BaseEstimator):
         """
         if len(t.shape) != 1:
             raise ValueError(
-                f"The `t` arg to {str(type(self).__name__)}.fit is not 1D.")
-                
+                f"The `t` arg to {str(type(self).__name__)}.fit() is not 1D.")
+        
+        if len(endog_states.shape) != 2:
+            raise ValueError(
+                f"The `endog_states` arg to {str(type(self).__name__)}.fit() is"
+                " not 2D"
+            )
+        
+        m, = t.shape
+        m_endog, endog_dim = endog_states.shape
+        exog_dim = None
+
+        if m != m_endog:
+            raise ValueError(
+                f"The arguments `t` and `endog_states` for "
+                f"{str(type(self).__name__)}.fit() have incompatible shapes: \n"
+                f"\tt.shape = {t.shape}\n"
+                f"\tendog_states.shape = {endog_states.shape}"
+            )
+        
+        if exog_states is not None:
+            if len(exog_states.shape) != 2:
+                raise ValueError(
+                    f"The `exog_states` arg to {str(type(self).__name__)}.fit() is"
+                    " not 2D"
+                )
+        
+            m_exog, exog_dim = exog_states.shape
+            if m != m_exog:
+
+                raise ValueError(
+                    f"The arguments `t` and `exog_states` for "
+                    f"{str(type(self).__name__)}.fit() have incompatible shapes: \n"
+                    f"t.shape = {t.shape}\n"
+                    f"exog_states.shape = {exog_states.shape}"
+                )
+
+        
         # Make sure no Pandas DataFrames are passed in.
         if any([
             isinstance(x, pd.DataFrame) 
@@ -108,9 +144,18 @@ class BaseInferenceMethod(BaseEstimator):
         if np.any(np.diff(t) <= 0):
             raise ValueError(f"Time points passed to {str(type(self).__name__)}.fit must be strictly increasing.")
         
+        self.timestep_of_fit = None
+        self.endog_dim_of_fit = endog_dim
+        self.exog_dim_of_fit = exog_dim
 
+        # Store timestep size if time points are evenly spaced.
+        dt = t[1] - t[0]
+        if np.allclose(np.diff(t), dt):
+            self.timestep_of_fit = dt
+
+        self._fit(t, endog_states, exog_states)
         self.is_fit = True
-        return self._fit(t, endog_states, exog_states)
+        return self
     
 
     def predict(
@@ -214,6 +259,11 @@ class BaseInferenceMethod(BaseEstimator):
                 "of `prior_endog_states`, the `t` argument must have at least "
                 "two time values."
             )
+        
+        if self.exog_dim_of_fit is not None and prediction_exog is None:
+            raise ValueError(
+                f"{type(self).__name__} was fit to exogenous data but no "
+                "exogenous signals were provided to predict().")
 
         # Check shape of exogenous signals.
         if prediction_exog is not None:
