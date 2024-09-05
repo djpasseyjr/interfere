@@ -117,6 +117,41 @@ def check_simulate_method(
 
     return X, X_do
 
+def test_stochastic_array_builder():
+    beloz = interfere.dynamics.Belozyorov3DQuad()
+
+    # Test float argument.
+    sigma = beloz.build_stochastic_noise_matrix(3)
+    assert np.all(sigma == sigma * np.eye(3))
+    assert sigma.shape == (beloz.dim, beloz.dim)
+
+    # Test 1D array argument
+    x = np.random.rand(3)
+    sigma = beloz.build_stochastic_noise_matrix(x)
+    assert np.all(sigma == np.diag(x))
+    assert sigma.shape == (beloz.dim, beloz.dim)
+
+    # Test 2D array argument
+    x = np.random.rand(3, 3)
+    sigma = beloz.build_stochastic_noise_matrix(x)
+    assert np.all(sigma == x)
+    assert sigma.shape == (beloz.dim, beloz.dim)
+
+    with pytest.raises(
+        ValueError, match="float or a 1 or 2 dimensional numpy array."):
+        beloz.build_stochastic_noise_matrix(np.random.rand(3, 3, 3))
+
+    with pytest.raises(
+        ValueError, match="Pass a float or `sigma` with shape"
+    ):
+        beloz.build_stochastic_noise_matrix(np.random.rand(4))
+
+    with pytest.raises(
+        ValueError, match="Pass a float or `sigma` with shape"
+    ):
+        beloz.build_stochastic_noise_matrix(np.random.rand(2, 2))
+
+
 def test_lotka_voltera():
     # Initialize interfere.LotkaVoltera model.
     n = 10
@@ -425,4 +460,24 @@ def test_hodgkin_huxley():
     model = interfere.dynamics.HodgkinHuxleyPyclustering(stimulus, sigma)
     check_simulate_method(model)
 
-test_coupled_map_lattice()
+
+def test_lorenz():
+    model = interfere.dynamics.Lorenz()
+    check_simulate_method(model)
+
+
+def test_rossler():
+    model = interfere.dynamics.Rossler()
+    check_simulate_method(model)
+
+
+def test_thomas():
+    model = interfere.dynamics.Thomas()
+    check_simulate_method(model)
+
+
+def test_aquarium():
+    model = interfere.dynamics.PlantedTankNitrogenCycle()
+    check_simulate_method(model)
+
+    
