@@ -23,11 +23,13 @@ from .decoupled_noise_dynamics import (
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi
 from .lotka_voltera import LotkaVoltera, LotkaVolteraSDE
+from .method_models import MethodModel
+from .planted_aquarium import PlantedTankNitrogenCycle
 from .pyclustering_models import (
     HodgkinHuxleyPyclustering, LEGIONPyclustering, StuartLandauKuramoto
 )
 from .ornstein_uhlenbeck import OrnsteinUhlenbeck
-from .quadratic_sdes import Belozyorov3DQuad, Liping3DQuadFinance
+from .quadratic_sdes import Belozyorov3DQuad, Liping3DQuadFinance, Lorenz, Rossler, Thomas
 from .simple_linear_sdes import (
     DampedOscillator,
     LinearSDE,
