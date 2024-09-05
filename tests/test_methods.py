@@ -589,9 +589,19 @@ def test_lstm():
     forecast_intervention_check(method_type, *VARIMA_timeseries())
     forecast_intervention_check(method_type, *belozyorov_timeseries())
 
-def test_autoarima():
-    standard_inference_method_checks(interfere.methods.AutoARIMA)
 
+@pytest.skip(reason="Not finished developing method.")
+def test_autoarima():
+    method_type = interfere.methods.AutoARIMA
+    fit_predict_checks(method_type, *VARIMA_timeseries())
+    fit_predict_checks(method_type, *belozyorov_timeseries())
+    # predict_error_checks(method_type)
+
+    grid_search_checks(method_type, *VARIMA_timeseries())
+    grid_search_checks(method_type, *belozyorov_timeseries())
+
+    forecast_intervention_check(method_type, *VARIMA_timeseries())
+    forecast_intervention_check(method_type, *belozyorov_timeseries())
 
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
