@@ -321,6 +321,7 @@ def predict_error_checks(method_type):
     # Clean up method so that bad window size doesn't break things.
     method = None
 
+
 def grid_search_checks(
         method_type: Type[BaseInferenceMethod],
         X_historic: np.ndarray,
@@ -451,6 +452,57 @@ def check_exogeneous_effect(
     assert mse_intervened < mse_no_intervention
 
 
+def check_arbitrary_initial(
+        method_type,
+        X_historic: np.ndarray,
+        historic_times: np.ndarray,
+        X_do: np.ndarray, 
+        forecast_times: np.ndarray,
+        intervention: interfere.interventions.ExogIntervention
+):
+    rng = np.random.default_rng(SEED)
+
+    # Fit the method.
+    dt = historic_times[1] - historic_times[0]
+    if not np.allclose(np.diff(historic_times), dt):
+        raise AssertionError("`check_arbitrary_initial` requires evenly spaced time points")
+    
+    method = method_type(**method_type.get_test_params(), 
+    )
+
+    method.fit(historic_times, X_historic)
+
+    # Make random initial conditions.
+    random_prior_states = rng.random(
+        (method.get_window_size(), X_historic.shape[1]))
+
+    # Predict from random initial conditions.
+    endog_pred = method.predict(
+        forecast_times, prior_endog_states=random_prior_states)
+    assert np.allclose(
+        random_prior_states[-1, :], endog_pred[0, :], atol=0.1), (
+        "First arbitrary prediction failed. \nTarget = "
+        f" {random_prior_states[-1, :]} \n"
+        f"Predic = {endog_pred[0, :]}"
+    )
+
+    # Check that the model can make multiple predictions from different initial
+    # conditions.
+    new_random_prior_states = rng.random(
+        (method.get_window_size(), X_historic.shape[1]))
+    
+    endog_pred = method.predict(
+        forecast_times, prior_endog_states=new_random_prior_states)
+    
+    assert np.allclose(
+        new_random_prior_states[-1, :], endog_pred[0, :], atol=0.1), (
+        "Second arbitrary prediction failed. \nTarget = "
+        f" {random_prior_states[-1, :]} \n"
+        f"Predic = {endog_pred[0, :]}"
+    )
+
+
+
 def forecast_intervention_check(
         method_type: Type[BaseInferenceMethod],
         X_historic: np.ndarray,
@@ -500,6 +552,9 @@ def standard_inference_method_checks(method_type: BaseInferenceMethod):
 
     forecast_intervention_check(method_type, *VARIMA_timeseries())
     forecast_intervention_check(method_type, *belozyorov_timeseries())
+
+    check_arbitrary_initial(method_type, *VARIMA_timeseries())
+    check_arbitrary_initial(method_type, *belozyorov_timeseries())
     
     # check_exogeneous_effect(method_type)
     
@@ -589,8 +644,11 @@ def test_lstm():
     forecast_intervention_check(method_type, *VARIMA_timeseries())
     forecast_intervention_check(method_type, *belozyorov_timeseries())
 
+    check_arbitrary_initial(method_type, *VARIMA_timeseries())
+    check_arbitrary_initial(method_type, *belozyorov_timeseries())
 
-@pytest.skip(reason="Not finished developing method.")
+
+@pytest.mark.skip(reason="Not finished developing method.")
 def test_autoarima():
     method_type = interfere.methods.AutoARIMA
     fit_predict_checks(method_type, *VARIMA_timeseries())
@@ -602,6 +660,9 @@ def test_autoarima():
 
     forecast_intervention_check(method_type, *VARIMA_timeseries())
     forecast_intervention_check(method_type, *belozyorov_timeseries())
+
+    check_arbitrary_initial(method_type, *VARIMA_timeseries())
+    check_arbitrary_initial(method_type, *belozyorov_timeseries())
 
 def test_ltsf():
     standard_inference_method_checks(interfere.methods.LTSFLinearForecaster)
