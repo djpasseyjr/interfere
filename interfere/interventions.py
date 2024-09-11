@@ -28,11 +28,38 @@ class ExogIntervention(Intervention):
         endo_X = np.delete(X, self.intervened_idxs, axis=-1)
         return endo_X, exog_X
     
+
     def combine_exogeneous(self, endo_X: np.ndarray, exog_X: np.ndarray):
-        """Recombines endogenous and endogenous signals."""
-        X = np.insert(endo_X, self.intervened_idxs, exog_X, axis=1)
+        """Recombines endogenous and endogenous signals.
+        
+        Args:
+            endo_X (ndarray): A 2D array of endogenous signals with shape 
+                (m, n_endo). Rows are observations and columns are variables.
+            exog_X (ndarray): A 2D array of exogenous signals with shape 
+                (m, n_exog). Rows are observations and columns are variables.
+        """
+        m_endo, n_endo = endo_X.shape
+        m_exog, n_exog = exog_X.shape
+
+        if m_exog != m_endo:
+            raise ValueError(
+                "Endogenous and exogenous arrays must have the same number of "
+                f"rows. \nNum endog rows = {m_endo} Num exog rows = {m_endo}"
+            )
+        
+        if n_exog != len(self.intervened_idxs):
+            raise ValueError(
+                "Wrong number of exogenous signals passed to intervention. "
+                f"Expected {len(self.intervened_idxs)} received {m_exog}.")
+        
+        n = n_endo + n_exog
+        X = np.zeros((m_endo, n))
+        X[:, self.intervened_idxs] = exog_X
+        endo_idxs = [i for i in range(n) if i not in self.intervened_idxs]
+        X[:, endo_idxs] = endo_X
         return X
     
+
     def eval_at_times(self, t: np.ndarray):
         """Produces exogeneous signals only at the time values in t.
 
