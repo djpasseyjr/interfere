@@ -1,4 +1,4 @@
-"""Tests for benchmarking tools."""
+"""Tests for metrics."""
 
 from interfere.benchmarking import (
     DirectionalChangeBinary,
