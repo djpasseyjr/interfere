@@ -1,7 +1,7 @@
 """The base class for methods for intervention response prediction.
 """
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Type
+from abc import abstractmethod
+from typing import Any, Dict, List, Optional
 from warnings import warn
 
 import numpy as np
