@@ -1,8 +1,7 @@
 """Dynamic model wrapper for predictive algorithms. 
 """
 
-from typing import Callable, Optional, Type, Union
-import warnings
+from typing import Callable, Optional, Union
 
 import numpy as np
 
@@ -83,17 +82,6 @@ class GenerativeForecaster(DynamicModel):
                 f"expecting an array with {self.fitted_method.endog_dim_of_fit}"
                 " columns."
             )
-        
-        # if prior_t is None:
-        #     prior_t = np.arange(-num_prior_obs, 1) * self.timestep + t[0]
-
-        # if len(prior_t) != num_prior_obs:
-        #     raise ValueError(
-        #         f"{type(self).__name__}[{type(self.fitted_method).__name__}] "
-        #         "requires the same number of prior states and prior times. \n"
-        #         f"\tprior_states.shape={prior_states.shape}"
-        #         f"\tprior_t.shape={prior_t.shape}"
-        #     )
 
         for i in range(len(t) - 1):
 
