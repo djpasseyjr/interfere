@@ -346,7 +346,7 @@ class BaseInferenceMethod(BaseEstimator):
         # If the user provided prior_t and it is greater or equal to
         # num_prior_endog, then we trim it to size.
         if num_prior_times > num_prior_endog:
-            warn(f"{str(type(self).__name__)}.predict was passed too many"
+            warn(f"{str(type(self).__name__)}.predict was passed too many "
                  f"({num_prior_times}) prior time points. Using only the last "
                  f"{num_prior_endog} time points.")
             prior_t = prior_t[-num_prior_endog:]
