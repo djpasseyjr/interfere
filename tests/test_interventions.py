@@ -52,24 +52,30 @@ def test_identity_intervention():
     t = np.arange(100)
     rng = np.random.default_rng(11)
 
-    X = model.simulate(x0, t, rng=rng)
+    X = model.simulate(t, x0, rng=rng)
 
     rng = np.random.default_rng(11)
     X_ident = model.simulate(
-        x0, t, interfere.interventions.IdentityIntervention(), rng)
+        t, x0,
+        intervention=interfere.interventions.IdentityIntervention(),
+        rng=rng
+    )
     
     assert np.all(X == X_ident)
 
     # Test identity intervention for continuous stochastic dynamics.
     model = interfere.dynamics.Belozyorov3DQuad(sigma=0.01)
     x0 = np.random.rand(3) * 0.1
-    t = np.linspace(0, 10, 1000)
+    t = np.linspace(0, 10, 1001)
 
     rng = np.random.default_rng(11)
-    X = model.simulate(x0, t, rng=rng)
+    X = model.simulate(t, x0, rng=rng)
 
     rng = np.random.default_rng(11)
     X_ident = model.simulate(
-        x0, t, interfere.interventions.IdentityIntervention(), rng)
+        t, x0,
+        intervention=interfere.interventions.IdentityIntervention(),
+        rng=rng
+    )
     
     assert np.all(X == X_ident)
