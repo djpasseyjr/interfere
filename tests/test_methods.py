@@ -471,7 +471,8 @@ class TestFitPredict:
         assert endo_pred.shape[0] == PRED_LEN
 
 
-    def test_predict_clip(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_predict_clip(
+            self, method_type: Type[BaseInferenceMethod], dynamics):
         """Tests that the predict method clips predictions when they get big.
         
         Args:
@@ -501,7 +502,9 @@ class TestFitPredict:
 
         method.fit(prior_t, prior_endog_states, prior_exog_states)
 
-        prediction_max = max(np.max(prior_endog_states), np.max(prior_exog_states))
+        prediction_max = max(
+            np.max(prior_endog_states), np.max(prior_exog_states))
+        
         endo_pred = method.predict(
             t=forecast_times,
             prior_endog_states=prior_endog_states,
@@ -511,7 +514,7 @@ class TestFitPredict:
             prediction_max=prediction_max
         )
         
-        assert np.all(endo_pred) <= prediction_max
+        assert np.all(endo_pred <= prediction_max)
 
 
     def test_predict_arbitrary_initial(self, method_type: Type[BaseInferenceMethod], dynamics):
@@ -688,7 +691,7 @@ class TestPredictErrors:
         bad_prior_t = np.random.rand(1)
         with pytest.raises(ValueError, match=re.escape(
             f"For {str(type(method).__name__)}.predict, the last prior time, "
-            f"`prior_t[-1]`={bad_prior_t[-1]} must equal the first simulation "
+            f"prior_t[-1]={bad_prior_t[-1]} must equal the first simulation "
             f"time t[0]={t[0]}."
         )):
             method.predict(t, prior_endog_states[-1,:], prior_t=bad_prior_t)    
