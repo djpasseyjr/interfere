@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 import numpy as np
 
@@ -21,6 +21,7 @@ class DynamicModel(ABC):
         self,
         dim: int, 
         measurement_noise_std: Optional[np.ndarray] = None,
+        sigma: Optional[Union[float, np.ndarray]] = None
     ):
         """Initializes a DynamicModel instance.
 
@@ -34,9 +35,13 @@ class DynamicModel(ABC):
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
         """
         self.dim = dim
         self.measurement_noise_std = measurement_noise_std
+        self.sigma = self.build_stochastic_noise_matrix(sigma, dim)
 
 
     def simulate(
@@ -99,14 +104,14 @@ class DynamicModel(ABC):
         
         # Reshape prior_states to ensure they are 2D
         prior_states = np.reshape(prior_states, (-1, prior_states.shape[-1]))
-        p, _ = prior_states.shape     
+        prior_obs, _ = prior_states.shape     
 
         if prior_t is not None:
             p_prior_t, = prior_t.shape
 
-            if p_prior_t != p:
+            if p_prior_t != prior_obs:
                 raise ValueError(f"The length of `prior_t` ({p_prior_t}) must "
-                    f"be equal to the number of rows ({p}) in prior_states. "
+                    f"be equal to the number of rows ({prior_obs}) in prior_states. "
                 )
             
             if prior_t[-1] != t[0]:
@@ -127,7 +132,7 @@ class DynamicModel(ABC):
 
             start_time = t[0]
             # Evenly spaced prior times ending at the start of t.
-            prior_t = np.arange(start_time - p * dt, start_time + dt, dt)
+            prior_t = np.arange(-prior_obs + 1, 1) * dt + start_time
 
         return self._simulate(
             t, prior_states, prior_t, intervention, rng, **kwargs)
@@ -166,6 +171,60 @@ class DynamicModel(ABC):
             return X
         
         return X + rng.standard_normal(X.shape) * self.measurement_noise_std
+    
+
+    def build_stochastic_noise_matrix(
+        self,
+        sigma: Union[float, np.ndarray],
+        dim: int
+    ) -> np.ndarray:
+        """Helper function that creates a fixed noise rescaling matrix.
+
+        If sigma is a float, returns a diagonal matrix with sigma on diagonal.
+        If sigma is a 1D array, returns a diagonal matrix with diagonal equal to
+        sigma. If sigma is a 2D array, checks dimension and returns sigma.
+
+        Args:
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
+            dim (int): The desired dimension of the noise matrix.
+
+        Returns:
+            A numpy array with shape (dim, dim).
+        """
+        # If sigma is a float, make a diagnonal matrix.
+        if isinstance(sigma, (float, int)):
+            return np.eye(dim) * sigma
+        
+        # If sigma is a 1D array, check dimension and put it on the diagonal.
+        elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 1:
+
+            if sigma.shape[0] != dim:
+                raise ValueError(
+                    f"The stochastic noise parameter for {type(self).__name__} "
+                    f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
+                    f"Pass a float or `sigma` with shape ({dim},) or "
+                    "({dim}, {dim}).")
+            
+            return np.diag(sigma)
+        
+        elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 2:
+            if sigma.shape != (dim, dim):
+                raise ValueError(
+                    f"The stochastic noise parameter for {type(self).__name__} "
+                    f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
+                    f"Pass a float or `sigma` with shape ({dim},) or "
+                    "({dim}, {dim}).")
+            return sigma
+        
+        if sigma is None:
+            return np.zeros((dim, dim))
+        else:
+            raise ValueError(
+                f"The stochastic noise parameter for {type(self).__name__}"
+                " must be a float or a 1 or 2 dimensional numpy array."
+            )
     
 
     @abstractmethod
