@@ -10,6 +10,23 @@ from ..utils import copy_doc
 from ..interventions import ExogIntervention
 
 
+# Lists of hyper parameters for optimization.
+SINDY_LIB_LIST = [ps.PolynomialLibrary(), ps.FourierLibrary()]
+
+SINDY_DIFF_LIST = [
+    ps.SINDyDerivative(kind='finite_difference', k=1),
+    ps.SINDyDerivative(kind='finite_difference', k=2),
+    ps.SINDyDerivative(kind='finite_difference', k=3),
+    ps.SINDyDerivative(kind='spline', s=0.1),
+    ps.SINDyDerivative(kind='spline', s=0.5),
+    ps.SINDyDerivative(kind='savitzky_golay', order=2, left=0.1, right=0.1),
+    ps.SINDyDerivative(kind='savitzky_golay', order=3, left=0.1, right=0.1),
+    ps.SINDyDerivative(kind='trend_filtered', order=0, alpha=0.01),
+    ps.SINDyDerivative(kind='trend_filtered', order=1, alpha=0.01),
+    ps.SINDyDerivative(kind='trend_filtered', order=1, alpha=0.1),
+]
+
+
 class SINDY(BaseInferenceMethod):
 
     @copy_doc(ps.SINDy.__init__)
@@ -129,4 +146,24 @@ class SINDY(BaseInferenceMethod):
                 ps.feature_library.FourierLibrary()
             ],
             "discrete_time": [True, False]
+        }
+    
+
+    def _get_optuna_params(trial):
+        return {
+            'optimizer__threshold': trial.suggest_float(
+                'optimizer__threshold', 1e-5, 5, log=True),
+
+            'optimizer__alpha': trial.suggest_float(
+                'optimizer__alpha', 1e-5, 5, log=True),
+
+            'discrete_time': trial.suggest_categorical(
+                'discrete_time', [True, False]),
+
+            'feature_library': SINDY_LIB_LIST[
+                trial.suggest_categorical('feature_library', [0, 1])],
+
+            'differentiation_method': SINDY_DIFF_LIST[
+                trial.suggest_categorical(
+                    "differentiation_method", list(range(9)))]
         }

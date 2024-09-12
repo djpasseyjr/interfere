@@ -1,14 +1,20 @@
 from typing import Any, Dict, Optional
-from matplotlib.pylab import RandomState
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.ltsf import LTSFLinearForecaster as sktime_LTSFLinearForecaster
 
-from interfere.base import DEFAULT_RANGE
+try:
+    from sktime.forecasting.ltsf import LTSFLinearForecaster as sktime_LTSFLinearForecaster
+    
+except ImportError as e:
+    raise ImportError(
+        "ImportError occured in sktime import."
+        "\n\n This likely occurred because `interfere` does not list `sktime` as a direct dependency. To use the "
+        "LTSFLinearForecaster, try first install `sktime` via pip "
+        "install sktime."
+        f"\n\nOriginating error text: {e}"   
+)
 
-from .base import BaseInferenceMethod
-from ..interventions import ExogIntervention
+from .base import BaseInferenceMethod, DEFAULT_RANGE
 from ..utils import copy_doc, to_sktime_time_series
 
 
@@ -16,7 +22,6 @@ class LTSFLinearForecaster(BaseInferenceMethod):
     """Uses a transformer for inference."""
 
 
-    @copy_doc(sktime_LTSFLinearForecaster.__init__)
     def __init__(
         self,
         seq_len: int = 1,
@@ -33,6 +38,49 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         custom_dataset_train: Optional[Any] = None,
         custom_dataset_pred: Optional[Any] = None
     ):
+        """LTSF-Linear Forecaster.
+
+        Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
+        aka LTSF-Linear, by Zeng et al [1]_.
+
+        Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+        which is unfortunately not available as a package.
+
+        Args:
+            seq_len : int
+                length of input sequence
+            pred_len : int
+                length of prediction (forecast horizon)
+            num_epochs : int, default=16
+                number of epochs to train
+            batch_size : int, default=8
+                number of training examples per batch
+            in_channels : int, default=1
+                number of input channels passed to network
+            individual : bool, default=False
+                boolean flag that controls whether the network treats each channel individually"
+                "or applies a single linear layer across all channels. If individual=True, the"
+                "a separate linear layer is created for each input channel. If"
+                "individual=False, a single shared linear layer is used for all channels."
+            criterion : torch.nn Loss Function, default=torch.nn.MSELoss
+                loss function to be used for training
+            criterion_kwargs : dict, default=None
+                keyword arguments to pass to criterion
+            optimizer : torch.optim.Optimizer, default=torch.optim.Adam
+                optimizer to be used for training
+            optimizer_kwargs : dict, default=None
+                keyword arguments to pass to optimizer
+            lr : float, default=0.003
+                learning rate to train model with
+
+        References:
+            .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+            Are transformers effective for time series forecasting?
+            Proceedings of the AAAI conference on artificial intelligence 2023
+            (Vol. 37, No. 9, pp. 11121-11128).
+            .. [2] https://github.com/cure-lab/LTSF-Linear
+        """
+
         self.method_params = locals()
         self.method_params.pop("self") 
 
@@ -47,6 +95,7 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         endog_states: np.ndarray,
         exog_states: np.ndarray = None
     ):
+  
         self.model = sktime_LTSFLinearForecaster(
             **self.method_params
         )
@@ -121,4 +170,13 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         return {
             "seq_len": [2, 5],
             "lr": [0.001, 0.1],
+        }
+    
+    def _get_optuna_params(trial):
+        return {
+            "seq_len": trial.suggest_int("seq_len", 1, 25),
+            "lr": trial.suggest_float("lr", 1e-5, 1e-1, log=True),
+            "pred_len": trial.suggest_int("pred_len", 1, 25),
+            "num_epochs": trial.suggest_categorical(
+                "num_epochs", [50, 100, 300])
         }

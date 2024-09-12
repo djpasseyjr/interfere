@@ -213,3 +213,12 @@ class VAR(BaseInferenceMethod):
     @copy_doc(BaseInferenceMethod.get_test_params)
     def get_test_params() -> Dict[str, Any]:
         return {}
+    
+
+    def _get_optuna_params(trial):
+        return {
+            "ic": trial.suggest_categorical("ic", ["aic", "fpe"]),
+            "maxlags": trial.suggest_int("maxlags", 1, 5),
+            "trend" : trial.suggest_categorical(
+                "trend", ["c", "ct", "ctt", "n"]),
+        }
