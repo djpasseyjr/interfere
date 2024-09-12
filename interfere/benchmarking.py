@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 )
@@ -6,248 +5,12 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-import scipy as sp
 from skforecast.model_selection_multiseries import grid_search_forecaster_multiseries
-from sktime.performance_metrics.forecasting import mean_squared_scaled_error
 
 from .base import DynamicModel, DEFAULT_RANGE
 from .interventions import ExogIntervention
 from .utils import copy_doc
 from .methods import BaseInferenceMethod
-from .methods.neuralforecast_methods import NeuralForecastAdapter
-
-
-class CounterfactualForecastingMetric(ABC):
-
-    def __init__(self, name):
-        """Initializes a metric for counterfactual forecasting.
-        """
-        self.name = name
-
-
-    def drop_intervention_cols(self, intervention_idxs: Iterable[int], *Xs):
-        """Remove intervention columns for each array in `args`
-        
-        Args:
-            intervention_ids (Iterable[int]): A list of the indexes of columns
-                that contain the exogeneous intervention.
-            Xs (Iterable[np.ndarray]): An iterable containing numpy arrays    
-                with dimension (m_i, n). They should all have the same number of
-                columns but can have a variable number of rows.
-
-            Returns:
-                Xs_response (Iterable[np.ndarray]): Every array in `Xs` with the
-                    columns corresponding to the indexes in `intervention_idxs`
-                    removed.  
-        """
-
-        # Check that all arrays have the same number of columns. 
-        if  len(set([X.shape[1] for X in Xs])) != 1:
-            raise ValueError(
-                "All input arrays must have the same number of columns.")
-        
-        return  [np.delete(X, intervention_idxs, axis=1) for X in Xs]
-
-    
-    def __call__(self, X, X_do, X_do_pred, intervention_idxs):
-        """Scores the ability to forecast the counterfactual.
-
-        Args:
-            X (np.ndarray): An (m, n) matrix that is interpreted to be a  
-                realization of an n dimensional stochastic multivariate
-                timeseries sampled at m points
-            X_do (np.ndarray): A (m, n) maxtix. The ground truth 
-                counterfactual, what X would be if the intervention was applied.
-            X_do_pred (np.ndarray):  A (m, n) maxtix. The PREDICTED 
-                counterfactual, what X would be if the intervention was applied.
-            intervention_idxs (List[int]): Which columns of X, X_do, X_do_pred.
-                received the intervention.
-            t (np.ndarray): A, (m,) array of time points associated with the
-                time series.
-
-        Returns:
-            score (float): A scalar score.
-        """
-        raise NotImplementedError
-
-
-class DirectionalChangeBinary(CounterfactualForecastingMetric):
-
-    def __init__(self):
-        super().__init__("Directional Change (Increase or decrease)")
-
-    @copy_doc(CounterfactualForecastingMetric.__call__)
-    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
-        
-        # Drop intervention column
-        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
-            intervention_idxs, *[X, X_do, X_do_pred])
-            
-        # Compute time average
-        X_avg = np.mean(X_resp, axis=0)
-        X_do_avg = np.mean(X_do_resp, axis=0)
-        pred_X_do_avg = np.mean(pred_X_do_resp, axis=0)
-
-        # Compute sign of the difference
-        sign_of_true_diff = (X_do_avg - X_avg) > 0
-        sign_of_pred_diff = (pred_X_do_avg - X_avg) > 0
-
-        # Return number of signals correct
-        acc = np.mean(sign_of_true_diff == sign_of_pred_diff)
-        return acc
-    
-
-class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
-
-    def __init__(self):
-        super().__init__("T-Test Directional Change")
-
-
-    @copy_doc(CounterfactualForecastingMetric.__call__)
-    def __call__(self, X, X_do, X_do_pred, intervention_idxs, p_val_cut=0.01):
-        """Measures if the forecast correctly predicts the change in the mean
-        value of the time series in response to the intervention. 
-
-        The direction of change and whether a change can be inferred is computed
-        via a t-test.
-
-        Args:
-            X (np.ndarray): An (m, n) matrix that is interpreted to be a  
-                realization of an n dimensional stochastic multivariate
-                timeseries sampled at m points
-            X_do (np.ndarray): A (k, n) maxtix. The ground truth 
-                counterfactual, what X would be if the intervention was applied.
-            X_do_pred (np.ndarray):  A (k, n) maxtix. The PREDICTED 
-                counterfactual, what X would be if the intervention was applied.
-            intervention_idxs (List[int]): Which columns of X, X_do, X_do_pred.
-                received the intervention.
-            t (np.ndarray): A, (m,) array of time points associated with the
-                time series.
-            p_val_cut (float): The cutoff for statistical significance.
-
-        Returns:
-            score (float): A scalar score.
-        """
-        
-        # Drop intervention columns and get response columns.
-        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
-            intervention_idxs, *[X, X_do, X_do_pred])
-        
-        true_direct_chg = self.directional_change(X_resp, X_do_resp, p_val_cut)
-        pred_direct_chg = self.directional_change(
-            X_resp, pred_X_do_resp, p_val_cut)
-        
-        return np.mean(true_direct_chg == pred_direct_chg)
-        
-    
-    def directional_change(self, X: np.ndarray, Y: np.ndarray, p_val_cut):
-        """Return sign of the difference in mean across all columns of X and Y.
-
-        Args:
-            X (np.ndarray): A (m x n) array.
-            Y (np.ndarray): A (k x n) array.
-            p_value_cut (float): The cutoff for statistical significance.
-            
-        Returns:
-            estimated_change (np.ndarray): A 1d array with length equal to the
-                number of columns in X and Y. Each entry of `estimated_change`
-                can take on one of three values, 1, -1, or 0. If the ith entry
-                of `estimated_change` is 1, then the mean of X[:, i] is greater
-                than the mean of Y[:, i] (positive t-statistic). A -1 denotes
-                that the mean of X[:, i] is less than the mean of Y[:, i]
-                (negative t-statistic) and a 0 means that no statistically
-                significant change was detected given the p-value cutoff for the t-test.
-        """
-        true_ttest_result = sp.stats.ttest_ind(X, Y, axis=0, equal_var=False)
-        
-        # Extract t-statistic
-        estimated_change = true_ttest_result.statistic
-
-        # Zero out where p-value is above the cutoff
-        estimated_change *= (true_ttest_result.pvalue < p_val_cut)
-
-        # Keep only whether the change in mean was positive, negative or no
-        # change (zero)
-        estimated_change[estimated_change < 0] = -1
-        estimated_change[estimated_change > 0] = 1
-
-        return estimated_change
-        
-            
-class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
-
-    def __init__(self):
-        super().__init__("Room Mean Standardized Squared Error")
-
-
-    @copy_doc(CounterfactualForecastingMetric.__call__)
-    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
-        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
-            intervention_idxs, *[X, X_do, X_do_pred])
-        return mean_squared_scaled_error(
-            X_do_resp, pred_X_do_resp, y_train=X_resp)
-
-
-class ValidPredictionTime(CounterfactualForecastingMetric):
-
-    def __init__(self):
-        super().__init__("Valid Prediction Time")
-        self.eps_max = 0.5
-
-
-    @copy_doc(CounterfactualForecastingMetric.__call__)
-    def __call__(self, X, X_do, X_do_pred, intervention_idxs, **kwargs):
-
-        eps_max = kwargs.get("eps_max", self.eps_max)
-
-        X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
-            intervention_idxs, X_do, X_do_pred)
-        
-        # Compute infinity norm of error for each point in time
-        inf_norm_err = np.max(np.abs(X_do_resp - pred_X_do_resp), axis=1)
-        idxs, = (inf_norm_err > eps_max).nonzero()
-
-        if len(idxs) == 0:
-            return len(inf_norm_err)
-        
-        vpt = idxs.min()
-        return vpt
-        
-
-    
-
-
-def directional_accuracy(X, X_do, pred_X_do, intervention_idx):
-    # TODO Fix this docstring
-    """Predict the correct directional change of each non intervened signal in
-    response to the intervention relative to the counterfactual, non-intervened
-    system.
-
-    For example, if a system has three variables, $x(t)$, $y(t)$ and $z(t)$ and
-    we intervene on $x(t)$ to produce $y_\text{do}(t)$ and $z_\text{do}(t)$, we
-    evaluate the method's ability to estimate the sign of the difference in the
-    time average of the signals. E.g.
-    $$
-    \frac{1}{T}\int_0^T  y_\text{do}(t) dt - \frac{1}{T}\int_0^T y(t)dt 
-    $$
-    """
-    # Drop intervention column
-    X_resp = np.delete(X, intervention_idx, axis=1)
-    X_do_resp = np.delete(X_do, intervention_idx, axis=1)
-    pred_X_do_resp = np.delete(pred_X_do, intervention_idx, axis=1)
-
-    # Compute time average
-    X_avg = np.mean(X_resp, axis=0)
-    X_do_avg = np.mean(X_do_resp, axis=0)
-    pred_X_do_avg = np.mean(pred_X_do_resp, axis=0)
-
-    # Compute sign of the difference
-    sign_of_true_diff = (X_do_avg - X_avg) > 0
-    sign_of_pred_diff = (pred_X_do_avg - X_avg) > 0
-
-    # Return number of signals correct
-    acc = np.mean(sign_of_true_diff == sign_of_pred_diff)
-    return acc
 
 
 ##################################
@@ -432,7 +195,7 @@ def grid_search(
     """Tunes hyperparameters using skforecast.
 
     Args:
-        method_type (sktime.forecasting.base.BaseForecaster): The method to be
+        method_type (Type[BaseInferenceMethod]): The method to be
             used for prediction.
         method_params (dict): A dictionary of default parameters for the method.
         param_grid (dict): The parameter grid for a skforecast grid search.
@@ -611,7 +374,7 @@ def forecast_intervention(
             the desired prediction times.
         intervention (interfere.Intervention): The type of the intervention to
             apply.
-        method_type (sktime.forecasting.base.BaseForecaster): The method to be
+        method_type (Type[BaseInferenceMethod]): The method to be
             used for prediction.
         method_params (dict): A dictionary of default parameters for the method.
         method_param_grid (dict): The parameter grid for a sklearn grid search.
