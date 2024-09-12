@@ -28,6 +28,7 @@ from interfere.dynamics import (
 SEED = 11
 MAX_PRIOR_OBS = 5
 MEASUREMENT_NOISE_MAG = 0.1
+STOCHASTIC_NOISE_MAG = 0.02
 
 COUPLED_MAP_LATTICES = [
     coupled_map_1dlattice_chaotic_brownian,
@@ -81,7 +82,7 @@ class TestSimulate:
 
         # Make intervention
         interv_idx = 0
-        interv_const = 0.5
+        interv_const = 0.1
         interv = interfere.PerfectIntervention(interv_idx, interv_const)
 
         return m, n, t, x0, interv, rng
@@ -252,6 +253,106 @@ class TestSimulate:
             f"Random state does not preserve values after intervention for "
             " {model}."
         )       
+
+
+    def test_is_stochastic(self, model: DynamicModel):
+        """Tests that model is stochastic.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Turn off measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = np.zeros(n)
+
+        # Add stochastic matrix.
+        old_sigma = model.sigma
+        model.sigma = STOCHASTIC_NOISE_MAG * np.eye(n)
+
+        X = model.simulate(t, x0, rng=rng)
+        X_rerun = model.simulate(t, x0, rng=rng)
+
+        # Remove stochastic matrix.
+        model.sigma = old_sigma
+        model.measurement_noise_std = old_measurement_noise
+
+        assert not np.all(X == X_rerun), (
+            f"{model} is not behaving stochastically."
+        )
+
+
+    def test_range_preserves_stochastic(self, model: DynamicModel):
+        """Tests that range preserves stochasticity.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Turn off measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = np.zeros(n)
+
+        # Add stochastic matrix.
+        old_sigma = model.sigma
+        model.sigma = STOCHASTIC_NOISE_MAG * np.eye(n)
+
+        rng = np.random.default_rng(SEED)
+        X = model.simulate(t, x0, rng=rng)
+
+        rng = np.random.default_rng(SEED)
+        X_rerun = model.simulate(t, x0, rng=rng)
+
+        # Remove stochastic matrix.
+        model.sigma = old_sigma
+        model.measurement_noise_std = old_measurement_noise
+
+
+        assert np.all(X == X_rerun), (
+            f"{model} is not generating reproducible stochasticity."
+        )
+
+
+    def test_intervention_is_stochastic(self, model: DynamicModel):
+        """Tests that model is stochastic.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Turn off measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = np.zeros(n)
+
+        # Add stochastic matrix.
+        old_sigma = model.sigma
+        model.sigma = STOCHASTIC_NOISE_MAG * np.eye(n)
+
+        X = model.simulate(t, x0, intervention=interv, rng=rng)
+        X_rerun = model.simulate(t, x0, intervention=interv, rng=rng)
+
+        # Remove stochastic matrix.
+        model.sigma = old_sigma
+        model.measurement_noise_std = old_measurement_noise
+
+        assert not np.all(X == X_rerun), (
+            f"{model} is not behaving stochastically with interventions."
+        )
 
 
 def check_simulate_method(
