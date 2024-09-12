@@ -1,6 +1,6 @@
 """Tests for metrics."""
 
-from interfere.benchmarking import (
+from interfere.metrics import (
     DirectionalChangeBinary,
     RootMeanStandardizedSquaredError,
     TTestDirectionalChangeAccuracy,
