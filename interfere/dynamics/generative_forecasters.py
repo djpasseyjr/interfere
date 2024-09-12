@@ -89,6 +89,7 @@ class GenerativeForecaster(DynamicModel):
                 t[i:(i+2)],
                 prior_states,
                 prior_t=prior_t,
+                prediction_max=np.inf
             )
             next_state = new_states[-1,:]
 
