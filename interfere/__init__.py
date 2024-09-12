@@ -1,6 +1,7 @@
 from .base import (
     DynamicModel
 )
+from . import metrics
 from . import benchmarking
 from . import dynamics
 from .interventions import (
