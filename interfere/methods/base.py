@@ -127,7 +127,8 @@ class BaseInferenceMethod(BaseEstimator):
 
                 raise ValueError(
                     f"The arguments `t` and `exog_states` for "
-                    f"{str(type(self).__name__)}.fit() have incompatible shapes: \n"
+                    f"{str(type(self).__name__)}.fit() have incompatible "
+                    "shapes: \n"
                     f"t.shape = {t.shape}\n"
                     f"exog_states.shape = {exog_states.shape}"
                 )
@@ -142,7 +143,10 @@ class BaseInferenceMethod(BaseEstimator):
         
         # Make sure time points are monotonic.
         if np.any(np.diff(t) <= 0):
-            raise ValueError(f"Time points passed to {str(type(self).__name__)}.fit must be strictly increasing.")
+            raise ValueError(
+                f"Time points passed to {str(type(self).__name__)}.fit must be "
+                "strictly increasing."
+            )
         
         self.timestep_of_fit = None
         self.endog_dim_of_fit = endog_dim
@@ -214,7 +218,8 @@ class BaseInferenceMethod(BaseEstimator):
         Returns:
             X_sim: A (m, n) array of containing a multivariate time series. The
             rows are observations correstponding to entries in `time_points` and
-            the columns correspod to the endogenous variables in the forecasting method.
+            the columns correspod to the endogenous variables in the forecasting
+            method. 
         """
         if not self.is_fit:
             raise ValueError("Call self.fit(...) before self.predict(...).")
@@ -227,7 +232,10 @@ class BaseInferenceMethod(BaseEstimator):
             isinstance(x, pd.DataFrame) 
             for x in [t, prior_endog_states, prior_exog_states, prior_t, prediction_exog]
         ]):
-            raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
+            raise ValueError(
+                "Interfere inference methods do not accept "
+                "DataFrames. Use DataFrame.values and DataFrame.index"
+            )
         
         # Make sure time points are monotonic.
         if np.any(np.diff(t) <= 0):
@@ -238,7 +246,8 @@ class BaseInferenceMethod(BaseEstimator):
         
         if np.any(prior_endog_states > prediction_max):
             raise ValueError(
-                f"Historic endogenous contains values ({np.max(prior_endog_states)}"
+                f"Historic endogenous contains values "
+                "({np.max(prior_endog_states)}"
                 " that are larger than" 
                 f" `prediction_max = {prediction_max}`, the "
                 "prediction threshold."
@@ -250,12 +259,14 @@ class BaseInferenceMethod(BaseEstimator):
             prior_endog_states = np.reshape(prior_endog_states, (1, -1))
 
         # Gather array shapes
-        p, k = prior_endog_states.shape
+        prior_enod_obs, k = prior_endog_states.shape
         (m,) = t.shape 
 
         if len(t) < 2:
             raise ValueError(
-                f" For {str(type(self).__name__)}.predict, the first timestep in `t` is assumed to be the current time, and correspond to the last row "
+                f" For {str(type(self).__name__)}.predict, the first timestep "
+                "in `t` is assumed to be the current time, and correspond to "
+                "the last row "
                 "of `prior_endog_states`, the `t` argument must have at least "
                 "two time values."
             )
@@ -273,16 +284,16 @@ class BaseInferenceMethod(BaseEstimator):
                 f" does not match the number of t ({m}).")
 
         # Compare window size of forecaster with amount of historic data.
-        w = self.get_window_size()
+        window_size = self.get_window_size()
 
-        if w > p:
-            warn(str(type(self).__name__) + f" has window size {w} but only recieved {p}"
+        if window_size > prior_enod_obs:
+            warn(str(type(self).__name__) + f" has window size {window_size} but only recieved {prior_enod_obs}"
                  " endog observations. Augmenting historic edogenous "
                  "observations with zeros."
             )
 
             prior_endog_states = np.vstack([
-                np.zeros((w - p, k)),
+                np.zeros((window_size - prior_enod_obs, k)),
                 prior_endog_states
             ])
             
@@ -290,7 +301,7 @@ class BaseInferenceMethod(BaseEstimator):
         if prior_exog_states is not None:
             p_hexog, k_hexog = prior_exog_states.shape
 
-            if p_hexog != p:
+            if p_hexog != prior_enod_obs:
                 raise ValueError("Arguments `prior_endog_states` and "
                 "`prior_exog_states` must have the same number of rows.")
             
@@ -299,13 +310,13 @@ class BaseInferenceMethod(BaseEstimator):
                     raise ValueError("The `prior_exog_states` and `exog` arguments"
                     " must have the same number of columns.")
                 
-            if w > p_hexog:
-                warn(str(type(self).__name__) + f" has window size {w} but only recieved"
+            if window_size > p_hexog:
+                warn(str(type(self).__name__) + f" has window size {window_size} but only recieved"
                      f" {p_hexog} exog observations. Augmenting historic "
                      "exogenous observations with zeros.")
 
                 prior_exog_states = np.vstack([
-                    np.zeros((w - p_hexog, k_hexog)),
+                    np.zeros((window_size - p_hexog, k_hexog)),
                     prior_exog_states
                 ])
 
@@ -354,16 +365,16 @@ class BaseInferenceMethod(BaseEstimator):
 
                 # When prior_endog_states were not augmented with zeros raise a
                 # normal value error. 
-                if num_prior_endog == p:
+                if num_prior_endog == prior_enod_obs:
                     raise ValueError(
-                        f"{str(type(self).__name__)}.predict was passed {p} "
+                        f"{str(type(self).__name__)}.predict was passed {prior_enod_obs} "
                         "prior_endog_states but there are only "
                         f"{num_prior_times} entries in `prior_t`."
                     )
                 
                 # When prior_endog_states were augmented with zeros, give
                 # instructions on how to augment.
-                if num_prior_endog > p:
+                if num_prior_endog > prior_enod_obs:
                     raise ValueError(
                         f"{str(type(self).__name__)}.predict augmented "
                         "`prior_endog_states` with zeros but `prior_t` was not "

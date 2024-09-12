@@ -2,12 +2,14 @@
 from typing import Any, Dict, List, Optional
 
 import neuralforecast
-from neuralforecast.losses.pytorch import MAE, MSE
+from neuralforecast.losses.pytorch import MSE
+import neuralforecast.models
 import numpy as np
 
 from ..base import BaseInferenceMethod
 from .nixtla_adapter import NixtlaAdapter, default_exog_names
 from ...utils import copy_doc
+
 
 class LSTM(NixtlaAdapter):
 
@@ -28,7 +30,7 @@ class LSTM(NixtlaAdapter):
         futr_exog_list=None,
         hist_exog_list=None,
         stat_exog_list=None,
-        loss=MAE(),
+        loss=MSE(),
         valid_loss=None,
         max_steps: int = 1000,
         learning_rate: float = 1e-3,
@@ -108,3 +110,31 @@ class LSTM(NixtlaAdapter):
             encoder_hidden_size = [8, 16],
             learning_rate = [1e-12, 0.001]
         )
+    
+
+    def _get_optuna_params(trial):
+        return {
+            "loss": MSE(),
+
+            "h": trial.suggest_int("h", 1, 16),
+
+            "encoder_hidden_size": trial.suggest_categorical(
+                "encoder_hidden_size", [50, 100, 200, 300]),
+
+            "encoder_n_layers": trial.suggest_int("encoder_n_layers", 1, 4),
+
+            "context_size": trial.suggest_categorical(
+                "context_size", [5, 10, 50]),
+
+            "decoder_hidden_size": trial.suggest_categorical(
+                "decoder_hidden_size", [64, 128, 256, 512]),
+
+            "learning_rate": trial.suggest_float(
+                "learning_rate", 1e-4, 1e-1, log=True),
+
+            "max_steps": trial.suggest_categorical("max_steps", [500, 1000]),
+
+            "batch_size": trial.suggest_categorical("batch_size", [16, 32]),
+
+            "random_seed": trial.suggest_int("random_seed", 1, 20),
+        }
