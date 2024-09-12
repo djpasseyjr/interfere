@@ -20,10 +20,12 @@ from .decoupled_noise_dynamics import (
     StandardGammaNoise,
     StandardTNoise
 )
+from .generative_forecasters import (
+    GenerativeForecaster, generative_lorenz_VAR_forecaster
+)
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi
 from .lotka_voltera import LotkaVoltera, LotkaVolteraSDE
-from .generative_forecasters import GenerativeForecaster
 from .planted_aquarium import PlantedTankNitrogenCycle
 from .pyclustering_models import (
     HodgkinHuxleyPyclustering, LEGIONPyclustering, StuartLandauKuramoto

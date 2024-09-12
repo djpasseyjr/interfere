@@ -128,8 +128,7 @@ class PlantedTankNitrogenCycle(StochasticDifferentialEquation):
         self.nitrate_bacteria_effic_mu2 = lambda t: nitrate_bact_eff_gamma2 * (np.arctan((nitrate_bact_eff_z_max - nitrate_bact_eff_z_min) * t / reference_time_v + nitrate_bact_eff_z_min) - nitrate_bact_eff_const)
 
         dim = 4
-        super().__init__(dim, measurement_noise_std)
-        self.sigma = self.build_stochastic_noise_matrix(sigma)
+        super().__init__(dim, measurement_noise_std, sigma)
 
 
     @copy_doc(StochasticDifferentialEquation.drift)

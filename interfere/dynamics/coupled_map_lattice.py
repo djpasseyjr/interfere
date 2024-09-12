@@ -11,7 +11,7 @@ Notes:
        "Stochastic Resonance in..."
 """
 
-from typing import Optional, Callable
+from typing import Callable, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -64,7 +64,8 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         f: Callable = quadradic_map,
         f_params: tuple =(1.45,),
         tsteps_btw_obs: int = 1,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
+        sigma: Optional[Union[float, np.ndarray]] = None
     ):
         """N-dimensional coupled logistic map.
         
@@ -97,6 +98,9 @@ class CoupledMapLattice(DiscreteTimeDynamics):
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
         """
         self.adjacency_matrix = adjacency_matrix
         self.eps = eps
@@ -104,7 +108,8 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         self.f_params = f_params
         self.tsteps_btw_obs = tsteps_btw_obs
         self.row_sums = np.sum(self.adjacency_matrix, axis=1)
-        super().__init__(self.adjacency_matrix.shape[0], measurement_noise_std)
+        super().__init__(
+            self.adjacency_matrix.shape[0], measurement_noise_std, sigma)
 
     
     def step(
@@ -174,12 +179,12 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         eps: float = 0.5,
         f: Callable = quadradic_map,
         f_params: tuple =(1.45,),
-        sigma: float = 0.0,
+        sigma: Union[float, np.ndarray] = 0.0,
         x_min: float = 0.0,
         x_max: float = 1.0,
         boundary_condition: Optional[str] = "none",
         tsteps_btw_obs: int = 1,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None        
     ):
         """N-dimensional coupled logistic map.
         
@@ -209,8 +214,9 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
                 scalar parameters.
             f_params (tuple): A tuple of floats that will be unpacked and  
                 passed to f as so: `f(x, **f_params)`.
-            sigma (float): The standard deviation of the additive gaussian noise
-                in the model.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
             x_min (float): Optional minimum bound (applied to state
                 elementwise) to ensure that the noise does not peturb the system out of it's domain.
             x_max (float): Optional maximum bound (applied to state
@@ -232,12 +238,11 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
         """
-        self.sigma = sigma
         self.x_max = x_max
         self.x_min = x_min
         self.boundary_condition = boundary_condition
         super().__init__(
-            adjacency_matrix, eps, f, f_params, tsteps_btw_obs, measurement_noise_std)
+            adjacency_matrix, eps, f, f_params, tsteps_btw_obs, measurement_noise_std, sigma)
 
 
     
@@ -257,8 +262,8 @@ class StochasticCoupledMapLattice(CoupledMapLattice):
         x_next = super().step(x, time, rng) 
 
         # This check enables sigma == 0.0 to generate deterministic dynamics.
-        if self.sigma != 0.0:
-            x_next += rng.normal(0, self.sigma, size=self.dim)
+        if not np.all(self.sigma == 0.0):
+            x_next += self.sigma @ rng.normal(size=self.dim)
 
         # See if the state is within boundary and apply appropriate transform. 
         if self.boundary_condition == "mod":

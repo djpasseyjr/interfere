@@ -177,8 +177,7 @@ class Lorenz(StochasticDifferentialEquation):
         self.s = s
         self.beta = beta
         self.rho = rho
-        super().__init__(dim, measurement_noise_std)
-        self.sigma = self.build_stochastic_noise_matrix(sigma)
+        super().__init__(dim, measurement_noise_std, sigma)
 
 
     @copy_doc(StochasticDifferentialEquation.drift)
@@ -245,8 +244,7 @@ class Rossler(StochasticDifferentialEquation):
         self.b = b
         self.c = c
 
-        super().__init__(3, measurement_noise_std)
-        self.sigma = self.build_stochastic_noise_matrix(sigma)
+        super().__init__(3, measurement_noise_std, sigma)
 
 
     @copy_doc(StochasticDifferentialEquation.drift)
@@ -308,8 +306,7 @@ class Thomas(StochasticDifferentialEquation):
         """
         self.b = b
 
-        super().__init__(3, measurement_noise_std)
-        self.sigma = self.build_stochastic_noise_matrix(sigma)
+        super().__init__(3, measurement_noise_std, sigma)
 
 
     @copy_doc(StochasticDifferentialEquation.drift)
