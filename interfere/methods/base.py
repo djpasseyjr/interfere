@@ -332,12 +332,12 @@ class BaseInferenceMethod(BaseEstimator):
                 " AND `t` is not equally spaced. Cannot infer "
                 " `prior_t`. Either pass it explicitly or provide "
                 " equally spaced time `t`.")
-            prior_t = np.arange(-num_prior_endog, 1) * dt + t[0]
+            prior_t = np.arange(-num_prior_endog + 1, 1) * dt + t[0]
 
         if not np.isclose(prior_t[-1], t[0]):
             raise ValueError(
                 f"For {str(type(self).__name__)}.predict, the last prior time, "
-                f"`prior_t[-1]={prior_t[-1]} must equal the first simulation "
+                f"prior_t[-1]={prior_t[-1]} must equal the first simulation "
                 f"time t[0]={t[0]}."
             )
 
