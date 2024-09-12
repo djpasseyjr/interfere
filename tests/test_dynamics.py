@@ -1,5 +1,7 @@
 import interfere
 from interfere.dynamics.decoupled_noise_dynamics import UncorrelatedNoise
+from interfere.base import DynamicModel
+
 import numpy as np
 import pytest
 from scipy import integrate
@@ -22,6 +24,8 @@ from interfere.dynamics import (
     coupled_map_1dlattice_spatiotemp_intermit2,
     coupled_map_1dlattice_traveling_wave
 )
+SEED = 11
+MAX_PRIOR_OBS = 5
 
 COUPLED_MAP_LATTICES = [
     coupled_map_1dlattice_chaotic_brownian,
@@ -35,6 +39,193 @@ COUPLED_MAP_LATTICES = [
     coupled_map_1dlattice_traveling_wave
 ]
 
+CML_TEST_DIM = 4
+CML_MODELS = [
+   cml(CML_TEST_DIM) for cml in COUPLED_MAP_LATTICES
+]
+        
+
+MODELS = [
+    interfere.dynamics.generative_lorenz_VAR_forecaster(),
+    interfere.dynamics.PlantedTankNitrogenCycle(),
+    interfere.dynamics.Thomas(),
+    interfere.dynamics.Rossler(),
+    interfere.dynamics.Lorenz(),
+    interfere.dynamics.HodgkinHuxleyPyclustering(
+        [0, 0, 0, 15, 15, 15, 25, 25, 25, 40], sigma=0.1),
+]
+
+@pytest.mark.parametrize("model", MODELS + CML_MODELS)
+class TestSimulate:
+
+
+    def make_test_data(self, model: DynamicModel):
+        """Makes test data that matches the model specs.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+        """
+        n = model.dim
+        m = 1000
+        rng = np.random.default_rng(SEED)
+        x0 = rng.random((MAX_PRIOR_OBS, n))
+        t = np.linspace(0, 10, m)
+
+        # Adjust time scale for discrete time models
+        if isinstance(model, interfere.dynamics.base.DiscreteTimeDynamics):
+            t = np.arange(100)
+            m = 100
+
+        # For non noise models, add measurement noise:
+        if not isinstance(
+            model, 
+            interfere.dynamics.decoupled_noise_dynamics.UncorrelatedNoise
+        ):
+            model.measurement_noise_std = 0.2 * np.ones(n)
+
+        # Make intervention
+        interv_idx = 0
+        interv_const = 0.5
+        interv = interfere.PerfectIntervention(interv_idx, interv_const)
+
+        return m, n, t, x0, interv, rng
+
+
+    def test_output_shape(self, model: DynamicModel):
+        """Tests that simulate produces the correct output shape.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+        X = model.simulate(t, x0, rng=rng)
+
+        assert X.shape == (m, n), (
+            f"Output is the wrong shape"" for {model}.")
+
+
+    def test_initial_condition(self, model: DynamicModel):
+        """Tests that simulate produces the correct initial condition.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+        X = model.simulate(t, x0, rng=rng)
+
+        if x0.ndim == 1:
+            assert np.allclose(X[0], x0), (
+                f"Initial condition is incorrect for {model}.")
+            
+        elif x0.ndim == 2:
+            assert np.allclose(X[0, :], x0[-1, :]), (
+                f"Initial condition is incorrect for {model}.")
+
+
+    def test_noise_preservation(self, model: DynamicModel):
+        """Tests that random state works correctly.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+        rng = np.random.default_rng(SEED)
+        X = model.simulate(t, x0, rng=rng)
+        
+        rng = np.random.default_rng(SEED)
+        X_rerun = model.simulate(t, x0, rng=rng)
+        assert np.all(X == X_rerun), (
+            f"Random state does not preserve noise for {model}.")
+        
+    
+    def test_not_deterministic(self, model: DynamicModel):
+        """Tests that measurement noise is random.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+        X = model.simulate(t, x0, rng=rng)
+    
+        # Check that model is not deterministic
+        X_new_realization = model.simulate(t, x0, rng=rng)
+        assert not np.all(X == X_new_realization), (
+            f"{model} has deterministic measurement noise."
+        )
+
+    
+    def test_intervention(self, model: DynamicModel):
+        """Tests that interventions function correctly.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+        
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Apply an intervention
+        rng = np.random.default_rng(SEED)
+        X_do = model.simulate(t, x0, intervention=interv, rng=rng)
+        assert X_do.shape == (m, n), (
+            f"Incorrect output size after intervention for {model}.")
+        
+        _, interv_states = interv.split_exogeneous(X_do)
+        assert np.isclose(
+            np.mean(interv_states), interv.constants[0], atol=0.1), (
+            f"Intervention is incorrect for {model}.")
+
+
+    def test_intervention_random_state(self, model: DynamicModel):
+        """Tests that intervention function works with random noise.
+
+        Args:
+            model (DynamicModel): An instance of a dynamic model
+                to test.
+
+        Notes:
+            Args are supplied via the pytest.mark.parametrize decorator.
+        """
+
+        m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Apply an intervention
+        rng = np.random.default_rng(SEED)
+        X_do = model.simulate(t, x0, intervention=interv, rng=rng)
+
+        # Make sure that random state works for interventions
+        rng = np.random.default_rng(SEED)
+        X_do_rerun = model.simulate(t, x0, intervention=interv, rng=rng)
+
+        assert np.allclose(X_do, X_do_rerun), (
+            f"Random state does not preserve values after intervention for "
+            " {model}."
+        )        
+
+
 def check_simulate_method(
         model: interfere.base.DynamicModel,
         x0: np.ndarray = None,
@@ -47,7 +238,7 @@ def check_simulate_method(
     """
     n = model.dim
     m = 1000
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     if x0 is None:
         x0 = np.random.rand(n)
     t = np.linspace(0, 10, m)
@@ -69,7 +260,7 @@ def check_simulate_method(
     g = interfere.perfect_intervention(interv_idx, interv_const)
 
     # Check output shape
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     X = model.simulate(t, x0, rng=rng)
     assert X.shape == (m, n), (
         f"Output is the wrong shape"" for {model}.")
@@ -86,7 +277,7 @@ def check_simulate_method(
 
 
     # Check that random state works correctly
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     X_rerun = model.simulate(t, x0, rng=rng)
     assert np.all(X == X_rerun), (
         f"Random state does not preserve noise for {model}.")
@@ -96,7 +287,7 @@ def check_simulate_method(
     assert not np.all(X == X_new_realization)
 
     # Apply an intervention
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     X_do = model.simulate(t, x0, intervention=g, rng=rng)
     assert X_do.shape == (m, n), (
         f"Incorrect output size after intervention for {model}.")
@@ -105,7 +296,7 @@ def check_simulate_method(
         f"Intervention is incorrect for {model}.")
 
     # Make sure that random state works for interventions
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     X_do_rerun = model.simulate(t, x0, intervention=g, rng=rng)
     assert np.allclose(X_do, X_do_rerun), (f"Random state does not preserve "
                                           "values after intervention for "
@@ -121,35 +312,35 @@ def test_stochastic_array_builder():
     beloz = interfere.dynamics.Belozyorov3DQuad()
 
     # Test float argument.
-    sigma = beloz.build_stochastic_noise_matrix(3)
+    sigma = beloz.build_stochastic_noise_matrix(3, 3)
     assert np.all(sigma == sigma * np.eye(3))
     assert sigma.shape == (beloz.dim, beloz.dim)
 
     # Test 1D array argument
     x = np.random.rand(3)
-    sigma = beloz.build_stochastic_noise_matrix(x)
+    sigma = beloz.build_stochastic_noise_matrix(x, 3)
     assert np.all(sigma == np.diag(x))
     assert sigma.shape == (beloz.dim, beloz.dim)
 
     # Test 2D array argument
     x = np.random.rand(3, 3)
-    sigma = beloz.build_stochastic_noise_matrix(x)
+    sigma = beloz.build_stochastic_noise_matrix(x, 3)
     assert np.all(sigma == x)
     assert sigma.shape == (beloz.dim, beloz.dim)
 
     with pytest.raises(
         ValueError, match="float or a 1 or 2 dimensional numpy array."):
-        beloz.build_stochastic_noise_matrix(np.random.rand(3, 3, 3))
+        beloz.build_stochastic_noise_matrix(np.random.rand(3, 3, 3), 3)
 
     with pytest.raises(
         ValueError, match="Pass a float or `sigma` with shape"
     ):
-        beloz.build_stochastic_noise_matrix(np.random.rand(4))
+        beloz.build_stochastic_noise_matrix(np.random.rand(4), 3)
 
     with pytest.raises(
         ValueError, match="Pass a float or `sigma` with shape"
     ):
-        beloz.build_stochastic_noise_matrix(np.random.rand(2, 2))
+        beloz.build_stochastic_noise_matrix(np.random.rand(2, 2), 3)
 
 
 def test_lotka_voltera():
@@ -280,30 +471,11 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
 
 def test_coupled_logistic_map():
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     A = rng.random((10, 10)) < 0.5
     model = interfere.dynamics.coupled_logistic_map(A)
     # Standard checks for intervene.base.DynamicModel objects
     check_simulate_method(model)
-
-
-def test_coupled_map_lattice():
-
-    ndims = 4
-    for cml in COUPLED_MAP_LATTICES:
-        model = cml(ndims)
-        # Standard checks for intervene.base.DynamicModel objects
-        check_simulate_method(model)
-
-
-def test_stochastic_coupled_map_lattice():
-
-    ndims = 4
-
-    for cml in COUPLED_MAP_LATTICES:
-        model = cml(ndims, sigma=0.01)
-        # Standard checks for intervene.base.DynamicModel objects
-        check_simulate_method(model)
 
 
 def test_normal_noise():
@@ -424,7 +596,7 @@ def test_varma():
     )
 
 def test_varima_standard_checks():
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     coef_matrices = [rng.random((3, 3)) - 0.5 for i in range(5)]
     Z = rng.random((3, 3))
     sigma = Z * Z.T
@@ -438,7 +610,7 @@ def test_varima_standard_checks():
 
 
 def test_kuramoto():
-    rng = np.random.default_rng(10)
+    rng = np.random.default_rng(SEED)
     omega = rng.random(10)
     K = 0.7
     A = rng.random((10, 10)) < .3
@@ -452,32 +624,3 @@ def test_kuramoto():
     check_simulate_method(model)
     model = interfere.dynamics.StuartLandauKuramoto(omega, rho, K, sigma)
     check_simulate_method(model)
-
-
-def test_hodgkin_huxley():
-    stimulus = [0, 0, 0, 15, 15, 15, 25, 25, 25, 40]
-    sigma = 0.1
-    model = interfere.dynamics.HodgkinHuxleyPyclustering(stimulus, sigma)
-    check_simulate_method(model)
-
-
-def test_lorenz():
-    model = interfere.dynamics.Lorenz()
-    check_simulate_method(model)
-
-
-def test_rossler():
-    model = interfere.dynamics.Rossler()
-    check_simulate_method(model)
-
-
-def test_thomas():
-    model = interfere.dynamics.Thomas()
-    check_simulate_method(model)
-
-
-def test_aquarium():
-    model = interfere.dynamics.PlantedTankNitrogenCycle()
-    check_simulate_method(model)
-
-    
