@@ -24,8 +24,10 @@ from interfere.dynamics import (
     coupled_map_1dlattice_spatiotemp_intermit2,
     coupled_map_1dlattice_traveling_wave
 )
+
 SEED = 11
 MAX_PRIOR_OBS = 5
+MEASUREMENT_NOISE_MAG = 0.1
 
 COUPLED_MAP_LATTICES = [
     coupled_map_1dlattice_chaotic_brownian,
@@ -76,13 +78,6 @@ class TestSimulate:
         if isinstance(model, interfere.dynamics.base.DiscreteTimeDynamics):
             t = np.arange(100)
             m = 100
-
-        # For non noise models, add measurement noise:
-        if not isinstance(
-            model, 
-            interfere.dynamics.decoupled_noise_dynamics.UncorrelatedNoise
-        ):
-            model.measurement_noise_std = 0.2 * np.ones(n)
 
         # Make intervention
         interv_idx = 0
@@ -142,13 +137,22 @@ class TestSimulate:
         Notes:
             Args are supplied via the pytest.mark.parametrize decorator.
         """
-        
+
         m, n, t, x0, interv, rng = self.make_test_data(model)
+
+        # Add measurement_noise
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+
         rng = np.random.default_rng(SEED)
         X = model.simulate(t, x0, rng=rng)
         
         rng = np.random.default_rng(SEED)
         X_rerun = model.simulate(t, x0, rng=rng)
+
+        # Remove measurement noise.
+        model.measurement_noise_std = old_measurement_noise
+
         assert np.all(X == X_rerun), (
             f"Random state does not preserve noise for {model}.")
         
@@ -165,10 +169,19 @@ class TestSimulate:
         """
         
         m, n, t, x0, interv, rng = self.make_test_data(model)
+        
+        # Add measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+
         X = model.simulate(t, x0, rng=rng)
     
-        # Check that model is not deterministic
+        # Check that model is not deterministic.
         X_new_realization = model.simulate(t, x0, rng=rng)
+
+        # Remove measurment noise.
+        model.measurement_noise_std = old_measurement_noise
+
         assert not np.all(X == X_new_realization), (
             f"{model} has deterministic measurement noise."
         )
@@ -187,9 +200,17 @@ class TestSimulate:
         
         m, n, t, x0, interv, rng = self.make_test_data(model)
 
-        # Apply an intervention
+        # Add measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+
+        # Apply an intervention.
         rng = np.random.default_rng(SEED)
         X_do = model.simulate(t, x0, intervention=interv, rng=rng)
+
+        # Remove measurement noise.
+        model.measurement_noise_std = old_measurement_noise
+
         assert X_do.shape == (m, n), (
             f"Incorrect output size after intervention for {model}.")
         
@@ -212,6 +233,10 @@ class TestSimulate:
 
         m, n, t, x0, interv, rng = self.make_test_data(model)
 
+        # Add measurement_noise.
+        old_measurement_noise = model.measurement_noise_std
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+
         # Apply an intervention
         rng = np.random.default_rng(SEED)
         X_do = model.simulate(t, x0, intervention=interv, rng=rng)
@@ -220,10 +245,13 @@ class TestSimulate:
         rng = np.random.default_rng(SEED)
         X_do_rerun = model.simulate(t, x0, intervention=interv, rng=rng)
 
+        # Remove measurement noise.
+        model.measurement_noise_std = old_measurement_noise
+
         assert np.allclose(X_do, X_do_rerun), (
             f"Random state does not preserve values after intervention for "
             " {model}."
-        )        
+        )       
 
 
 def check_simulate_method(
@@ -252,7 +280,7 @@ def check_simulate_method(
 
     # For non noise models, add measurement noise:
     if not isinstance(model, UncorrelatedNoise):
-        model.measurement_noise_std = 0.2 * np.ones(n)
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
 
     # Make intervention
     interv_idx = 0
