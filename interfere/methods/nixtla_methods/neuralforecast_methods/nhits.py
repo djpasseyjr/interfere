@@ -1,11 +1,11 @@
 from typing import Optional
 
 import neuralforecast.models
-from neuralforecast.losses.pytorch import MAE
+from neuralforecast.losses.pytorch import BasePointLoss, MAE
 import numpy as np
 
 from ...base import BaseInferenceMethod
-from ..nixtla_adapter import NixtlaAdapter
+from ..nixtla_adapter import NixtlaAdapter, default_exog_names
 from ....utils import copy_doc
 
 
@@ -16,7 +16,7 @@ class NHITS(NixtlaAdapter):
     def __init__(
         self,
         h: int = 1,
-        input_size: int = -1,
+        input_size: int = 2,
         futr_exog_list: Optional[list]= None,
         hist_exog_list: Optional[list] = None,
         stat_exog_list: Optional[list] = None,
@@ -28,10 +28,10 @@ class NHITS(NixtlaAdapter):
         n_freq_downsample: list = [4, 2, 1],
         pooling_mode: str = "MaxPool1d",
         interpolation_mode: str = "linear",
-        dropout_prob_theta=0.0,
-        activation="ReLU",
-        loss=MAE(),
-        valid_loss=None,
+        dropout_prob_theta: float = 0.0,
+        activation: str = "ReLU",
+        loss: BasePointLoss = MAE(),
+        valid_loss: BasePointLoss = None,
         max_steps: int = 1000,
         learning_rate: float = 1e-3,
         num_lr_decays: int = 3,
@@ -41,16 +41,14 @@ class NHITS(NixtlaAdapter):
         valid_batch_size: Optional[int] = None,
         windows_batch_size: int = 1024,
         inference_windows_batch_size: int = -1,
-        start_padding_enabled=False,
+        start_padding_enabled: bool = False,
         step_size: int = 1,
         scaler_type: str = "identity",
         random_seed: int = 1,
-        num_workers_loader=0,
-        drop_last_loader=False,
+        num_workers_loader: int = 0,
+        drop_last_loader: bool = False,
         optimizer=None,
         optimizer_kwargs=None,
-        lr_scheduler=None,
-        lr_scheduler_kwargs=None,
         **trainer_kwargs,
     ):
         # Initialize model
@@ -60,8 +58,8 @@ class NHITS(NixtlaAdapter):
         self.method_params = {
             **self.method_params,
             **trainer_kwargs,
-            # The following two arguments prevent pytorch lightning from writing
-            # to files in order to enable parallel grid search.
+            # The following two arguments prevent pytorch lightning from 
+            # writing to files in order to enable parallel grid search.
             "enable_checkpointing": False,
             "logger": False
         }
@@ -90,16 +88,19 @@ class NHITS(NixtlaAdapter):
 
 
     def get_window_size(self):
-        return self.method_params["context_size"]
+        return self.method_params["input_size"]
     
 
     def get_horizon(self):
         return self.model.h
+    
+
+    def get_test_params():
+        return {"max_steps": 50}
 
 
     def _get_optuna_params(trial):
         return {
-            "input_size_multiplier": [1, 2, 3, 4, 5],
 
             "h": trial.suggest_int("h", 1, 16),
 
@@ -135,7 +136,7 @@ class NHITS(NixtlaAdapter):
                 "scaler_type", [None, "robust", "standard"]),
 
             "max_steps": trial.suggest_float(
-                "max_steps", lower=500, upper=1500, step=100),
+                "max_steps", 500, 1500, step=100),
             
             "batch_size": trial.suggest_categorical(
                 "batch_size", [32, 64, 128, 256]),
