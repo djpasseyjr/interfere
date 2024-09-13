@@ -2,13 +2,13 @@
 from typing import Any, Dict, List, Optional
 
 import neuralforecast
-from neuralforecast.losses.pytorch import MSE
+from neuralforecast.losses.pytorch import MAE
 import neuralforecast.models
 import numpy as np
 
-from ..base import BaseInferenceMethod
-from .nixtla_adapter import NixtlaAdapter, default_exog_names
-from ...utils import copy_doc
+from ...base import BaseInferenceMethod
+from ..nixtla_adapter import NixtlaAdapter, default_exog_names
+from ....utils import copy_doc
 
 
 class LSTM(NixtlaAdapter):
@@ -30,7 +30,7 @@ class LSTM(NixtlaAdapter):
         futr_exog_list=None,
         hist_exog_list=None,
         stat_exog_list=None,
-        loss=MSE(),
+        loss=MAE(),
         valid_loss=None,
         max_steps: int = 1000,
         learning_rate: float = 1e-3,
@@ -68,7 +68,7 @@ class LSTM(NixtlaAdapter):
         self,
         t: np.ndarray,
         endog_states: np.ndarray,
-        exog_states: np.ndarray = None
+        exog_states: Optional[np.ndarray] = None
     ):
         
         if exog_states is not None:
@@ -114,8 +114,6 @@ class LSTM(NixtlaAdapter):
 
     def _get_optuna_params(trial):
         return {
-            "loss": MSE(),
-
             "h": trial.suggest_int("h", 1, 16),
 
             "encoder_hidden_size": trial.suggest_categorical(
