@@ -50,7 +50,7 @@ class BaseInferenceMethod(BaseEstimator):
         """
         if intervention is not None:
             (prior_endog_states, 
-             prior_exog_states) = intervention.split_exogeneous(prior_states)
+             prior_exog_states) = intervention.split_exog(prior_states)
             prediction_exog = intervention.eval_at_times(t)
 
         else:
@@ -71,7 +71,7 @@ class BaseInferenceMethod(BaseEstimator):
 
         # Optionally intervention to combine exogeneous and endogenous.
         if intervention is not None:
-            simulated_states = intervention.combine_exogeneous(
+            simulated_states = intervention.combine_exog(
                 endo_pred, prediction_exog)
     
         return simulated_states
