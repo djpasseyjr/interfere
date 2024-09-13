@@ -26,6 +26,7 @@ METHODS = [
     interfere.methods.LTSFLinearForecaster,
     interfere.methods.VAR,
     interfere.methods.LSTM,
+    interfere.methods.NHITS,
 ]
 EXOG_RESP_METHODS = []
 
@@ -1147,3 +1148,5 @@ def test_optimize_method_exog_response(
         "\n\nInterv. response vs. predicted interv. response RMSSE: "
         f"{interv_error}"
     )
+
+# TestFitPredict().test_fit(interfere.methods.NHITS, DYNAMICS[0])
