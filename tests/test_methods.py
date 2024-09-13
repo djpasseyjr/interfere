@@ -127,8 +127,8 @@ def make_time_series_combos(dynamics):
     X_historic, prior_t, X_do, forecast_times, intervention = dynamics
 
     # Create time series combonations.
-    prior_endog_states, prior_exog_states = intervention.split_exogeneous(X_historic)
-    endo_true, exog = intervention.split_exogeneous(X_do)
+    prior_endog_states, prior_exog_states = intervention.split_exog(X_historic)
+    endo_true, exog = intervention.split_exog(X_do)
     forecast_times = forecast_times[:PRED_LEN]
     endo_true = endo_true[:PRED_LEN, :]
     exog = exog[:PRED_LEN, :]
@@ -272,9 +272,9 @@ class TestFitPredict:
         method_params = method_type.get_test_params()
 
         # Test simulate with exog.
-        X_historic = intervention.combine_exogeneous(
+        X_historic = intervention.combine_exog(
             prior_endog_states, prior_exog_states)
-        X_do = intervention.combine_exogeneous(endo_true, exog)
+        X_do = intervention.combine_exog(endo_true, exog)
 
         method = method_type(**method_params)
         method.fit(prior_t, prior_endog_states,  prior_exog_states)
@@ -317,9 +317,9 @@ class TestFitPredict:
         method_params = method_type.get_test_params()
 
         # Test simulate with exog.
-        X_historic = intervention.combine_exogeneous(
+        X_historic = intervention.combine_exog(
             prior_endog_states, prior_exog_states)
-        X_do = intervention.combine_exogeneous(endo_true, exog)
+        X_do = intervention.combine_exog(endo_true, exog)
 
         method = method_type(**method_params)
         method.fit(prior_t, prior_endog_states,  prior_exog_states)
@@ -363,9 +363,9 @@ class TestFitPredict:
         method_params = method_type.get_test_params()
 
         # Test simulate with exog.
-        X_historic = intervention.combine_exogeneous(
+        X_historic = intervention.combine_exog(
             prior_endog_states, prior_exog_states)
-        X_do = intervention.combine_exogeneous(endo_true, exog)
+        X_do = intervention.combine_exog(endo_true, exog)
 
         method = method_type(**method_params)
         method.fit(prior_t, prior_endog_states,  prior_exog_states)
@@ -380,7 +380,7 @@ class TestFitPredict:
 
         # Make sure simulate returns the exogenous data correctly.
         exog_true = intervention.eval_at_times(forecast_times)
-        _, exog_pred = intervention.split_exogeneous(X_do_pred)
+        _, exog_pred = intervention.split_exog(X_do_pred)
         assert np.allclose(exog_true, exog_pred), (
             "Exogeneous signal not close to expected.\n\n"
             f"Target = \n{exog_true}"
@@ -966,7 +966,7 @@ class TestOptuna:
         exog_pred = None
 
         if intervention is not None:
-            endo_train_states, exog_train_states = intervention.split_exogeneous(train_states)
+            endo_train_states, exog_train_states = intervention.split_exog(train_states)
             exog_pred = intervention.eval_at_times(forecast_t)
 
         method.fit(train_t, endo_train_states, exog_train_states)
@@ -979,7 +979,7 @@ class TestOptuna:
         )
 
         if intervention is not None:
-            forecast_pred = intervention.combine_exogeneous(
+            forecast_pred = intervention.combine_exog(
                 forecast_pred, exog_pred)
 
         score = interfere.metrics.RootMeanStandardizedSquaredError()(
@@ -1107,7 +1107,7 @@ def test_optimize_method_exog_response(
     method = method_type(**params)
 
     (endo_train_states, 
-        exog_train_states) = intervention.split_exogeneous(
+        exog_train_states) = intervention.split_exog(
             train_states)
     
     exog_pred = intervention.eval_at_times(
@@ -1122,7 +1122,7 @@ def test_optimize_method_exog_response(
         prior_t=train_t,
         prediction_exog=exog_pred
     )
-    interv_pred = intervention.combine_exogeneous(
+    interv_pred = intervention.combine_exog(
         interv_endo_pred, exog_pred)
 
 

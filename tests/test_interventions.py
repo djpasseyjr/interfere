@@ -9,7 +9,7 @@ def test_perfect_intervention():
         g(np.array([0.1, 0.2, 0.0]), 0) == np.array([0.1, 0.2, 0.3])
     )
     X = rng.random((10, 5))
-    X_en, X_ex = g.split_exogeneous(X)
+    X_en, X_ex = g.split_exog(X)
     assert np.all(
         X_en == np.hstack([X[:, :2], X[:, 3:]])
     )
@@ -24,7 +24,7 @@ def test_perfect_intervention():
         g.eval_at_times(np.array([0, 1, 2])) == np.zeros((3, 2))
     )
     X = rng.random((10, 5))
-    X_en, X_ex = g.split_exogeneous(X)
+    X_en, X_ex = g.split_exog(X)
     assert np.all(X_en == X[:, 2:])
     assert np.all(X_ex == X[:, :2])
 

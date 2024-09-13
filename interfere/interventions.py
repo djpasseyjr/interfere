@@ -22,14 +22,14 @@ class ExogIntervention(Intervention):
     def __init__(self, intervened_idxs: List[int]):
         self.intervened_idxs = intervened_idxs
     
-    def split_exogeneous(self, X: np.ndarray):
+    def split_exog(self, X: np.ndarray):
         """Splits exogeneous columns from endogenous."""
         exog_X = X[..., self.intervened_idxs]
         endo_X = np.delete(X, self.intervened_idxs, axis=-1)
         return endo_X, exog_X
     
 
-    def combine_exogeneous(self, endo_X: np.ndarray, exog_X: np.ndarray):
+    def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
         """Recombines endogenous and endogenous signals.
         
         Args:
@@ -76,14 +76,14 @@ class ExogIntervention(Intervention):
         # Exogeneous interventions do not depend on x so we can use a dummy var.
         dummy_x = np.zeros(np.max(self.intervened_idxs) + 1)
         # The size of the dummy variable only needs to be as big as the max
-        # intervened index and self.split_exogeneous will still work.
+        # intervened index and self.split_exog will still work.
         # This is done to avoid the need for an additional argument containing
         # the dimension of the system.
 
         X_do = np.vstack([
             self.__call__(dummy_x, ti) for ti in t
         ])
-        _, exog_X_do = self.split_exogeneous(X_do)
+        _, exog_X_do = self.split_exog(X_do)
         return exog_X_do
 
     def __call__(self, x: np.ndarray, t: float):
@@ -108,10 +108,10 @@ class IdentityIntervention(ExogIntervention):
     def __init__(self) -> None:
         super().__init__([])
 
-    def split_exogeneous(self, X: np.ndarray):
+    def split_exog(self, X: np.ndarray):
         return X, None
     
-    def combine_exogeneous(self, endo_X: np.ndarray, exog_X: np.ndarray):
+    def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
         return endo_X
     
     def eval_at_times(self, t: np.ndarray):

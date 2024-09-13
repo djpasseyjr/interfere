@@ -215,7 +215,7 @@ class TestSimulate:
         assert X_do.shape == (m, n), (
             f"Incorrect output size after intervention for {model}.")
         
-        _, interv_states = interv.split_exogeneous(X_do)
+        _, interv_states = interv.split_exog(X_do)
         assert np.isclose(
             np.mean(interv_states), interv.constants[0], atol=0.1), (
             f"Intervention is incorrect for {model}.")

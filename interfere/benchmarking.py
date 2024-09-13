@@ -391,7 +391,7 @@ def forecast_intervention(
         best_params: A Dict of the best parameters found by the grid search.
     """
 
-    prior_endog_states, prior_exog_states = intervention.split_exogeneous(X)
+    prior_endog_states, prior_exog_states = intervention.split_exog(X)
 
     if best_params is None:
 
