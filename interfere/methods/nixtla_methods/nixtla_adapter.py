@@ -1,11 +1,15 @@
 from abc import abstractmethod
+import logging
 from math import ceil
-from typing import Any, Dict, List, Optional, Tuple
+import os
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import neuralforecast
+from neuralforecast.common._base_model import BaseModel as NeuralForecastBaseModel
 import numpy as np
 import pandas as pd
 import statsforecast
+from statsforecast.models import _TS as StatsForecastBaseModel
 
 from ..base import BaseInferenceMethod
 from ...base import DEFAULT_RANGE
@@ -15,12 +19,12 @@ from ...utils import copy_doc
 class NixtlaAdapter(BaseInferenceMethod):
     """Adapter that bridges nixtla and interfere predictive methods.
 
-    Notes: Inheriting classes must define an __init__ function that declares
-    three attributes:
-        (1) `self.method_type` which must be subtype of
+    Notes: Inheriting classes must define an __init__ function that passes these
+    three arguments to the __init__ function below:
+        (1) `method_type` which must be subtype of
             `neuralforecast.models.common.BaseModel` or be a class from `statsforecast.models`.
-        (2) `self.method_params` which is an instance of a `Dict[str, Any]`.
-        (3) `self.nixtla_forecaster_class` one of 
+        (2) `method_params` which is an instance of a `Dict[str, Any]`.
+        (3) `nixtla_forecaster_class` one of 
             [statsforecast.StatsForecast, neuralforecast.NeuralForecast].
 
     For example
@@ -28,9 +32,14 @@ class NixtlaAdapter(BaseInferenceMethod):
     ```
     class LSTM(NixtlaAdapter)
         def __init__(self, a, b, c=1):
-            self.method_params = {"a": a, "b": b, "c": c}
-            self.method_type = neuralforecast.models.LSTM
-            self.nixtla_forecaster_class = neuralforecast.NeuralForecast
+            method_params = {"a": a, "b": b, "c": c}
+            method_type = neuralforecast.models.LSTM
+            nixtla_forecaster_class = neuralforecast.NeuralForecast
+            super().__init__(
+                method_type,
+                method_params,
+                nixtla_forecaster_class
+            )
             
     ```
 
@@ -53,6 +62,49 @@ class NixtlaAdapter(BaseInferenceMethod):
         '''Returns a parameter grid for testing grid search'''
     """
 
+    def __init__(
+        self,
+        method_type: Union[
+            Type[NeuralForecastBaseModel],
+            Type[StatsForecastBaseModel],
+        ],
+        method_params: Dict[str, Any],
+        nixtla_forecaster_class: Union[
+            Type[neuralforecast.NeuralForecast], 
+            Type[statsforecast.StatsForecast]
+        ]
+    ):
+        """Initializes a Nixtla <-> Interfere adapter.
+
+        Args:
+            method_type (Nixtla Base Model): The type of Nixtla model to be 
+                adapted to interfere.
+            method_params (Dict[str, Any]): The Nixtla model's parameters.
+            nixtla_forecaster_class (Type): one of 
+            [statsforecast.StatsForecast, neuralforecast.NeuralForecast].
+        """
+        self.method_type = method_type
+        self.method_params = method_params
+        self.nixtla_forecaster_class = nixtla_forecaster_class
+
+        # The following args prevent pytorch lightning from 
+        # writing to files in order to enable parallel grid search.
+        self.set_params(
+            enable_checkpointing=False,
+            logger=False,
+            enable_progress_bar=False
+        )
+
+        # Turn off logs.
+        logging.getLogger(
+            "pytorch_lightning.utilities.rank_zero").setLevel(logging.WARNING)
+        logging.getLogger(
+            "pytorch_lightning.accelerators.cuda").setLevel(logging.WARNING)
+        logging.getLogger(
+            "lightning_fabric.utilities.seed").setLevel(logging.WARNING)
+        logging.getLogger(
+            "pytorch_lightning.callbacks.model_summary").setLevel(
+                logging.WARNING)
 
     @copy_doc(BaseInferenceMethod._fit)
     def _fit(
@@ -152,11 +204,17 @@ class NixtlaAdapter(BaseInferenceMethod):
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
+        # Set environment variable to adopt future behavior where predict
+        # returns ID as a column. It will be safe to remove this after Nixtla
+        # updates neuralforecast and adopts this behavior as the default.
+        os.environ['NIXTLA_ID_AS_COL'] = "1"
+        
         # Convert to discrete time.
         discrete_t = self.to_discrete(t)
 
-        # Total number of predictions times.
-        m_pred = len(discrete_t)
+        # Total number of predictions times. First time corresponds to current
+        # state. 
+        m_pred = len(discrete_t) - 1
 
         # Internal forecasting method's prediction horizon.
         h = self.get_horizon()
@@ -210,13 +268,16 @@ class NixtlaAdapter(BaseInferenceMethod):
             # Make prediction.
             pred_df = self.nixtla_forecaster.predict(df=df, futr_df=futr_df)
             
-            # Reformat prediction and append to historical context.
-            pred_df = pred_df.reset_index()
+            # Reformat prediction.
             pred_df = pred_df.rename(columns={str(self.model): "y"})
             # Add in exogeneous states
-            pred_df = pd.merge(
-                pred_df, futr_df[["ds"] + exog_state_ids], on="ds")
-            df = pd.concat([df, pred_df])
+            merged_df = pd.merge(
+                pred_df, 
+                futr_df[["ds"] + exog_state_ids].drop_duplicates(), 
+                on="ds"
+            )
+            # Append to historical context.
+            df = pd.concat([df, merged_df])
 
         # Convert to endogenous array.
         _, endog_pred, _ = to_interfere_arrays(
@@ -225,9 +286,9 @@ class NixtlaAdapter(BaseInferenceMethod):
         )
 
         # Remove historic observations
-        endog_pred = endog_pred[len(prior_t):, :]
+        endog_pred = endog_pred[(len(prior_t) - 1):, :]
         # Remove extra predictions.
-        endog_pred = endog_pred[:m_pred, :]
+        endog_pred = endog_pred[:(m_pred + 1), :]
         return endog_pred
 
 
@@ -242,7 +303,7 @@ class NixtlaAdapter(BaseInferenceMethod):
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
-        h = len(t)
+        h = len(t) - 1
         lag = self.get_window_size()
 
         # Grab only the neccesary number of historic obs.
@@ -283,6 +344,10 @@ class NixtlaAdapter(BaseInferenceMethod):
             pred_df,
             unique_ids=[id for id in pred_df.unique_id.unique()]
         )
+
+        # Include the initial state of the system.
+        endog_pred = np.vstack([prior_endog_states[-1, :], endog_pred])
+
         return endog_pred
     
     def to_discrete(self, t: np.ndarray):

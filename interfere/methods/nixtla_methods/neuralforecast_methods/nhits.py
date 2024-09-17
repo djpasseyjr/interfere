@@ -1,4 +1,6 @@
+import logging
 from typing import Optional
+
 
 import neuralforecast.models
 from neuralforecast.losses.pytorch import BasePointLoss, MAE
@@ -52,20 +54,18 @@ class NHITS(NixtlaAdapter):
         **trainer_kwargs,
     ):
         # Initialize model
-        self.method_params = locals()
-        self.method_params.pop("self")
-        self.method_params.pop("trainer_kwargs")
-        self.method_params = {
-            **self.method_params,
+        method_params = locals()
+        method_params.pop("self")
+        method_params.pop("trainer_kwargs")
+        method_params.pop("__class__", None)
+        method_params = {
+            **method_params,
             **trainer_kwargs,
-            # The following two arguments prevent pytorch lightning from 
-            # writing to files in order to enable parallel grid search.
-            "enable_checkpointing": False,
-            "logger": False
         }
 
-        self.method_type = neuralforecast.models.NHITS
-        self.nixtla_forecaster_class = neuralforecast.NeuralForecast
+        method_type = neuralforecast.models.NHITS
+        nixtla_forecaster_class = neuralforecast.NeuralForecast
+        super().__init__(method_type, method_params, nixtla_forecaster_class)
 
 
     @copy_doc(BaseInferenceMethod._fit)
