@@ -25,6 +25,19 @@ from interfere.dynamics import (
     coupled_map_1dlattice_traveling_wave
 )
 
+from sample_models import (
+    lotka_voltera_model,
+    ornstein_uhlenbeck_model,
+    coupled_logistic_model,
+    arithmetic_brownian_motion_model,
+    geometric_brownian_motion_model,
+    varima_model,
+    kuramoto_model,
+    kuramoto_sakaguchi_model,
+    stuart_landau_kuramoto_model,
+    hodgkin_huxley_model
+)
+
 SEED = 11
 MAX_PRIOR_OBS = 5
 MEASUREMENT_NOISE_MAG = 0.1
@@ -46,6 +59,19 @@ CML_TEST_DIM = 4
 CML_MODELS = [
    cml(CML_TEST_DIM) for cml in COUPLED_MAP_LATTICES
 ]
+
+NOISE_DYNAMICS = [
+    StandardNormalNoise,
+    StandardCauchyNoise, 
+    StandardExponentialNoise,
+    StandardGammaNoise,
+    StandardTNoise
+]
+
+NOISE_DIM = 3
+NOISE_MODELS = [
+    nd(NOISE_DIM) for nd in NOISE_DYNAMICS
+]
         
 
 MODELS = [
@@ -54,8 +80,16 @@ MODELS = [
     interfere.dynamics.Thomas(),
     interfere.dynamics.Rossler(),
     interfere.dynamics.Lorenz(),
-    interfere.dynamics.HodgkinHuxleyPyclustering(
-        [0, 0, 0, 15, 15, 15, 25, 25, 25, 40], sigma=0.1),
+    lotka_voltera_model(),
+    ornstein_uhlenbeck_model(),
+    coupled_logistic_model(),
+    arithmetic_brownian_motion_model(),
+    geometric_brownian_motion_model(),
+    varima_model(),
+    kuramoto_model(),
+    kuramoto_sakaguchi_model(),
+    stuart_landau_kuramoto_model(),
+    hodgkin_huxley_model(),
 ]
 
 @pytest.mark.parametrize("model", MODELS + CML_MODELS)
@@ -355,88 +389,6 @@ class TestSimulate:
         )
 
 
-def check_simulate_method(
-        model: interfere.base.DynamicModel,
-        x0: np.ndarray = None,
-    ):
-    """Checks that model.simulate() runs and interventions occur appropriately.
-    
-    Args:
-        model (interfere.base.DynamicModel): An initialized model.
-        x0: Optional initial condition for simulate.
-    """
-    n = model.dim
-    m = 1000
-    rng = np.random.default_rng(SEED)
-    if x0 is None:
-        x0 = np.random.rand(n)
-    t = np.linspace(0, 10, m)
-    # Save original measurement noise
-    orig_measurement_noise = model.measurement_noise_std
-
-    # Adjust time scale for discrete time models
-    if isinstance(model, interfere.dynamics.base.DiscreteTimeDynamics):
-        t = np.arange(100)
-        m = 100
-
-    # For non noise models, add measurement noise:
-    if not isinstance(model, UncorrelatedNoise):
-        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
-
-    # Make intervention
-    interv_idx = 0
-    interv_const = 0.5
-    g = interfere.perfect_intervention(interv_idx, interv_const)
-
-    # Check output shape
-    rng = np.random.default_rng(SEED)
-    X = model.simulate(t, x0, rng=rng)
-    assert X.shape == (m, n), (
-        f"Output is the wrong shape"" for {model}.")
-
-    # Check initial condition
-    if x0.ndim == 1:
-        assert np.allclose(X[0], x0), (
-            f"Initial condition is incorrect for {model}.")
-        
-    elif x0.ndim == 2:
-        p, _ = x0.shape
-        assert np.allclose(X[:p, :], x0), (
-            f"Initial condition is incorrect for {model}.")
-
-
-    # Check that random state works correctly
-    rng = np.random.default_rng(SEED)
-    X_rerun = model.simulate(t, x0, rng=rng)
-    assert np.all(X == X_rerun), (
-        f"Random state does not preserve noise for {model}.")
-    
-    # Check that model is not deterministic
-    X_new_realization = model.simulate(t, x0, rng=rng)
-    assert not np.all(X == X_new_realization)
-
-    # Apply an intervention
-    rng = np.random.default_rng(SEED)
-    X_do = model.simulate(t, x0, intervention=g, rng=rng)
-    assert X_do.shape == (m, n), (
-        f"Incorrect output size after intervention for {model}.")
-    
-    assert np.abs(np.mean(X_do[:, interv_idx]) - interv_const) < 0.1, (
-        f"Intervention is incorrect for {model}.")
-
-    # Make sure that random state works for interventions
-    rng = np.random.default_rng(SEED)
-    X_do_rerun = model.simulate(t, x0, intervention=g, rng=rng)
-    assert np.allclose(X_do, X_do_rerun), (f"Random state does not preserve "
-                                          "values after intervention for "
-                                          " {model}.")
-    
-
-    # Reset to original measurement noise
-    model.measurement_noise_std = orig_measurement_noise
-
-    return X, X_do
-
 def test_stochastic_array_builder():
     beloz = interfere.dynamics.Belozyorov3DQuad()
 
@@ -473,6 +425,9 @@ def test_stochastic_array_builder():
 
 
 def test_lotka_voltera():
+    """Tests that interfere.dynamics.LotkaVoltera simulation corresponds to a
+    ground truth ODE with interventions built in.
+    """
     # Initialize interfere.LotkaVoltera model.
     n = 10
     r = np.random.rand(n)
@@ -514,14 +469,13 @@ def test_lotka_voltera():
     x0[interv_idx] = np.sin(t[0])
     true_sin_X = integrate.odeint(sin_int_true_deriv, x0, t)
     interfere_sin_X = model.simulate(t, x0, intervention=sin_interv)
-    assert np.allclose(true_sin_X, interfere_sin_X)
-
-    # Standard checks for intervene.base.DynamicModel objects
-    model = interfere.dynamics.LotkaVolteraSDE(r, k, A, sigma=1.0)
-    check_simulate_method(model)
+    assert np.allclose(true_sin_X, interfere_sin_X)    
 
 
 def test_ornstein_uhlenbeck_and_sde_integrator():
+    """Uses Ornstein Uhlenback model to test interfere's SDE inegrator against
+    the sdeint integrator.
+    """
     seed = 11
     rng = np.random.default_rng(seed)
     n = 3
@@ -530,8 +484,6 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
     sigma = rng.random((n, n))- 0.5
 
     model = interfere.dynamics.OrnsteinUhlenbeck(theta, mu, sigma)
-    # Standard checks for intervene.base.DynamicModel objects
-    check_simulate_method(model)
 
     x0 = np.random.rand(n)
     tspan = np.linspace(0, 10, 1000)
@@ -599,19 +551,15 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
     assert np.mean((X_perf_inter - X_perf_inter_sim) ** 2) < 0.01
 
 
-def test_coupled_logistic_map():
-    rng = np.random.default_rng(SEED)
-    A = rng.random((10, 10)) < 0.5
-    model = interfere.dynamics.coupled_logistic_map(A)
-    # Standard checks for intervene.base.DynamicModel objects
-    check_simulate_method(model)
-
-
 def test_normal_noise():
-    rng = np.random.default_rng(11)
+    """Tests that the normal distribution parameters are correct and that the
+    generated noise is reproducible.
+    """
     model = interfere.dynamics.StandardNormalNoise(5)
-    # Standard checks for intervene.base.DynamicModel objects
-    X, X_do = check_simulate_method(model)
+    m, n, t, x0, interv, rng = TestSimulate().make_test_data(model)
+
+    X = model.simulate(t, x0, rng=np.random.default_rng(SEED))
+    X_do = model.simulate(t, x0, rng=np.random.default_rng(SEED))
 
     # Check that the normal distribution works as expected
     assert np.all(np.abs(np.mean(X[1:, :], axis=0)) < 0.1)
@@ -621,41 +569,16 @@ def test_normal_noise():
     assert np.all(X_do[:, 1:] == X[:, 1:])
 
 
-def test_noise_dynamics():
-    noise_models = [StandardNormalNoise, StandardCauchyNoise, 
-        StandardExponentialNoise, StandardGammaNoise, StandardTNoise]
-    
-    f = interfere.perfect_intervention(0, 30.0)
-    for model_class in noise_models:
-        dim = 5
-        model = model_class(dim)
-        # Standard checks for intervene.base.DynamicModel objects
-        check_simulate_method(model)   
-
-
-def test_arithmetic_brownian_motion():
-    n = 1000
-    m = 1000
-    mu = np.ones(n) * -1
-    sigma = np.ones(n) * 0.1
-    model = interfere.dynamics.ArithmeticBrownianMotion(mu=mu, sigma=sigma)
-    # Standard checks for intervene.base.DynamicModel objects
-    X, X_do =check_simulate_method(model)
-
-    # Make sure that the intervention makes a difference but only on one signal.
-    assert np.any(X_do != X)
-    assert np.all(X_do[:, 1:] == X[:, 1:])
-
-
 def test_geometric_brownian_motion():
+    """Tests that simulated expectation matches analytic expectation for
+    geometric brownian motion.
+    """
+    
     n = 1000
     m = 1000
     mu = np.ones(n) * -1
     sigma = np.ones(n) * 0.1
     model = interfere.dynamics.GeometricBrownianMotion(mu=mu, sigma=sigma)
-    
-    # Standard checks for intervene.base.DynamicModel objects
-    check_simulate_method(model)
 
     # Run additional checks
 
@@ -678,8 +601,12 @@ def test_geometric_brownian_motion():
     assert np.all(Xdo[:, 1:] == X[:, 1:])
     assert np.all(Xdo[:, 0] == 10)
 
+
 @pytest.mark.slow
 def test_varma():
+    """Tests that multiple simulations of the interfere VARMA matches
+    statsmodels.tsa.vector_ar.util.varsim when averaged.
+    """
     seed = 1
     rs = np.random.RandomState(seed)
 
@@ -706,7 +633,7 @@ def test_varma():
     )
 
     # Initialize a VARMA model with no moving average component
-    model = interfere.dynamics.VARMA_Dynamics(
+    model = interfere.dynamics.VARMADynamics(
         phi_matrices=coefs,
         theta_matrices=[np.zeros((3,3))],
         sigma=sigma
@@ -723,33 +650,3 @@ def test_varma():
     assert np.all(
         np.abs(np.mean(true_var_sim - varma_sim, axis=0)) < 0.2
     )
-
-def test_varima_standard_checks():
-    rng = np.random.default_rng(SEED)
-    coef_matrices = [rng.random((3, 3)) - 0.5 for i in range(5)]
-    Z = rng.random((3, 3))
-    sigma = Z * Z.T
-
-    model = interfere.dynamics.VARMA_Dynamics(
-        phi_matrices=coef_matrices[:2],
-        theta_matrices=coef_matrices[2:],
-        sigma=sigma
-    )
-    check_simulate_method(model, x0=rng.random((3, 3)))
-
-
-def test_kuramoto():
-    rng = np.random.default_rng(SEED)
-    omega = rng.random(10)
-    K = 0.7
-    A = rng.random((10, 10)) < .3
-    sigma=0.1
-    rho = np.random.rand(10)
-
-    # Run standard checks for interfere.base.DynamicModel objects.
-    model = interfere.dynamics.Kuramoto(omega, K, A, sigma)
-    check_simulate_method(model)
-    model = interfere.dynamics.KuramotoSakaguchi(omega, K, A, A, sigma)
-    check_simulate_method(model)
-    model = interfere.dynamics.StuartLandauKuramoto(omega, rho, K, sigma)
-    check_simulate_method(model)
