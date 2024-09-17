@@ -712,9 +712,9 @@ class TestPredictErrors:
         """
         method_params = method_type.get_test_params()
 
-        t = np.arange(10)
+        t = np.arange(10.0)
         prior_endog_states = np.random.rand(9, 2)
-        true_prior_t = np.arange(-8, 1)
+        true_prior_t = np.arange(-8.0, 1.0)
         method = method_type(**method_params)
         method.fit(true_prior_t, prior_endog_states)
 
@@ -724,6 +724,9 @@ class TestPredictErrors:
         num_prior_times = 2
         bad_prior_t = true_prior_t[-num_prior_times:].copy()
         bad_prior_t[0] -= np.pi
+
+        # For this test to pass, method window size must be smaller than 3.
+        method.get_window_size = lambda : 2
 
         with pytest.raises(ValueError, match=re.escape(
             f"{str(type(method).__name__)}.predict was passed {p} "
