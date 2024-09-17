@@ -39,4 +39,4 @@ from .simple_linear_sdes import (
     imag_roots_4d_linear_sde,
     attracting_fixed_point_4d_linear_sde
 )
-from .statespace_models import VARMA_Dynamics
+from .statespace_models import VARMADynamics

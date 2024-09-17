@@ -57,7 +57,7 @@ def VARIMA_timeseries(dim=5, lags=3, noise_lags=2, tsteps=100, n_do=20):
     thetas = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(noise_lags)]
     sigma = rng.random((dim, dim))
     sigma += sigma.T
-    model = interfere.dynamics.VARMA_Dynamics(phis, thetas, sigma)
+    model = interfere.dynamics.VARMADynamics(phis, thetas, sigma)
 
     max_lags = max(lags, noise_lags)
     # Generate a time series
@@ -139,7 +139,7 @@ def make_time_series_combos(dynamics):
 
 def make_optuna_training_data():
     # Generate sample data.
-    model = interfere.dynamics.attracting_fixed_point_4d_linear_sde()
+    model = interfere.dynamics.Belozyorov3DQuad()
     dt = 0.05
     train_t = np.arange(0, 1.5 + dt, dt)
     forecast_t = np.arange(1.5, 2 + dt, dt)
@@ -1087,6 +1087,47 @@ class TestOptuna:
         )
 
 
+@pytest.mark.parametrize("method_type", METHODS)
+def test_continuous_predict_arbitrary_initial(
+    method_type: Type[BaseInferenceMethod]):
+    """Test that the method can predict continuous time series data.
+        
+        Args:
+            method_type: The type of the BaseInferenceMethod.
+    """
+    dt = 1/100
+    method = method_type(**method_type.get_test_params())
+
+    prior_t = np.arange(0, 2 * np.pi, dt)
+    prior_endog_states = np.vstack([np.sin(prior_t), np.cos(prior_t)]).T
+
+    method.fit(prior_t, prior_endog_states)
+
+    rng = np.random.default_rng(SEED)
+    rand_t0 = rng.random()
+    pred_t = np.array([rand_t0, rand_t0 + dt])
+    rand_prior_t = np.arange(-20, 1) * dt + rand_t0
+    rand_prior_states = np.vstack([
+        np.sin(rand_prior_t),
+        np.cos(rand_prior_t)
+    ]).T
+    
+    endo_pred = method.predict(
+        pred_t, rand_prior_states, prior_t=rand_prior_t)
+    
+    assert np.allclose(endo_pred[0, :], endo_pred[1, :], atol=dt**0.5), (
+        "Change in state too big for continuous system:"
+        f"\nTarget={endo_pred[0, :]}"
+        f"\nPredic={endo_pred[1, :]}"
+    )
+
+    assert not np.allclose(endo_pred[0, :], endo_pred[1, :]), (
+        "Change in state not big enough for the modeled system."
+        f"\nTarget={endo_pred[0, :]}"
+        f"\nPredic={endo_pred[1, :]}"
+    )
+
+
 @pytest.mark.parametrize("method_type", EXOG_RESP_METHODS)
 def test_optimize_method_exog_response(
     method_type: Type[BaseInferenceMethod]):
@@ -1148,5 +1189,3 @@ def test_optimize_method_exog_response(
         "\n\nInterv. response vs. predicted interv. response RMSSE: "
         f"{interv_error}"
     )
-
-# TestFitPredict().test_fit(interfere.methods.NHITS, DYNAMICS[0])
