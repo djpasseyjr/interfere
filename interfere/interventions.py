@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List, Union
+from typing import Callable, Iterable, List, Tuple, Union
 from typing_extensions import TypeAlias
 
 import numpy as np
@@ -183,7 +183,12 @@ class SignalIntervention(ExogIntervention):
     def __init__(
         self,
         intervened_idxs: Union[int, Iterable[int]],
-        signals: Union[ScalarFunction, Iterable[ScalarFunction]]
+        signals: Union[
+            ScalarFunction,
+            Iterable[ScalarFunction],
+            Tuple[np.ndarray, np.ndarray],
+            Iterable[Tuple[np.ndarray, np.ndarray]]
+        ]
     ):
         """Creates an intervention that applies passed one arg functions.
 
@@ -193,9 +198,9 @@ class SignalIntervention(ExogIntervention):
             Args:
                 intervened_idxs (int or collection of ints): The indexes where the intervention
                     will be applied.
-                signals (float or collection of floats): The functions that will
-                    replace the value of variables at `intervened_idxs` at each
-                    time point.
+                signals (Scalar function or collection of scalar functions): 
+                    The functions that will replace the value of variables at
+                    `intervened_idxs` at each time point.
         """
         if isinstance(intervened_idxs, int):
 
@@ -207,10 +212,10 @@ class SignalIntervention(ExogIntervention):
         if len(signals) != len(intervened_idxs):
             raise ValueError(
                 "Number of intervened indexes must equal number of signals.")
-        
 
         self.intervened_idxs = intervened_idxs
         self.signals = signals
+
 
     def __call__(self, x: np.ndarray, t: float):
         """A signal intervention on multiple variables.
