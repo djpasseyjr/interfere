@@ -8,7 +8,7 @@ import numpy as np
 from ..base import DynamicModel, DEFAULT_RANGE
 
 
-class VARMA_Dynamics(DynamicModel):
+class VARMADynamics(DynamicModel):
 
     def __init__(
         self,
@@ -114,30 +114,28 @@ class VARMA_Dynamics(DynamicModel):
         q = len(self.theta_matrices)
         _, m = self.phi_matrices[0].shape
 
-        max_lags = max(p, q)
-
         n_initial_obs, _ = initial_condition.shape
 
-        if n_initial_obs < max_lags:
+        if n_initial_obs < p:
             warn("Historic timesteps not found in initial condition. Replacing with zeros")
-            time_steps_needed = max_lags - n_initial_obs
+            time_steps_needed = p - n_initial_obs
             initial_condition = np.vstack([
                     np.zeros(m) for i in range(time_steps_needed)
                 ] + [prior_states]
             )
         
         n = len(t)
-        X = np.zeros((n, m))
+        X = np.zeros((n + p - 1, m))
 
         # Assign initial condition
-        X[:max_lags, :] = initial_condition[-max_lags:, :]
+        X[:p, :] = initial_condition[-p:, :]
         
         # Initialize noise
         noise_vecs = rng.multivariate_normal(
-            np.zeros(m), self.sigma, n - p + q)
+            np.zeros(m), self.sigma, n - 1 + q)
 
         # Simulate
-        for i in range(n - p):
+        for i in range(n - 1):
 
             # Compute autogregressive component
             x_AR = np.sum([
@@ -161,11 +159,14 @@ class VARMA_Dynamics(DynamicModel):
 
             X[p+i, :] = x_next
 
-        if self.measurement_noise_std is not None:
-            X = self.add_measurement_noise(X, rng)
-            # Preserve initial conditions.
-            X[:max_lags, :] = initial_condition[-max_lags:, :]
+        # Remove prior states except for the one corresponding to t[0].
+        X = X[p-1:, :]
 
+        if self.measurement_noise_std is not None:
+            # Preserve initial condition.
+
+            X[1:, :] = self.add_measurement_noise(X[1:, :], rng)
+ 
         return X
 
             
