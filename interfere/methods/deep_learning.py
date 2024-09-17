@@ -122,16 +122,22 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         
+        m = len(prior_t)
+        prior_y = to_sktime_time_series(np.arange(m), prior_endog_states)
+        
         X = None
         if prediction_exog is not None:
             X = to_sktime_time_series(t, prediction_exog)
 
+
+
         # Save original stored endogeneous.
         _y_orig = self.model._y
+        self.model._y = prior_y
 
         futr_endo = []
 
-        for i in range(len(t)):
+        for i in range(len(t) - 1):
             y_next = self.model.predict(X=X, fh=self.fh).iloc[0:1, :]
             self.model._y = pd.concat([self.model._y.iloc[1:, :], y_next])
             futr_endo.append(y_next)
@@ -139,8 +145,11 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         # Reset stored endogenous to original state.
         self.model._y = _y_orig
 
-        # Extract values and return.
-        pred_endo = pd.concat(futr_endo).values        
+        # Extract values.
+        pred_endo = pd.concat(futr_endo).values
+        # Add initial state to correspond with t.     
+        pred_endo = np.vstack([prior_endog_states[-1, :], pred_endo])
+
         return pred_endo
 
 
@@ -162,7 +171,15 @@ class LTSFLinearForecaster(BaseInferenceMethod):
 
     @copy_doc(BaseInferenceMethod.get_test_params)
     def get_test_params() -> Dict[str, Any]:
-        return sktime_LTSFLinearForecaster.get_test_params()[0]
+        return {
+            'seq_len': 2,
+            'pred_len': 1,
+            'lr': 0.005,
+            'optimizer': 'Adam',
+            'batch_size': 1,
+            'num_epochs': 10,
+            'individual': False
+        }
     
 
     @copy_doc(BaseInferenceMethod.get_test_param_grid)
