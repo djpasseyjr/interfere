@@ -188,7 +188,9 @@ class TestSimulate:
         # Remove measurement noise.
         model.measurement_noise_std = old_measurement_noise
 
-        assert np.all(X == X_rerun), (
+         # Added a tolerance because Stuart Landau model has some round off
+        # error. 
+        assert np.max(X - X_rerun) < 1e-15, (
             f"Random state does not preserve noise for {model}.")
         
     
@@ -351,8 +353,9 @@ class TestSimulate:
         model.sigma = old_sigma
         model.measurement_noise_std = old_measurement_noise
 
-
-        assert np.all(X == X_rerun), (
+        # Added a tolerance because Stuart Landau model has some round off
+        # error. 
+        assert np.max(X - X_rerun) < 1e-15, (
             f"{model} is not generating reproducible stochasticity."
         )
 
@@ -429,10 +432,11 @@ def test_lotka_voltera():
     ground truth ODE with interventions built in.
     """
     # Initialize interfere.LotkaVoltera model.
+    rng = np.random.default_rng(SEED)
     n = 10
-    r = np.random.rand(n)
+    r = rng.random(n)
     k = np.ones(n)
-    A = np.random.rand(n, n) - 0.5
+    A = rng.random((n, n)) - 0.5
 
     interv_idx = n - 1
     interv_const = 1.0
@@ -456,7 +460,7 @@ def test_lotka_voltera():
         return dx
 
     # Set initial condition to match intervention
-    x0 = np.random.rand(n)
+    x0 = rng.random(n)
     x0[interv_idx] = interv_const
     t = np.linspace(0, 2, 1000)
 
@@ -485,7 +489,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
 
     model = interfere.dynamics.OrnsteinUhlenbeck(theta, mu, sigma)
 
-    x0 = np.random.rand(n)
+    x0 = rng.random(n)
     tspan = np.linspace(0, 10, 1000)
     dt = (tspan[-1] - tspan[0]) / len(tspan)
 
@@ -618,7 +622,8 @@ def test_varma():
     Z = rs.rand(3, 3)
     sigma = Z * Z.T
     steps = 101
-    initial_vals = np.ones((2, 3))
+    lags = 2
+    initial_vals = np.ones((lags, 3))
     nsims = 10000
 
     # Simulate it
@@ -639,7 +644,7 @@ def test_varma():
         sigma=sigma
     )
 
-    t = np.arange(steps)
+    t = np.arange(steps - lags + 1)
 
     varma_sim = np.stack([
         model.simulate(t, initial_vals)
@@ -648,5 +653,5 @@ def test_varma():
     # Average over the 10000 simulations to compute the expected trajectory.
     # Make sure it is equal for both models.
     assert np.all(
-        np.abs(np.mean(true_var_sim - varma_sim, axis=0)) < 0.2
-    )
+        np.abs(np.mean(true_var_sim[:, lags - 1:, :] - varma_sim, axis=0)) < 0.2
+    ), ("Average of interfere VARMA model runs does not match statsmodels sim.")

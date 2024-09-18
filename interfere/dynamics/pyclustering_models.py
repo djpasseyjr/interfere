@@ -57,8 +57,9 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         Args:
             stimulus (np.ndarray): Array of stimulus for oscillators, number of
                 stimulus. Length equal to number of oscillators.
-            sigma (float): Scale of the independent stochastic noise added to
-                the system.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
             nu (float): Intrinsic noise.
             vNa (float): Reverse potential of sodium current [mV].
             vK (float): Reverse potential of potassium current [mV].
@@ -103,9 +104,6 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         self.sigma = sigma
         self.type_conn = type_conn
 
-        # Make independent noise matrix.
-        self.Sigma = sigma * np.diag(np.ones(dim))
-
         ## Maximal conductivity for sodium current.
         gNa = 120.0 * (1 + 0.02 * nu)
         ## Maximal conductivity for potassium current.
@@ -141,7 +139,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         # Store hhm_parameters class for use in pyclustering simulator.
         self.parameters = parameters
         
-        super().__init__(dim, measurement_noise_std)
+        super().__init__(dim, measurement_noise_std, sigma)
 
     @copy_doc(StochasticDifferentialEquation._simulate)
     def _simulate(
@@ -320,7 +318,7 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
 
     def noise(self, x: np.ndarray, ti: float) -> np.ndarray:
-        return self.Sigma
+        return self.sigma
 
 
 class LEGIONPyclustering(DiscreteTimeDynamics):
@@ -339,8 +337,9 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         Args:
             num_neurons (int): Number of neurons in the model. Must be an even  
                 number.
-            sigma (float): Scale of the independent stochastic noise added to
-                the system.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
             parameters (hhn_parameters): A pyclustering.nnet.hhn.hhn_paramerers 
                 object.
             type_conn (str): Type of connection between oscillators. One
@@ -362,8 +361,7 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         self.parameters = parameters
         self.sigma = sigma
         self.type_conn = type_conn
-        self.Sigma = sigma * np.diag(np.ones(num_neurons))  # Noise covariance.
-        super().__init__(num_neurons, measurement_noise_std)
+        super().__init__(num_neurons, measurement_noise_std, sigma)
 
 
     @copy_doc(DiscreteTimeDynamics._simulate)
@@ -422,7 +420,7 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
 
         # Add stochastic system noise:
         if self.sigma != 0:
-            x_next +=  self.Sigma @ rng.normal(0.0, np.sqrt(self.dt))
+            x_next +=  self.sigma @ rng.normal(0.0, np.sqrt(self.dt))
 
         return x_next
     
@@ -455,8 +453,9 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
             rho (np.ndarray): Radius of oscillators that affects amplitude. 1D
                 array with the same length as omega.
             K (float): Coupling strength between oscillators.
-            sigma (float): Scale of the brownian increments. Model is
-                deterministic when sigma == 0.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
             type_conn (str): Type of connection between oscillators. One
                 of ["all_to_all", "grid_four", "grid_eight", "list_bdir",
                 "dynamic"]. See pyclustering.nnet.__init__::conn_type for
@@ -482,14 +481,11 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
         self.type_conn = type_conn
         self.convert_to_real = convert_to_real
 
-        # Make independent noise matrix.
-        self.Sigma = sigma * np.diag(np.ones(dim))
-
         # Initialize the pyclustering model.
         self.pyclustering_model = fsync_network(
             dim, omega, rho, K, CONN_TYPE_MAP[type_conn])
         
-        super().__init__(dim, measurement_noise_std)
+        super().__init__(dim, measurement_noise_std, sigma)
 
 
     @copy_doc(StochasticDifferentialEquation._simulate)
@@ -558,4 +554,4 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
     
     def noise(self, x: np.ndarray, t: float) -> np.ndarray:
         """Independent noise matrix scaled by scalar sigma in self.__init__."""
-        return self.Sigma
+        return self.sigma
