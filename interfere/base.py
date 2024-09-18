@@ -114,7 +114,7 @@ class DynamicModel(ABC):
                     f"be equal to the number of rows ({prior_obs}) in prior_states. "
                 )
             
-            if prior_t[-1] != t[0]:
+            if not np.isclose(prior_t[-1], t[0]):
                 raise ValueError(f"The last prior time, `prior_t[-1] "
                     f"= {prior_t[-1]}` must equal the first simulation time "
                     f"`t[0] = {t[0]}`."
