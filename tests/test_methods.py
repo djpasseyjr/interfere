@@ -55,8 +55,7 @@ def VARIMA_timeseries(dim=5, lags=3, noise_lags=2, tsteps=100, n_do=20):
     rng = np.random.default_rng(SEED)
     phis = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(lags)]
     thetas = [0.5 * (rng.random((dim, dim)) - 0.5) for i in range(noise_lags)]
-    sigma = rng.random((dim, dim))
-    sigma += sigma.T
+    sigma = 0.5 * np.eye(dim)
     model = interfere.dynamics.VARMADynamics(phis, thetas, sigma)
 
     max_lags = max(lags, noise_lags)

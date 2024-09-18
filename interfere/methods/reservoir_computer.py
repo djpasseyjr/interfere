@@ -560,7 +560,7 @@ class ResComp(BaseInferenceMethod):
             max_weight=2,
             min_weight=0,
             batchsize=2000,
-            map_initial="relax",
+            map_initial="activ_f",
             window=0.02,
             overlap=0.0,
             rng = np.random.default_rng(11)

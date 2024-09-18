@@ -259,7 +259,7 @@ class BaseInferenceMethod(BaseEstimator):
             prior_endog_states = np.reshape(prior_endog_states, (1, -1))
 
         # Gather array shapes
-        prior_enod_obs, k = prior_endog_states.shape
+        orig_num_prior_endog, k = prior_endog_states.shape
         (m,) = t.shape 
 
         if len(t) < 2:
@@ -286,14 +286,14 @@ class BaseInferenceMethod(BaseEstimator):
         # Compare window size of forecaster with amount of historic data.
         window_size = self.get_window_size()
 
-        if window_size > prior_enod_obs:
-            warn(str(type(self).__name__) + f" has window size {window_size} but only recieved {prior_enod_obs}"
+        if window_size > orig_num_prior_endog:
+            warn(str(type(self).__name__) + f" has window size {window_size} but only recieved {orig_num_prior_endog}"
                  " endog observations. Augmenting historic edogenous "
                  "observations with zeros."
             )
 
             prior_endog_states = np.vstack([
-                np.zeros((window_size - prior_enod_obs, k)),
+                np.zeros((window_size - orig_num_prior_endog, k)),
                 prior_endog_states
             ])
             
@@ -301,7 +301,7 @@ class BaseInferenceMethod(BaseEstimator):
         if prior_exog_states is not None:
             p_hexog, k_hexog = prior_exog_states.shape
 
-            if p_hexog != prior_enod_obs:
+            if p_hexog != orig_num_prior_endog:
                 raise ValueError("Arguments `prior_endog_states` and "
                 "`prior_exog_states` must have the same number of rows.")
             
@@ -365,16 +365,16 @@ class BaseInferenceMethod(BaseEstimator):
 
                 # When prior_endog_states were not augmented with zeros raise a
                 # normal value error. 
-                if num_prior_endog == prior_enod_obs:
+                if num_prior_endog == orig_num_prior_endog:
                     raise ValueError(
-                        f"{str(type(self).__name__)}.predict was passed {prior_enod_obs} "
+                        f"{str(type(self).__name__)}.predict was passed {orig_num_prior_endog} "
                         "prior_endog_states but there are only "
                         f"{num_prior_times} entries in `prior_t`."
                     )
                 
                 # When prior_endog_states were augmented with zeros, give
                 # instructions on how to augment.
-                if num_prior_endog > prior_enod_obs:
+                if num_prior_endog > orig_num_prior_endog:
                     raise ValueError(
                         f"{str(type(self).__name__)}.predict augmented "
                         "`prior_endog_states` with zeros but `prior_t` was not "
