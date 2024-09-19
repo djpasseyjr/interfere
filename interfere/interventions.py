@@ -120,6 +120,9 @@ class IdentityIntervention(ExogIntervention):
     def __call__(self, x: np.array, t: float):
         return x
     
+    def __eq__(self, other):
+        return isinstance(other, IdentityIntervention)
+    
 
 class PerfectIntervention(ExogIntervention):
 
@@ -177,6 +180,16 @@ class PerfectIntervention(ExogIntervention):
         for i, c in zip(self.intervened_idxs, self.constants):
             x_do[..., i] = c
         return x_do
+    
+    def __eq__(self, other):
+        """Determine if two perfect interventions are equal."""
+        if not isinstance(other, PerfectIntervention):
+            return False
+        equal = True
+        equal = equal and np.all(self.intervened_idxs == other.intervened_idxs)
+        equal = equal and np.all(self.constants == other.constants)
+        return equal
+        
     
 class SignalIntervention(ExogIntervention):
 
