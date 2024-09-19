@@ -82,7 +82,7 @@ class CounterfactualForecastingMetric(ABC):
 class DirectionalChangeBinary(CounterfactualForecastingMetric):
 
     def __init__(self):
-        super().__init__("Directional Change (Increase or decrease)")
+        super().__init__("BDC")
 
     @copy_doc(CounterfactualForecastingMetric.__call__)
     def __call__(self,
@@ -113,7 +113,7 @@ class DirectionalChangeBinary(CounterfactualForecastingMetric):
 class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
 
     def __init__(self):
-        super().__init__("T-Test Directional Change")
+        super().__init__("DC")
 
 
     @copy_doc(CounterfactualForecastingMetric.__call__)
@@ -194,7 +194,7 @@ class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
 class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
 
     def __init__(self):
-        super().__init__("Room Mean Standardized Squared Error")
+        super().__init__("RMSSE")
 
 
     @copy_doc(CounterfactualForecastingMetric.__call__)
@@ -218,7 +218,7 @@ class ValidPredictionTime(CounterfactualForecastingMetric):
         the absolute difference between the target and the predicted is greater
         than a threshold.
         """
-        super().__init__("Valid Prediction Time")
+        super().__init__("VPT")
         self.eps_max = 0.5
 
 
