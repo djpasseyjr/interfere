@@ -79,3 +79,78 @@ def test_identity_intervention():
     )
     
     assert np.all(X == X_ident)
+
+
+def test_intervention_equality():
+    """Tests that interventions are correctly labeled as equal or unequal."""
+    h = interfere.PerfectIntervention(0, 0)
+    g = interfere.PerfectIntervention(0, 0.0)
+
+    assert h == g, (
+        "PerfectIntervention.__eq__ method should have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([0], 0)
+    g = interfere.PerfectIntervention(0, 0.0)
+    
+    assert h == g, (
+        "PerfectIntervention.__eq__ method should have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([0], 0)
+    g = interfere.PerfectIntervention(0, [0.0])
+    
+    assert h == g, (
+        "PerfectIntervention.__eq__ method should have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([0], [0])
+    g = interfere.PerfectIntervention(0, 0.0)
+    
+    assert h == g, (
+        "PerfectIntervention.__eq__ method should have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([0, 1], [0, 1])
+    g = interfere.PerfectIntervention([0, 1], [0.0, 1])
+    
+    assert h == g, (
+        "PerfectIntervention.__eq__ method should have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([1], 0)
+    g = interfere.PerfectIntervention(0, 0.0)
+    
+    assert h != g, (
+        "PerfectIntervention.__eq__ method should not have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention(0, [0])
+    g = interfere.PerfectIntervention(0, 1.0)
+    
+    assert h != g, (
+        "PerfectIntervention.__eq__ method should not have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([1, 2], [0, 1])
+    g = interfere.PerfectIntervention([1, 2], [0.0, 2])
+    
+    assert h != g, (
+        "PerfectIntervention.__eq__ method should not have found the two "
+        "interventions equal."
+    )
+
+    h = interfere.PerfectIntervention([1, 3], [0, 1])
+    g = interfere.PerfectIntervention([1, 2], [0.0, 1])
+    
+    assert h != g, (
+        "PerfectIntervention.__eq__ method should not have found the two "
+        "interventions equal."
+    )
