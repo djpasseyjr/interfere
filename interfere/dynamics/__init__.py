@@ -21,7 +21,9 @@ from .decoupled_noise_dynamics import (
     StandardTNoise
 )
 from .generative_forecasters import (
-    GenerativeForecaster, generative_lorenz_VAR_forecaster
+    GenerativeForecaster,
+    generative_lorenz_VAR_forecaster,
+    generative_cml_SINDY_forecaster
 )
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi

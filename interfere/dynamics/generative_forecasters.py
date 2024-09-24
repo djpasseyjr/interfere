@@ -4,10 +4,12 @@
 from typing import Callable, Optional, Union
 
 import numpy as np
+import pysindy as ps
 
+from .coupled_map_lattice import coupled_logistic_map
 from .quadratic_sdes import Lorenz
 from ..base import DynamicModel, DEFAULT_RANGE
-from ..methods import VAR
+from ..methods import VAR, SINDY
 from ..methods.base import BaseInferenceMethod
 from ..utils import copy_doc
 
@@ -119,12 +121,10 @@ def generative_lorenz_VAR_forecaster(
     tsteps = 300,
     dt = 0.02,
 ):
-    """Initializes the a GenerativeForecaster with a forecaster that has been
+    """Initializes the a GenerativeForecaster with a VAR model that has been
     fit to the Lorenz equations.
 
         Args:
-            method_type (Type[BaseInferenceMethod]): A subtype of  
-                BaseInferenceMethod.
             sigma (float or ndarray): The stochastic noise parameter. Can be a
                 float, a 1D matrix or a 2D matrix. Dimension must match
                 dimension of model.
@@ -135,16 +135,76 @@ def generative_lorenz_VAR_forecaster(
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
-    """
-    tsteps = 300
-    dt = 0.02
+            tsteps (int): The number of time steps to simulate.
+            dt (float): The timestep size 
 
+    """
     train_t = np.arange(0, tsteps * dt, dt)
     train_prior_states = np.array([0.1, 0.1, 0.1])
     train_states = Lorenz().simulate(
         train_t, train_prior_states)
 
     method = VAR(maxlags=5)
+    method.fit(train_t, train_states)
+
+    return GenerativeForecaster(method,
+        sigma=sigma, measurement_noise_std=measurement_noise_std)
+
+
+def generative_cml_SINDY_forecaster(
+    sigma: Optional[Union[float, np.ndarray]] = None,
+    measurement_noise_std: Optional[np.ndarray] = None,
+    tsteps: int = 300,
+):
+    """Creates a generative SINDY model that is fit to a coupled map lattice.
+
+    Args:
+        sigma (float or ndarray): The stochastic noise parameter. Can be a
+            float, a 1D matrix or a 2D matrix. Dimension must match
+            dimension of model.
+        measurement_noise_std (ndarray): None, or a vector with shape (n,)
+            where each entry corresponds to the standard deviation of the
+            measurement noise for that particular dimension of the dynamic
+            model. For example, if the dynamic model had two variables x1
+            and x2 and `measurement_noise_std = [1, 10]`, then
+            independent gaussian noise with standard deviation 1 and 10
+            will be added to x1 and x2 respectively at each point in time.
+        tsteps (int): The number of time steps to simulate.
+    """
+    train_t = np.arange(0, tsteps)
+    dim = 10
+    train_prior_states = -0.1 * np.ones(dim)
+    rng=np.random.default_rng(11)
+    
+    train_states = coupled_logistic_map(
+        **{
+            # Two cycles and isolated node
+            "adjacency_matrix": np.array([
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+            ]),
+            "eps": 0.9,
+            "logistic_param": 3.72,
+            "sigma": 0.0,
+            "measurement_noise_std": 0.01 * np.ones(10),
+    }).simulate(train_t, train_prior_states, rng=rng)
+
+    method = SINDY(**{
+        'optimizer__threshold': 2.619572195011037,
+        'optimizer__alpha': 0.0001587441595198887,
+        'discrete_time': True,
+        'feature_library': ps.PolynomialLibrary(),
+        'differentiation_method': ps.SINDyDerivative(
+            alpha=0.01, kind='trend_filtered', order=1)
+    })
     method.fit(train_t, train_states)
 
     return GenerativeForecaster(method,
