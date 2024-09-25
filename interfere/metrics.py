@@ -185,9 +185,11 @@ class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
 
         # Keep only whether the change in mean was positive, negative or no
         # change (zero)
-        estimated_change[estimated_change < 0] = -1
-        estimated_change[estimated_change > 0] = 1
+        estimated_change[estimated_change < 0] = -1.0
+        estimated_change[estimated_change > 0] = 1.0
 
+        # Get rid of negative zeros.
+        estimated_change += 0.0
         return estimated_change
         
             
