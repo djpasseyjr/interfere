@@ -576,13 +576,14 @@ class ResComp(BaseInferenceMethod):
 
     def _get_optuna_params(trial):
         return {
-            "gamma": trial.suggest_float("gamma", 0.1, 500),
-            "sigma": trial.suggest_float("sigma", 0.001, 100),
-            "delta": trial.suggest_float("delta", 0.001, 100),
+            "gamma": trial.suggest_float("gamma", 0.1, 20),
+            "sigma": trial.suggest_float("sigma", 0, 1),
+            "delta": trial.suggest_float("delta", 0, 1),
             "mean_degree": trial.suggest_float("mean_degree", 0.1, 5),
             "res_sz": trial.suggest_int("res_sz", 10, 100),
             "window": trial.suggest_float("window", 0.001, 100, log=True),
-            "spect_rad": trial.suggest_float("spect_rad", 0.001, 100, log=True),
-            "ridge_alpha": trial.suggest_float("ridge_alpha", 1e-10, 100, log=True),
+            "spect_rad": trial.suggest_float("spect_rad", 0.1, 0.9),
+            "ridge_alpha": trial.suggest_float(
+                "ridge_alpha", 1e-10, 0.1, log=True),
             "map_initial": "activ_f"
         }
