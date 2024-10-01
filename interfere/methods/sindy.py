@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Dict, List, Optional
 from warnings import warn
 
@@ -40,6 +41,15 @@ class SINDY(BaseInferenceMethod):
         max_sim_value = 10000,
         **kwargs
     ):
+        
+        # Differentiation method and feature library must be copied so that
+        # their internal state doesn't carry over across different fits.
+        if differentiation_method is not None:
+            differentiation_method = copy(differentiation_method)
+
+        if feature_library is not None:
+            feature_library = copy(feature_library)
+
         self.sindy = ps.SINDy(
             optimizer, feature_library, differentiation_method, feature_names, t_default, discrete_time,
         )
@@ -122,8 +132,18 @@ class SINDY(BaseInferenceMethod):
         return self.sindy.get_params(deep=deep)
 
 
-    def set_params(self, **parameters):
-        return self.sindy.set_params(**parameters)
+    def set_params(self, **params):
+
+        # Differentiation method and feature library must be copied so that
+        # their internal state doesn't carry over across different fits.
+        if params["differentiation_method"] is not None:
+            params["differentiation_method"] = copy(
+                params["differentiation_method"])
+
+        if params["feature_library"] is not None:
+            params["feature_library"] = copy(params["feature_library"])
+
+        return self.sindy.set_params(**params)
 
 
     def get_test_params():
