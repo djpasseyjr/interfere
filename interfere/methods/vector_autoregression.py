@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from statsmodels.tsa.api import VAR as smVAR
 
-from .base import BaseInferenceMethod, DEFAULT_RANGE
+from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc
 
 
-class VAR(BaseInferenceMethod):
+class VAR(ForecastMethod):
     """Wrapper of statsmodels vector autoregression model.
     """
 
@@ -27,7 +27,7 @@ class VAR(BaseInferenceMethod):
         self.method_params.pop("self")
 
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
@@ -47,7 +47,7 @@ class VAR(BaseInferenceMethod):
         )
     
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def _predict(
         self,
         t: np.ndarray,
@@ -75,21 +75,21 @@ class VAR(BaseInferenceMethod):
         return np.vstack([prior_endog_states[-1, :], endog_pred])
     
 
-    @copy_doc(BaseInferenceMethod.get_window_size)
+    @copy_doc(ForecastMethod.get_window_size)
     def get_window_size(self):
         return max(2, self.method_params["maxlags"])
     
 
-    @copy_doc(BaseInferenceMethod.set_params)
+    @copy_doc(ForecastMethod.set_params)
     def set_params(self, **params):
         self.method_params = {**self.method_params, **params}
 
-    @copy_doc(BaseInferenceMethod.get_params)
+    @copy_doc(ForecastMethod.get_params)
     def get_params(self, deep: bool = True) -> Dict:
         return self.method_params
     
 
-    @copy_doc(BaseInferenceMethod.get_test_param_grid)
+    @copy_doc(ForecastMethod.get_test_param_grid)
     def get_test_param_grid() -> Dict[str, List[Any]]:
         return {
             "maxlags": [1, 2, 10],
@@ -97,7 +97,7 @@ class VAR(BaseInferenceMethod):
         }
     
 
-    @copy_doc(BaseInferenceMethod.get_test_params)
+    @copy_doc(ForecastMethod.get_test_params)
     def get_test_params() -> Dict[str, Any]:
         return {}
     

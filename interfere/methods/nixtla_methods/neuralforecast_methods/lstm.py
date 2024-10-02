@@ -6,7 +6,7 @@ from neuralforecast.losses.pytorch import MAE
 import neuralforecast.models
 import numpy as np
 
-from ...base import BaseInferenceMethod
+from ....base import ForecastMethod
 from ..nixtla_adapter import NixtlaAdapter, default_exog_names
 from ....utils import copy_doc
 
@@ -61,7 +61,7 @@ class LSTM(NixtlaAdapter):
 
         super().__init__(method_type, method_params, nixtla_forecaster_class)
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,

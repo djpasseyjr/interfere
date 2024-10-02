@@ -3,103 +3,10 @@ from typing_extensions import TypeAlias
 
 import numpy as np
 
-from .base import Intervention
+from .base import ExogIntervention
 
 ScalarFunction: TypeAlias = Callable[[float], float]
 
-
-class ExogIntervention(Intervention):
-    """A class describing an exogeneous intervention on a system.
-    
-    In an exogeneous intervention, some of the signals are treated as
-    though they were under exogenous control.
-
-    This class must contain the indexes of the signals that are being
-    controled exogenously and must also contain a mechanism for computing
-    the intervened signal from the non intervened signal. (i.e. replacing
-    values with the exogenous values.)
-    """
-    def __init__(self, intervened_idxs: List[int]):
-        self.intervened_idxs = intervened_idxs
-    
-    def split_exog(self, X: np.ndarray):
-        """Splits exogeneous columns from endogenous."""
-        exog_X = X[..., self.intervened_idxs]
-        endo_X = np.delete(X, self.intervened_idxs, axis=-1)
-        return endo_X, exog_X
-    
-
-    def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
-        """Recombines endogenous and endogenous signals.
-        
-        Args:
-            endo_X (ndarray): A 2D array of endogenous signals with shape 
-                (m, n_endo). Rows are observations and columns are variables.
-            exog_X (ndarray): A 2D array of exogenous signals with shape 
-                (m, n_exog). Rows are observations and columns are variables.
-        """
-        m_endo, n_endo = endo_X.shape
-        m_exog, n_exog = exog_X.shape
-
-        if m_exog != m_endo:
-            raise ValueError(
-                "Endogenous and exogenous arrays must have the same number of "
-                f"rows. \nNum endog rows = {m_endo} Num exog rows = {m_endo}"
-            )
-        
-        if n_exog != len(self.intervened_idxs):
-            raise ValueError(
-                "Wrong number of exogenous signals passed to intervention. "
-                f"Expected {len(self.intervened_idxs)} received {m_exog}.")
-        
-        n = n_endo + n_exog
-        X = np.zeros((m_endo, n))
-        X[:, self.intervened_idxs] = exog_X
-        endo_idxs = [i for i in range(n) if i not in self.intervened_idxs]
-        X[:, endo_idxs] = endo_X
-        return X
-    
-
-    def eval_at_times(self, t: np.ndarray):
-        """Produces exogeneous signals only at the time values in t.
-
-        Args:
-            t (np.ndarray): A 1D array of time points
-
-        Returns:
-            exog_X_do (np.ndarray): An (m, ) or (m, p) array where `m = len(t)` 
-                and `p = len(self.intervened_idx)`. Contains the values of the
-                exogenous signal at the time points in `t`. The order of the
-                columns corresponds to the order of indexes in 
-                `self.intervened_idx`.
-        """
-        # Exogeneous interventions do not depend on x so we can use a dummy var.
-        dummy_x = np.zeros(np.max(self.intervened_idxs) + 1)
-        # The size of the dummy variable only needs to be as big as the max
-        # intervened index and self.split_exog will still work.
-        # This is done to avoid the need for an additional argument containing
-        # the dimension of the system.
-
-        X_do = np.vstack([
-            self.__call__(dummy_x, ti) for ti in t
-        ])
-        _, exog_X_do = self.split_exog(X_do)
-        return exog_X_do
-
-    def __call__(self, x: np.ndarray, t: float):
-        """A perfect intervention on multiple variables.
-
-        Args:
-            x (ndarray): In the context of this package, x represents
-                the current state of a dynamic model.
-            t: (ndarray): In the context of this package, t represents
-                the current time in a dynamic model.
-        
-        Returns:
-            x_do (ndarray): In the context of this package, x_do represents
-                the state of the dynamic model after the intervention is applied.
-        """
-        raise NotImplementedError()
 
 
 class IdentityIntervention(ExogIntervention):

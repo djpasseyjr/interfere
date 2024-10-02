@@ -1,7 +1,7 @@
 from .base import (
-    DynamicModel
+    DynamicModel,
+    ForecastMethod
 )
-from . import metrics
 from . import benchmarking
 from . import dynamics
 from .interventions import (
@@ -10,5 +10,8 @@ from .interventions import (
     PerfectIntervention,
     SignalIntervention
 )
-from . import methods
+from . import metrics
+from .methods.sindy import SINDY
+from .methods.vector_autoregression import VAR
+from .methods.reservoir_computer import ResComp
 from . import utils

@@ -6,10 +6,9 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from .base import DynamicModel, DEFAULT_RANGE
+from .base import DynamicModel, ForecastMethod, DEFAULT_RANGE
 from .interventions import ExogIntervention
 from .utils import copy_doc
-from .methods import BaseInferenceMethod
 
 
 def generate_counterfactual_forecasts(
@@ -114,7 +113,7 @@ def forecast_intervention(
             the desired prediction times.
         intervention (interfere.Intervention): The type of the intervention to
             apply.
-        method_type (Type[BaseInferenceMethod]): The method to be
+        method_type (Type[ForecastMethod]): The method to be
             used for prediction.
         method_params (dict): A dictionary of default parameters for the method.
         method_param_grid (dict): The parameter grid for a sklearn grid search.

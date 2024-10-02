@@ -5,7 +5,7 @@ from warnings import warn
 import numpy as np
 import pysindy as ps
 
-from .base import BaseInferenceMethod
+from ..base import ForecastMethod
 from ..base import DEFAULT_RANGE
 from ..utils import copy_doc
 from ..interventions import ExogIntervention
@@ -28,7 +28,7 @@ SINDY_DIFF_LIST = [
 ]
 
 
-class SINDY(BaseInferenceMethod):
+class SINDY(ForecastMethod):
 
     @copy_doc(ps.SINDy.__init__)
     def __init__(self, 
@@ -56,7 +56,7 @@ class SINDY(BaseInferenceMethod):
         self.max_sim_value = max_sim_value
 
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
@@ -74,7 +74,7 @@ class SINDY(BaseInferenceMethod):
         self.sindy.fit(endog_states, t, u=exog_states)
 
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def _predict(
         self,
         t: np.ndarray,

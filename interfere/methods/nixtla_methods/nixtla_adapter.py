@@ -11,12 +11,12 @@ import pandas as pd
 import statsforecast
 from statsforecast.models import _TS as StatsForecastBaseModel
 
-from ..base import BaseInferenceMethod
+from ...base import ForecastMethod
 from ...base import DEFAULT_RANGE
 from ...utils import copy_doc
 
 
-class NixtlaAdapter(BaseInferenceMethod):
+class NixtlaAdapter(ForecastMethod):
     """Adapter that bridges nixtla and interfere predictive methods.
 
     Notes: Inheriting classes must define an __init__ function that passes these
@@ -106,7 +106,7 @@ class NixtlaAdapter(BaseInferenceMethod):
             "pytorch_lightning.callbacks.model_summary").setLevel(
                 logging.WARNING)
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
@@ -148,7 +148,7 @@ class NixtlaAdapter(BaseInferenceMethod):
         self.nixtla_forecaster.fit(df=train_df)
 
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def _predict(
         self,
         t: np.ndarray,
@@ -193,7 +193,7 @@ class NixtlaAdapter(BaseInferenceMethod):
             )
 
         
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def neuralforecast_predict(
         self,
         t: np.ndarray,
@@ -292,7 +292,7 @@ class NixtlaAdapter(BaseInferenceMethod):
         return endog_pred
 
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def statsforecast_predict(
         self,
         t: np.ndarray,

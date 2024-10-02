@@ -2,12 +2,11 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from ..base import DEFAULT_RANGE
-from .base import BaseInferenceMethod
+from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc
 
 
-class AverageMethod(BaseInferenceMethod):
+class AverageMethod(ForecastMethod):
     """The average method--predicts average of historic data."""
 
     def __init__(self):

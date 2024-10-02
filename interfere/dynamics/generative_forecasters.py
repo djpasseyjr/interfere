@@ -10,7 +10,7 @@ from .coupled_map_lattice import coupled_logistic_map
 from .quadratic_sdes import Lorenz
 from ..base import DynamicModel, DEFAULT_RANGE
 from ..methods import VAR, SINDY
-from ..methods.base import BaseInferenceMethod
+from ..base import ForecastMethod
 from ..utils import copy_doc
 
 
@@ -19,14 +19,14 @@ class GenerativeForecaster(DynamicModel):
 
     def __init__(
         self,
-        fitted_method: BaseInferenceMethod,
+        fitted_method: ForecastMethod,
         sigma: Union[float, np.ndarray] = None,
         measurement_noise_std: np.ndarray = None,
     ):
         """Initializes the GenerativeForecaster.
 
         Args:
-            fitted_method (BaseInferenceMethod): A predictive method which has
+            fitted_method (ForecastMethod): A predictive method which has
                 already been fitted to data.
             sigma (float or ndarray): The stochastic noise parameter. Can be a
                 float, a 1D matrix or a 2D matrix. Dimension must match

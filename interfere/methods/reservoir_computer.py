@@ -14,11 +14,11 @@ from scipy.interpolate import CubicSpline
 from scipy import integrate
 from scipy import optimize
 
-from .base import BaseInferenceMethod, DEFAULT_RANGE
+from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc
 
 
-class ResComp(BaseInferenceMethod):
+class ResComp(ForecastMethod):
     
     def __init__(
         self,
@@ -511,7 +511,7 @@ class ResComp(BaseInferenceMethod):
         return idxs
     
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
@@ -526,7 +526,7 @@ class ResComp(BaseInferenceMethod):
         self.train(t, endog_states, exog_states)
 
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def _predict(
         self,
         t: np.ndarray,

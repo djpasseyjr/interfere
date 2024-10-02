@@ -14,11 +14,11 @@ except ImportError as e:
         f"\n\nOriginating error text: {e}"   
 )
 
-from .base import BaseInferenceMethod, DEFAULT_RANGE
+from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc, to_sktime_time_series
 
 
-class LTSFLinearForecaster(BaseInferenceMethod):
+class LTSFLinearForecaster(ForecastMethod):
     """Uses a transformer for inference."""
 
 
@@ -88,7 +88,7 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         self.fh = [i for i in range(1, pred_len + 1)]
 
 
-    @copy_doc(BaseInferenceMethod._fit)
+    @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
@@ -111,7 +111,7 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         self.model.fit(y, X=X, fh=self.fh)
 
 
-    @copy_doc(BaseInferenceMethod._predict)
+    @copy_doc(ForecastMethod._predict)
     def _predict(
         self,
         t: np.ndarray,
@@ -153,23 +153,23 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         return pred_endo
 
 
-    @copy_doc(BaseInferenceMethod.get_window_size)
+    @copy_doc(ForecastMethod.get_window_size)
     def get_window_size(self):
         return max(2, self.method_params["seq_len"])
     
 
-    @copy_doc(BaseInferenceMethod.set_params)
+    @copy_doc(ForecastMethod.set_params)
     def set_params(self, **params):
         self.method_params = {**self.method_params, **params}
         self.model = sktime_LTSFLinearForecaster(**self.method_params)
 
 
-    @copy_doc(BaseInferenceMethod.get_params)
+    @copy_doc(ForecastMethod.get_params)
     def get_params(self, deep: bool = True) -> Dict:
         return self.method_params
     
 
-    @copy_doc(BaseInferenceMethod.get_test_params)
+    @copy_doc(ForecastMethod.get_test_params)
     def get_test_params() -> Dict[str, Any]:
         return {
             'seq_len': 2,
@@ -182,7 +182,7 @@ class LTSFLinearForecaster(BaseInferenceMethod):
         }
     
 
-    @copy_doc(BaseInferenceMethod.get_test_param_grid)
+    @copy_doc(ForecastMethod.get_test_param_grid)
     def get_test_param_grid():
         return {
             "seq_len": [2, 5],
