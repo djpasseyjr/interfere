@@ -2,7 +2,7 @@ import re
 from typing import Type
 
 import interfere
-from interfere.methods.base import BaseInferenceMethod
+from interfere.base import ForecastMethod
 
 import numpy as np
 import pytest
@@ -176,11 +176,11 @@ DYNAMICS = [
 class TestFitPredict:
 
 
-    def test_fit(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_fit(self, method_type: Type[ForecastMethod], dynamics):
         """Tests fit() method without exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -210,11 +210,11 @@ class TestFitPredict:
         
 
 
-    def test_fit_exog(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_fit_exog(self, method_type: Type[ForecastMethod], dynamics):
         """Tests fit() method with exogenous data.
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -244,11 +244,11 @@ class TestFitPredict:
         assert method.is_fit
 
 
-    def test_simulate(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_simulate(self, method_type: Type[ForecastMethod], dynamics):
         """Tests the simulate() method with exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -289,11 +289,11 @@ class TestFitPredict:
         assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
 
 
-    def test_simulate_ident(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_simulate_ident(self, method_type: Type[ForecastMethod], dynamics):
         """Tests the simulate() method with exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -335,11 +335,11 @@ class TestFitPredict:
         assert X_do_pred.shape == (PRED_LEN, X_do.shape[1])
             
 
-    def test_simulate_exog(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_simulate_exog(self, method_type: Type[ForecastMethod], dynamics):
         """Tests the simulate() method with exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -388,11 +388,11 @@ class TestFitPredict:
         )
 
 
-    def test_predict(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_predict(self, method_type: Type[ForecastMethod], dynamics):
         """Tests the predict() method without exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -429,11 +429,11 @@ class TestFitPredict:
 
 
 
-    def test_predict_exog(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_predict_exog(self, method_type: Type[ForecastMethod], dynamics):
         """Tests the predict() method with exogenous data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -472,11 +472,11 @@ class TestFitPredict:
 
 
     def test_predict_clip(
-            self, method_type: Type[BaseInferenceMethod], dynamics):
+            self, method_type: Type[ForecastMethod], dynamics):
         """Tests that the predict method clips predictions when they get big.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -517,12 +517,12 @@ class TestFitPredict:
         assert np.all(endo_pred <= prediction_max)
 
 
-    def test_predict_arbitrary_initial(self, method_type: Type[BaseInferenceMethod], dynamics):
+    def test_predict_arbitrary_initial(self, method_type: Type[ForecastMethod], dynamics):
         """Tests that predict works for arbitrary initial conditions instead of
         just from the fitted data.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
             dynamics: A tuple containing
                 prior_endog_states: An array of historic endogenous states.
@@ -581,11 +581,11 @@ class TestFitPredict:
 class TestPredictErrors:
 
 
-    def test_monotoic_err(self, method_type: Type[BaseInferenceMethod]):
+    def test_monotoic_err(self, method_type: Type[ForecastMethod]):
         """Tests predict() raises an error for non-monotonic time points.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -609,11 +609,11 @@ class TestPredictErrors:
             method.predict(np.random.rand(10), prior_endog_states)
 
 
-    def test_infer_prior_t_warn(self, method_type: Type[BaseInferenceMethod]):
+    def test_infer_prior_t_warn(self, method_type: Type[ForecastMethod]):
         """Test that predict() warns about inferring prior_t.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -636,11 +636,11 @@ class TestPredictErrors:
             method.predict(t, prior_endog_states[-1,:], prior_t=t[0:1])
 
 
-    def test_equally_spaced_warn(self, method_type: Type[BaseInferenceMethod]):
+    def test_equally_spaced_warn(self, method_type: Type[ForecastMethod]):
         """Test that predict requires equally spaced t to infer prior_t.
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -666,12 +666,12 @@ class TestPredictErrors:
                 t, [t[-1] + np.pi]]), prior_endog_states[-1,:], prior_t=None)
 
 
-    def test_last_prior_t_equals_first_t(self, method_type: Type[BaseInferenceMethod]):
+    def test_last_prior_t_equals_first_t(self, method_type: Type[ForecastMethod]):
         """Test that predict requires last entry of prior_t to equal first entry
         of t.  
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -697,12 +697,12 @@ class TestPredictErrors:
             method.predict(t, prior_endog_states[-1,:], prior_t=bad_prior_t)    
     
 
-    def test_prior_t_match_prior_endog(self, method_type: Type[BaseInferenceMethod]):
+    def test_prior_t_match_prior_endog(self, method_type: Type[ForecastMethod]):
         """Test that predict requires the same number of entries in prior_t and
         prior_endog_states.  
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -744,12 +744,12 @@ class TestPredictErrors:
             method.predict(t, prior_endog_states, prior_t=bad_prior_t)
 
 
-    def test_window_size_warn(self, method_type: Type[BaseInferenceMethod]):
+    def test_window_size_warn(self, method_type: Type[ForecastMethod]):
         """Test that predict raises warning when not enough historic data is
         passed.
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -794,12 +794,12 @@ class TestPredictErrors:
             )
 
 
-    def test_window_size_warn_exog(self, method_type: Type[BaseInferenceMethod]):
+    def test_window_size_warn_exog(self, method_type: Type[ForecastMethod]):
         """Test that predict raises warning when not enough historic data is
         passed.
 
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -843,11 +843,11 @@ class TestPredictErrors:
             )
 
 
-    def test_prior_t_infer_warning(self, method_type: Type[BaseInferenceMethod]):
+    def test_prior_t_infer_warning(self, method_type: Type[ForecastMethod]):
         """Tests that a warning appears when inferring prior_t
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -882,11 +882,11 @@ class TestPredictErrors:
             method.predict(t, X[-w_old:], prior_t=true_prior_t[-w_old:])
 
 
-    def test_prior_t_infer_error(self, method_type: Type[BaseInferenceMethod]):
+    def test_prior_t_infer_error(self, method_type: Type[ForecastMethod]):
         """Tests that an error is thrown when prior_t is not equally spaced.
         
         Args:
-            method_type: An interfere.methods.BaseInferenceMethod
+            method_type: An interfere.methods.ForecastMethod
                 method type.
         
         Note:
@@ -939,7 +939,7 @@ class TestOptuna:
     def objective(
         self,
         trial,
-        method_type: Type[BaseInferenceMethod],
+        method_type: Type[ForecastMethod],
         train_t: np.ndarray,
         train_states: np.ndarray,
         forecast_t: np.ndarray,
@@ -950,8 +950,8 @@ class TestOptuna:
 
         Args:
             trial: An optuna trial.
-            method_type (Type[BaseInferenceMethod]): A subtype of  
-                BaseInferenceMethod.
+            method_type (Type[ForecastMethod]): A subtype of  
+                ForecastMethod.
             train_t (ndarray): The training data time points.
             train_states (ndarray): The training data.
             forecast_t (ndarray): The forecast data time points.
@@ -995,11 +995,11 @@ class TestOptuna:
         return score
 
 
-    def test_optimize_method(self, method_type: Type[BaseInferenceMethod]):
+    def test_optimize_method(self, method_type: Type[ForecastMethod]):
         """Test that optimizer works for endog data only.
         
         Args:
-            method_type: The type of the BaseInferenceMethod.
+            method_type: The type of the ForecastMethod.
 
         Note:
             Args are provided via parametrize decorator.
@@ -1042,11 +1042,11 @@ class TestOptuna:
         )
         
 
-    def test_optimize_method_exog(self, method_type: Type[BaseInferenceMethod]):
+    def test_optimize_method_exog(self, method_type: Type[ForecastMethod]):
         """Test that optimizer works for endog and exog data.
         
         Args:
-            method_type: The type of the BaseInferenceMethod.
+            method_type: The type of the ForecastMethod.
 
         Note:
             Args are provided via parametrize decorator.
@@ -1091,11 +1091,11 @@ class TestOptuna:
 
 @pytest.mark.parametrize("method_type", METHODS)
 def test_continuous_predict_arbitrary_initial(
-    method_type: Type[BaseInferenceMethod]):
+    method_type: Type[ForecastMethod]):
     """Test that the method can predict continuous time series data.
         
         Args:
-            method_type: The type of the BaseInferenceMethod.
+            method_type: The type of the ForecastMethod.
     """
     dt = 1/100
     method = method_type(**method_type.get_test_params())
@@ -1132,12 +1132,12 @@ def test_continuous_predict_arbitrary_initial(
 
 @pytest.mark.parametrize("method_type", EXOG_RESP_METHODS)
 def test_optimize_method_exog_response(
-    method_type: Type[BaseInferenceMethod]):
+    method_type: Type[ForecastMethod]):
     """Test that optimizer can get the method to correctly anticipate the
     intervention response.
     
     Args:
-        method_type: A subtype of the BaseInferenceMethod.
+        method_type: A subtype of the ForecastMethod.
 
     Note:
         Args are provided via parametrize decorator.
