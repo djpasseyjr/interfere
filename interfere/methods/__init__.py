@@ -1,8 +1,20 @@
-from .average_method import AverageMethod
-from .deep_learning import LTSFLinearForecaster
-from .nixtla_methods.neuralforecast_methods import LSTM, NHITS
-from .nixtla_methods.statsforecast_methods import AutoARIMA
-from .reservoir_computer import ResComp
-from .sindy import SINDY
-from .vector_autoregression import VAR
+"""This submodule exists to speed up import time for the interfere package.
+
+All actual methods are housed in _methods which imports nothing by default. 
+This allows other submodules to access specific methods in _methods without, for example, having to import all of pytorch and the nvidia gpu packages. 
+
+If a user wants to import all methods, they simply run 
+
+`import interfere.methods` 
+
+which takes 15-30 seconds as it needs to build the nvidia drivers and run all the pytorch installation scripts.
+"""
+
+from .._methods.average_method import AverageMethod
+from .._methods.deep_learning import LTSFLinearForecaster
+from .._methods.nixtla_methods.neuralforecast_methods import LSTM, NHITS
+from .._methods.nixtla_methods.statsforecast_methods import AutoARIMA
+from .._methods.reservoir_computer import ResComp
+from .._methods.sindy import SINDY
+from .._methods.vector_autoregression import VAR
 

@@ -9,7 +9,8 @@ import pysindy as ps
 from .coupled_map_lattice import coupled_logistic_map
 from .quadratic_sdes import Lorenz
 from ..base import DynamicModel, DEFAULT_RANGE
-from ..methods import VAR, SINDY
+from .._methods.vector_autoregression import VAR
+from .._methods.sindy import SINDY
 from ..base import ForecastMethod
 from ..utils import copy_doc
 

@@ -11,7 +11,7 @@ from .interventions import (
     SignalIntervention
 )
 from . import metrics
-from .methods.sindy import SINDY
-from .methods.vector_autoregression import VAR
-from .methods.reservoir_computer import ResComp
+from ._methods.sindy import SINDY
+from ._methods.vector_autoregression import VAR
+from ._methods.reservoir_computer import ResComp
 from . import utils
