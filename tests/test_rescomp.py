@@ -1,4 +1,4 @@
-from interfere.methods import ResComp
+from interfere._methods.reservoir_computer import ResComp
 import numpy as np
 import itertools
 import scipy as sp
