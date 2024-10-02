@@ -9,7 +9,7 @@ Classes:
         classes should implement a __call__() method. See interfere.
         interventions for examples. 
     ForecastMethod: Implements the base class for the forecasting method. 
-        Subclasses must implement _fit(), _predict(), _get_test_params(), _get_optuna_params(). See interfere.methods for examples. 
+        Subclasses must implement _fit(), _predict(), _get_test_params(), _get_optuna_params(). See interfere._methods for examples. 
 
 Notes:
     Arg Handling: Most of the error handling is done in the base classes in 
