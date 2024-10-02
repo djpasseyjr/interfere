@@ -22,7 +22,7 @@ REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 METHODS = [
     interfere.methods.ResComp,
     interfere.methods.SINDY, 
-    interfere.methods.LTSFLinearForecaster,
+    interfere.methods.LTSF,
     interfere.methods.VAR,
     interfere.methods.LSTM,
     interfere.methods.NHITS,

@@ -11,7 +11,7 @@ which takes 15-30 seconds as it needs to build the nvidia drivers and run all th
 """
 
 from .._methods.average_method import AverageMethod
-from .._methods.deep_learning import LTSFLinearForecaster
+from .._methods.deep_learning import LTSF
 from .._methods.nixtla_methods.neuralforecast_methods import LSTM, NHITS
 from .._methods.nixtla_methods.statsforecast_methods import AutoARIMA
 from .._methods.reservoir_computer import ResComp

@@ -9,7 +9,7 @@ except ImportError as e:
     raise ImportError(
         "ImportError occured in sktime import."
         "\n\n This likely occurred because `interfere` does not list `sktime` as a direct dependency. To use the "
-        "LTSFLinearForecaster, try first install `sktime` via pip "
+        "LTSF, try first install `sktime` via pip "
         "install sktime."
         f"\n\nOriginating error text: {e}"   
 )
@@ -18,7 +18,7 @@ from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc, to_sktime_time_series
 
 
-class LTSFLinearForecaster(ForecastMethod):
+class LTSF(ForecastMethod):
     """Uses a transformer for inference."""
 
 
