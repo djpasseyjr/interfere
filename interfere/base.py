@@ -1,4 +1,35 @@
-"""
+"""This file is home to all abstract base classes in the interfere package. Most functionality in interfere is designed around interactions between these three objects.
+
+Classes:
+    DynamicModel: This is the base class for all models in the interfere.
+        dynamics submodule. Inheriting classes must implement a _simulate() 
+        method and an __init__() method. See interfere.dynamics.base for 
+        several examples.
+    ExogIntervention: The base class for exogenous interventions. Inheriting 
+        classes should implement a __call__() method. See interfere.
+        interventions for examples. 
+    ForecastMethod: Implements the base class for the forecasting method. 
+        Subclasses must implement _fit(), _predict(), _get_test_params(), _get_optuna_params(). See interfere.methods for examples. 
+
+Notes:
+    Arg Handling: Most of the error handling is done in the base classes in 
+        order to avoid doing heavy error handling in every custom subclass.
+        Additionally, the interfer package is structured to do optional argument
+        handling in the base classes to guarantee that a minimum of the 
+        variables passed to abstract methods are empty. This is done so that 
+        inhereted subclasses can assume that most of the arguments to _simulate 
+        or _predict() etc. are non null. This is not always possible (i.e. for 
+        exog time series) but an effort was made to comply with this heuristic.
+    Non-Exogenous Interventions: Interventions that interact with the 
+        endogenous state of the dynamic system are possible, and relevant. (As 
+        an example consider an intervention that acts differently depending on 
+        the state of the system.) This kind of intervention is compatible with 
+        parts of the interfere API, but challenging to integrate with most 
+        forecasting methods because they are built around the idea of exogenous 
+        input. The interfere.dynamics.generative_forecasters module is an 
+        interesting look at a possible way to wrap forecasters in a recursive 
+        prediction structure that would enable non-exogenous interventions. 
+        Something to think about for a future date.
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Callable, List, Optional, Union
