@@ -20,6 +20,7 @@ MAX_SECS_PRE_OPTUNA_TRIAL = 180
 REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 
 METHODS = [
+    interfere.methods.AverageMethod,
     interfere.methods.ResComp,
     interfere.methods.SINDY, 
     interfere.methods.LTSF,
@@ -516,7 +517,8 @@ class TestFitPredict:
         assert np.all(endo_pred <= prediction_max)
 
 
-    def test_predict_arbitrary_initial(self, method_type: Type[interfere.ForecastMethod], dynamics):
+    def test_predict_arbitrary_initial(
+            self, method_type: Type[interfere.ForecastMethod], dynamics):
         """Tests that predict works for arbitrary initial conditions instead of
         just from the fitted data.
         
@@ -538,6 +540,9 @@ class TestFitPredict:
         Note:
             Args are passed via decorators for the test class.
         """
+        if method_type is interfere.methods.AverageMethod:
+            pytest.skip()
+
         (prior_endog_states, prior_exog_states, prior_t, endo_true, 
          exog, forecast_times, intervention) = dynamics
         
@@ -1003,6 +1008,9 @@ class TestOptuna:
         Note:
             Args are provided via parametrize decorator.
         """
+        if method_type is interfere.methods.AverageMethod:
+            pytest.skip()
+            
         (
             train_t, train_states, forecast_t, 
             forecast_states, interv_states, intervention
@@ -1050,6 +1058,9 @@ class TestOptuna:
         Note:
             Args are provided via parametrize decorator.
         """
+        if method_type is interfere.methods.AverageMethod:
+            pytest.skip()
+
         (
             train_t, train_states, forecast_t, 
             forecast_states, interv_states, intervention
@@ -1096,6 +1107,9 @@ def test_continuous_predict_arbitrary_initial(
         Args:
             method_type: The type of the ForecastMethod.
     """
+    if method_type is interfere.methods.AverageMethod:
+        pytest.skip()
+
     dt = 1/100
     method = method_type(**method_type.get_test_params())
 

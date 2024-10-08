@@ -40,4 +40,7 @@ class AverageMethod(ForecastMethod):
     
     def get_test_params() -> Dict[str, Any]:
         return {}
+    
+    def _get_optuna_params(trial) -> Dict[str, Any]:
+        return {}
         
