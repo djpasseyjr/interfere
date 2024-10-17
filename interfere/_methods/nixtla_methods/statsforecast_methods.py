@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict, Optional, Tuple
 
 import statsforecast.models
 
@@ -6,83 +6,59 @@ from .nixtla_adapter import NixtlaAdapter
 from ...utils import copy_doc
 
 
-class AutoARIMA(NixtlaAdapter): 
+class ARIMA(NixtlaAdapter): 
 
-    @copy_doc(statsforecast.models.AutoARIMA)
+    @copy_doc(statsforecast.models.ARIMA)
     def __init__(
         self,
-        d: Optional[int] = None,
-        D: Optional[int] = None,
-        max_p: int = 5,
-        max_q: int = 5,
-        max_P: int = 2,
-        max_Q: int = 2,
-        max_order: int = 5,
-        max_d: int = 2,
-        max_D: int = 1,
-        start_p: int = 2,
-        start_q: int = 2,
-        start_P: int = 1,
-        start_Q: int = 1,
-        stationary: bool = False,
-        seasonal: bool = True,
-        ic: str = "aicc",
-        stepwise: bool = True,
-        nmodels: int = 94,
-        trace: bool = False,
-        approximation: Optional[bool] = False,
-        method: Optional[str] = None,
-        truncate: Optional[bool] = None,
-        test: str = "kpss",
-        test_kwargs: Optional[str] = None,
-        seasonal_test: str = "seas",
-        seasonal_test_kwargs: Optional[Dict] = None,
-        allowdrift: bool = False,
-        allowmean: bool = False,
+        order: Tuple[int, int, int] = (0, 0, 0),
+        season_length: int = 1,
+        seasonal_order: Tuple[int, int, int] = (0, 0, 0),
+        include_mean: bool = True,
+        include_drift: bool = False,
+        include_constant: Optional[bool] = None,
         blambda: Optional[float] = None,
         biasadj: bool = False,
-        season_length: int = 1,
-        alias: str = "AutoARIMA",
+        method: str = "CSS-ML",
+        fixed: Optional[dict] = None,
+        alias: str = "ARIMA",
         prediction_intervals: Optional[statsforecast.utils.ConformalIntervals] = None,
     ):
         self.method_params = locals()
         self.method_params.pop("self")
-        self.method_type = statsforecast.models.AutoARIMA
+        self.method_type = statsforecast.models.ARIMA
         self.nixtla_forecaster_class = statsforecast.StatsForecast
 
     def get_window_size(self):
         """Returns how many historic time steps are needed to make a
         prediction."""
 
-        # if hasattr(self, "nixtla_forecaster"):
-
-        #     max_lag = max([
-        #         x 
-        #         for arma in self.nixtla_forecaster.fitted_[:, 0] 
-        #         for x in arma.model_["arma"]
-        #     ])
-        #     return max_lag
-
-        # else:
-        return max(self.method_params["max_p"], self.method_params["max_P"], 2)
+        return max(self.method_params["order"][0], 2)
         
 
     def get_horizon(self):
         """Returns the minimum timesteps the method will predict."""
         # Model predicts minimum of one timestep.
         return 1
-
+    
 
     def get_test_params() -> Dict[str, Any]:
         """Returns default parameters conducive to fast test cases"""
-        return dict(
-            nmodels = 10,
-        )
+        return {}
     
 
-    def get_test_param_grid() -> Dict[str, List[Any]]:
+    def _get_optuna_params(trial) -> Dict[str, List[Any]]:
         """Returns a parameter grid for testing grid search"""
         return {
-            "max_p": [6, 2, 1],
-            "max_q": [3, 1]
+            "order": (
+                trial.suggest_int("p",1, 15),
+                1, # Seasonal differencing.
+                trial.suggest_int("q",1, 15)
+            ),
+            "include_mean": trial.suggest_categorical(
+                "include_mean", [True, False]),
+            "include_drift": trial.suggest_categorical(
+                "include_drift", [True, False]),
+            "include_constant": trial.suggest_categorical(
+                "include_constant", [True, False]),
         }

@@ -302,6 +302,99 @@ class NixtlaAdapter(ForecastMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
+        # Set environment variable to adopt future behavior where predict
+        # returns ID as a column. It will be safe to remove this after Nixtla
+        # updates neuralforecast and adopts this behavior as the default.
+        os.environ['NIXTLA_ID_AS_COL'] = "1"
+        
+        # Convert to discrete time.
+        discrete_t = self.to_discrete(t)
+
+        # Total number of predictions times. First time corresponds to current
+        # state. 
+        m_pred = len(discrete_t) - 1
+
+        # Internal forecasting method's prediction horizon.
+        h = self.get_horizon()
+
+        # How many recursive predictions the model will need to do.
+        n_steps = ceil(m_pred / h)
+
+        # Number of additional exog datapoints needed to fill the
+        # prediction horizon for the last prediction chunk.
+        # Add one because no prediction is needed for the first timestep.
+        n_extra_preds = n_steps * h - m_pred + 1
+
+        # Names of exogeneous variables.
+        exog_state_ids = self.exog_state_ids
+
+        # Initial historical context DataFrame.
+        df = to_nixtla_df(
+            self.to_discrete(prior_t),
+            prior_endog_states,
+            prior_exog_states,
+            exog_state_ids=exog_state_ids
+        )
+        
+        # Build times and signals for the exogeneous input data frame.
+        futr_times = np.hstack([
+            discrete_t,
+            np.arange(1, n_extra_preds + 1) + discrete_t[-1]
+        ])
+
+        if prediction_exog is None:
+            prediction_exog = np.full(
+                (len(discrete_t), len(exog_state_ids)),
+                np.inf
+            )
+        
+        # Repeat last row of exogeneous for any extra predictions required
+        # due to forcast horizon window size.
+        futr_exog = np.vstack([prediction_exog] + [
+            prediction_exog[-1] for _ in range(n_extra_preds)
+        ])  
+
+        X_df = to_nixtla_df(
+            futr_times,
+            exog_states=futr_exog,
+            unique_ids=[id for id in df.unique_id.unique()],
+            exog_state_ids=exog_state_ids
+        )
+
+        # Run recursive predictions.
+        for i in range(1, n_steps + 1):
+
+            X_df = to_nixtla_df(
+            futr_times[i],
+            exog_states=futr_exog[i:i+1, :],
+            unique_ids=[id for id in df.unique_id.unique()],
+            exog_state_ids=exog_state_ids
+        )
+            # Make prediction.
+            pred_df = self.nixtla_forecaster.forecast(h=1, df=df, X_df=X_df)
+            
+            # Reformat prediction.
+            pred_df = pred_df.rename(columns={str(self.model): "y"})
+            # Add in exogeneous states
+            merged_df = pd.merge(
+                pred_df, 
+                X_df[["ds"] + exog_state_ids].drop_duplicates(), 
+                on="ds"
+            )
+            # Append to historical context.
+            df = pd.concat([df, merged_df])
+
+        # Convert to endogenous array.
+        _, endog_pred, _ = to_interfere_arrays(
+            df,
+            unique_ids=[id for id in df.unique_id.unique()]
+        )
+
+        # Remove historic observations
+        endog_pred = endog_pred[(len(prior_t) - 1):, :]
+        # Remove extra predictions.
+        endog_pred = endog_pred[:(m_pred + 1), :]
+        return endog_pred
         
         h = len(t) - 1
         lag = self.get_window_size()
@@ -349,6 +442,7 @@ class NixtlaAdapter(ForecastMethod):
         endog_pred = np.vstack([prior_endog_states[-1, :], endog_pred])
 
         return endog_pred
+    
     
     def to_discrete(self, t: np.ndarray):
         """Converts an evenly spaced time array to discrete time."""
