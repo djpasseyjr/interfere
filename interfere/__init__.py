@@ -8,7 +8,9 @@ from .interventions import (
     perfect_intervention,
     signal_intervention,
     PerfectIntervention,
-    SignalIntervention
+    SignalIntervention,
+    ExogIntervention,
+    IdentityIntervention,
 )
 from . import metrics
 from ._methods.sindy import SINDY
