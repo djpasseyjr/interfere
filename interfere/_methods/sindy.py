@@ -46,6 +46,9 @@ class SINDY(ForecastMethod):
         # their internal state doesn't carry over across different fits.
         if differentiation_method is not None:
             differentiation_method = copy(differentiation_method)
+            differentiation_method = differentiation_method.__init__(
+                **differentiation_method.get_params()
+            )
 
         if feature_library is not None:
             feature_library = copy(feature_library)

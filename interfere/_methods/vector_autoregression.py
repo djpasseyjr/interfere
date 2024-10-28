@@ -34,13 +34,21 @@ class VAR(ForecastMethod):
         endog_states: np.ndarray,
         exog_states: Optional[np.ndarray] = None,
     ):
-        self.results = smVAR(
+        self.var = smVAR(
             endog=endog_states,
             exog=exog_states,
             freq=self.method_params["freq"],
             missing=self.method_params["missing"]
-        ).fit(
-            maxlags=self.method_params["maxlags"],
+        )
+
+        # Make sure that the model doesn't try to estimate too many lags.
+        trend = self.method_params["trend"]
+        ntrend = len(trend) if trend.startswith("c") else 0
+        max_estimable_lags = (self.var.n_totobs - self.var.neqs - ntrend) // (1 + self.var.neqs)
+        maxlags = min(self.method_params["maxlags"], max_estimable_lags)
+        
+        self.results = self.var.fit(
+            maxlags=maxlags,
             method=self.method_params["method"],
             ic=self.method_params["ic"],
             trend=self.method_params["trend"]
@@ -67,11 +75,18 @@ class VAR(ForecastMethod):
         lags = self.results.k_ar
         y = prior_endog_states[-lags:, :]
 
-        endog_pred = self.results.forecast(
-            y=y,
-            steps=steps,
-            exog_future=exog_future
-        )
+        # When VAR determines that the best fit is a constant, predict constant # because there is a bug in the statsmodels forecaster.
+        if lags == 0:
+            consts = self.results.params[0]
+            endog_pred = np.vstack([consts for _ in range(steps)])
+
+        else:
+            endog_pred = self.results.forecast(
+                y=y,
+                steps=steps,
+                exog_future=exog_future
+            )
+
         return np.vstack([prior_endog_states[-1, :], endog_pred])
     
 
@@ -105,7 +120,7 @@ class VAR(ForecastMethod):
     def _get_optuna_params(trial):
         return {
             "ic": trial.suggest_categorical("ic", ["aic", "fpe"]),
-            "maxlags": trial.suggest_int("maxlags", 1, 5),
+            "maxlags": trial.suggest_int("maxlags", 5, 20),
             "trend" : trial.suggest_categorical(
                 "trend", ["c", "ct", "ctt", "n"]),
         }

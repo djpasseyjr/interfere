@@ -2,6 +2,8 @@ import re
 from typing import Type
 
 import interfere
+import interfere._methods
+import interfere._methods.sindy
 import interfere.methods
 import numpy as np
 import pytest
@@ -1205,3 +1207,46 @@ def test_optimize_method_exog_response(
         "\n\nInterv. response vs. predicted interv. response RMSSE: "
         f"{interv_error}"
     )
+
+
+def test_sindy_refit():
+    """Tests that sindy libraries and differentiation don't carry over state."""
+    for diff in interfere._methods.sindy.SINDY_DIFF_LIST:
+        for lib in interfere._methods.sindy.SINDY_LIB_LIST:
+            method = interfere.methods.SINDY(
+                feature_library=lib, differentiation_method=diff)
+            n_obs = 10
+            t = np.arange(n_obs)
+            # Three endog, no exog.
+            X = np.random.rand(n_obs, 3)
+            method.fit(t, X)
+            pred = method.predict(
+                np.arange(t[-1], t[-1] + 5),
+                X,
+                prior_t = t
+            )
+            assert pred.shape == (5, 3)
+            
+
+            # Two endog, two exog.
+            X = np.random.rand(n_obs, 2)
+            X_ex = np.random.rand(n_obs, 2)
+            method.fit(t, X)
+            pred_ex = np.random.rand(5, 2)
+            pred = method.predict(
+                np.arange(t[-1], t[-1] + 5),
+                X,
+                prior_t = t,
+                prediction_exog=pred_ex,
+            )
+            assert pred.shape == (5, 2)
+
+            # One endog, no exog.
+            X = np.random.rand(n_obs, 1)
+            method.fit(t, X)
+            pred = method.predict(
+                np.arange(t[-1], t[-1] + 5),
+                X,
+                prior_t = t
+            )
+            assert pred.shape == (5, 1)
