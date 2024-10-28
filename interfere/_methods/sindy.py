@@ -180,10 +180,10 @@ class SINDY(ForecastMethod):
             'discrete_time': trial.suggest_categorical(
                 'discrete_time', [True, False]),
 
-            'feature_library': SINDY_LIB_LIST[
-                trial.suggest_categorical('feature_library', [0, 1])],
+            'feature_library':
+                trial.suggest_categorical('feature_library', SINDY_LIB_LIST),
 
-            'differentiation_method': SINDY_DIFF_LIST[
+            'differentiation_method':
                 trial.suggest_categorical(
-                    "differentiation_method", list(range(9)))]
+                    "differentiation_method", SINDY_DIFF_LIST)
         }
