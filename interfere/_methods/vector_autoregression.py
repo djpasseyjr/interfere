@@ -46,6 +46,14 @@ class VAR(ForecastMethod):
         ntrend = len(trend) if trend.startswith("c") else 0
         max_estimable_lags = (self.var.n_totobs - self.var.neqs - ntrend) // (1 + self.var.neqs)
         maxlags = min(self.method_params["maxlags"], max_estimable_lags)
+        if maxlags < 0:
+            raise ValueError(
+                "Not enough data to estimate VAR model parameters for any "
+                "number of lags."
+                f"\n\t Trend equations: {ntrend}"
+                f"\n\t AR equations: {self.var.neqs}"
+                f"\n\t Observations: {self.var.n_totobs}"
+            )
         
         self.results = self.var.fit(
             maxlags=maxlags,
