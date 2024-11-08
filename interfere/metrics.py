@@ -246,8 +246,52 @@ class ValidPredictionTime(CounterfactualForecastingMetric):
         
         vpt = idxs.min()
         return vpt
-    
 
+
+class RootMeanSquaredScaledError(CounterfactualForecastingMetric):
+
+    def __init__(self):
+        super().__init__("RMSSE")
+
+
+    @copy_doc(CounterfactualForecastingMetric.__call__)
+    def __call__(self,
+        X: np.ndarray,
+        X_do: np.ndarray,
+        X_do_pred:np.ndarray,
+        intervention_idxs: Iterable[int],
+        **kwargs
+    ):
+        X_resp, X_do_resp, pred_X_do_resp = self.drop_intervention_cols(
+            intervention_idxs, *[X, X_do, X_do_pred])
+        return rmsse(
+            X_do_resp, pred_X_do_resp)
+
+
+class RootMeanSquaredScaledErrorOverAvgMethod(CounterfactualForecastingMetric):
+    def __init__(self):
+        """Computes RMSSE(actual, predicted) / RMSSE(actual, mean(training))."""
+        super().__init__("RMSSE/RMSSE(AVG)")
+
+    @copy_doc(CounterfactualForecastingMetric.__call__)
+    def __call__(self,
+        X: np.ndarray,
+        X_do: np.ndarray,
+        X_do_pred:np.ndarray,
+        intervention_idxs: Iterable[int],
+        **kwargs
+    ):
+        rmsse_cntr_metric = RootMeanSquaredScaledError()
+
+        err = rmsse_cntr_metric(
+            X, X_do, X_do_pred, intervention_idxs, **kwargs
+        )
+        X_means = np.vstack([np.mean(X, axis=0) for i in range(X_do.shape[0])])
+        avg_err = rmsse_cntr_metric(
+            X, X_do, X_means, intervention_idxs, **kwargs
+        )
+        return err / avg_err
+    
 
 def _error(actual: np.ndarray, predicted: np.ndarray):
     """ Simple error """

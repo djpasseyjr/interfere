@@ -5,6 +5,7 @@ from interfere.metrics import (
     RootMeanStandardizedSquaredError,
     TTestDirectionalChangeAccuracy,
     ValidPredictionTime,
+    RootMeanSquaredScaledErrorOverAvgMethod
 )
 import numpy as np
 
@@ -98,4 +99,18 @@ def test_vpt_first_idx():
     assert vpt(None, X_true, X_pred, [0]) == 0
 
 
-    
+def test_rmsse_over_avg():
+    X_train = np.random.rand(20, 4)
+    X_true = np.random.rand(10, 4)
+    X_false = np.zeros((10, 4))
+    X_pred_good = X_true + 0.01 * np.random.randn(10, 4)
+    intervention_idxs = np.array([0])
+
+    rmsse_over_avg = RootMeanSquaredScaledErrorOverAvgMethod()
+    x_false_err = rmsse_over_avg(X_train, X_true, X_false, intervention_idxs)
+    x_true_err = rmsse_over_avg(X_train, X_true, X_pred_good, intervention_idxs)
+    assert x_false_err > x_true_err
+
+    X_mean_pred = np.vstack([
+        np.mean(X_train, axis=0) for i in range(X_true.shape[0])])
+    assert 1.0 == rmsse_over_avg(X_train, X_true, X_mean_pred, intervention_idxs)
