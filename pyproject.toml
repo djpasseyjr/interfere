@@ -10,7 +10,7 @@ authors = [
 ]
 dependencies = [
     "neuralforecast",
-    "numpy",
+    "numpy <= 1.26.4",
     "pandas",
     "pyclustering@git+https://github.com/djpasseyjr/pyclustering",
     "pysindy",
