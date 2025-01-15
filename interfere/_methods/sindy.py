@@ -12,7 +12,7 @@ from ..interventions import ExogIntervention
 
 
 # Lists of hyper parameters for optimization.
-SINDY_LIB_LIST = [ps.PolynomialLibrary(), ps.FourierLibrary()]
+SINDY_LIB_LIST = [ps.PolynomialLibrary, ps.FourierLibrary]
 
 SINDY_DIFF_LIST = [
     ps.SINDyDerivative(kind='finite_difference', k=1),
@@ -44,7 +44,7 @@ class SINDY(ForecastMethod):
         # Optionally accept types for feature library.
         if isinstance(feature_library, type):
             feature_library = feature_library()
-            
+
         # Differentiation method and feature library must be copied so that
         # their internal state doesn't carry over across different fits.
         if differentiation_method is not None:
