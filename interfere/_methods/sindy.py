@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Dict, List, Optional
+from typing import Optional
 from warnings import warn
 
 import numpy as np
@@ -41,7 +41,10 @@ class SINDY(ForecastMethod):
         max_sim_value = 10000,
         **kwargs
     ):
-        
+        # Optionally accept types for feature library.
+        if isinstance(feature_library, type):
+            feature_library = feature_library()
+            
         # Differentiation method and feature library must be copied so that
         # their internal state doesn't carry over across different fits.
         if differentiation_method is not None:
