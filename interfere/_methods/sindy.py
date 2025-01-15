@@ -15,16 +15,16 @@ from ..interventions import ExogIntervention
 SINDY_LIB_LIST = [ps.PolynomialLibrary, ps.FourierLibrary]
 
 SINDY_DIFF_LIST = [
-    ps.SINDyDerivative(kind='finite_difference', k=1),
-    ps.SINDyDerivative(kind='finite_difference', k=2),
-    ps.SINDyDerivative(kind='finite_difference', k=3),
-    ps.SINDyDerivative(kind='spline', s=0.1),
-    ps.SINDyDerivative(kind='spline', s=0.5),
-    ps.SINDyDerivative(kind='savitzky_golay', order=2, left=0.1, right=0.1),
-    ps.SINDyDerivative(kind='savitzky_golay', order=3, left=0.1, right=0.1),
-    ps.SINDyDerivative(kind='trend_filtered', order=0, alpha=0.01),
-    ps.SINDyDerivative(kind='trend_filtered', order=1, alpha=0.01),
-    ps.SINDyDerivative(kind='trend_filtered', order=1, alpha=0.1),
+    dict(kind='finite_difference', k=1),
+    dict(kind='finite_difference', k=2),
+    dict(kind='finite_difference', k=3),
+    dict(kind='spline', s=0.1),
+    dict(kind='spline', s=0.5),
+    dict(kind='savitzky_golay', order=2, left=0.1, right=0.1),
+    dict(kind='savitzky_golay', order=3, left=0.1, right=0.1),
+    dict(kind='trend_filtered', order=0, alpha=0.01),
+    dict(kind='trend_filtered', order=1, alpha=0.01),
+    dict(kind='trend_filtered', order=1, alpha=0.1),
 ]
 
 
@@ -44,6 +44,11 @@ class SINDY(ForecastMethod):
         # Optionally accept types for feature library.
         if isinstance(feature_library, type):
             feature_library = feature_library()
+
+        # Optionally accept dictionaries for SINDyDerivative.
+        if isinstance(differentiation_method, dict):
+            differentiation_method = ps.SINDyDerivative(
+                **differentiation_method)
 
         # Differentiation method and feature library must be copied so that
         # their internal state doesn't carry over across different fits.
