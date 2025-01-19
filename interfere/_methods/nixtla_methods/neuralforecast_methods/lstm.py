@@ -41,7 +41,6 @@ class LSTM(NixtlaAdapter):
         valid_batch_size: Optional[int] = None,
         scaler_type: str = "robust",
         random_seed=1,
-        num_workers_loader=0,
         drop_last_loader=False,
         optimizer=None,
         optimizer_kwargs=None,
