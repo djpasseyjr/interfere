@@ -14,9 +14,6 @@ class IdentityIntervention(ExogIntervention):
 
     def __init__(self) -> None:
         super().__init__([])
-
-    def split_exog(self, X: np.ndarray):
-        return X, None
     
     def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
         return endo_X
