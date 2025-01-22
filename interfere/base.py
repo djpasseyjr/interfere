@@ -300,9 +300,38 @@ class ExogIntervention(Intervention):
         self.intervened_idxs = intervened_idxs
     
     def split_exog(self, X: np.ndarray):
-        """Splits exogeneous columns from endogenous."""
-        exog_X = X[..., self.intervened_idxs]
-        endo_X = np.delete(X, self.intervened_idxs, axis=-1)
+        """Splits exogeneous columns from endogenous.
+
+        Args:
+            X (ndarray, dimension (m, n)): An array where rows are observations
+                and columns are variables.
+        """
+        if len(X.shape) != 2:
+            raise ValueError(
+                f"Array must be two dimensional.\n\tX.shape = {X.shape}"
+            )
+        
+        _, n = X.shape
+        X_idxs = np.arange(n)
+
+        if not set(self.intervened_idxs).issubset(X_idxs):
+            ValueError((
+                "Some intervention indexes are too big for input array:"
+                f"\n\t Intervention indexes = {self.intervened_idxs}"
+                f"\n\t Input array shape = {X.shape}"
+            ))
+
+        if self.intervened_idxs:
+            exog_X = X[..., self.intervened_idxs]
+            endo_X = np.delete(X, self.intervened_idxs, axis=-1)
+
+        # Check for empty arrays.
+        if endo_X.shape[1] == 0:
+            endo_X = None
+
+        if exog_X.shape[1] == 0:
+            exog_X = None
+            
         return endo_X, exog_X
     
 
@@ -317,6 +346,9 @@ class ExogIntervention(Intervention):
         """
         m_endo, n_endo = endo_X.shape
         m_exog, n_exog = exog_X.shape
+
+        if exog_X is None:
+            return endo_X
 
         if m_exog != m_endo:
             raise ValueError(
