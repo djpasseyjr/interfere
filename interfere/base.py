@@ -325,14 +325,17 @@ class ExogIntervention(Intervention):
             exog_X = X[..., self.intervened_idxs]
             endo_X = np.delete(X, self.intervened_idxs, axis=-1)
 
-        # Check for empty arrays.
-        if endo_X.shape[1] == 0:
-            endo_X = None
+            # Check for empty arrays.
+            if endo_X.shape[1] == 0:
+                endo_X = None
 
-        if exog_X.shape[1] == 0:
-            exog_X = None
-            
-        return endo_X, exog_X
+            if exog_X.shape[1] == 0:
+                exog_X = None
+                
+            return endo_X, exog_X
+        
+        else:
+            return X, None
     
 
     def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
