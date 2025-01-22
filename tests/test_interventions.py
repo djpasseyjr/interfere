@@ -1,5 +1,7 @@
 import interfere
 import numpy as np
+import pytest
+
 
 def test_perfect_intervention():
     rng = np.random.default_rng(2)
@@ -154,3 +156,88 @@ def test_intervention_equality():
         "PerfectIntervention.__eq__ method should not have found the two "
         "interventions equal."
     )
+
+def test_split_exog():
+    """Tests that splitting exog works as expected.
+    """
+    interv = interfere.PerfectIntervention([2,3], [1.0, 2.0])
+
+    with pytest.raises(ValueError, match=(
+            f"Array must be two dimensional."
+        )):
+        interv.split_exog(np.ones(10))
+
+    with pytest.raises(ValueError, match=(
+            f"Some intervention indexes are too big."
+        )):
+        interv.split_exog(np.ones((10, 2)))
+
+    with pytest.raises(ValueError, match=(
+            f"Some intervention indexes are too big."
+        )):
+        interv.split_exog(np.ones((10, 2)))
+
+    interv = interfere.PerfectIntervention([0,1], [1.0, 2.0])
+    X = np.ones((4, 2))
+    en, ex = interv.split_exog(X)
+    assert en is None, (
+        "split_exog() returned endogenous when all states were exogenous."
+        f"\n\tX.shape = {X.shape}"
+        f"\n\tendog_X = {en}"
+    )
+
+    interv = interfere.PerfectIntervention([], [])
+    X = np.ones((4, 2))
+    en, ex = interv.split_exog(X)
+    assert ex is None, (
+        "split_exog() returned exogenous when all states were endog."
+        f"\n\tX.shape = {X.shape}"
+        f"\n\tendog_X = {en}"
+    )
+
+
+def test_combine_exog():
+    """Tests that combining exog works as expected."""
+
+    interv = interfere.PerfectIntervention(0, 1.0)
+    ident_interv = interfere.IdentityIntervention()
+
+    with pytest.raises(ValueError, match=("Both endo_X and exog_X are None.")):
+        interv.combine_exog(None, None)
+
+    with pytest.raises(ValueError, match=(
+        "Exogenous states was None but intervention expects")):
+        interv.combine_exog(np.ones((4, 2)), None)
+
+    with pytest.raises(ValueError, match=(
+        "Exogenous states provided but intervention does not expect"
+        " exogenous states"
+    )):
+        ident_interv.combine_exog(np.ones((4, 2)), np.ones((4, 1)))
+
+    with pytest.raises(ValueError, match=(
+        "Endogenous states was None but intervention expects "
+        "endogenous states."
+    )):
+        interv2 = interfere.PerfectIntervention([1, 2], [.5, .5])
+        interv2.combine_exog(None, np.ones((4, 2)))
+
+    with pytest.raises(ValueError, match=(
+        "Endogenous and exogenous arrays must have the same number of ")):
+        interv.combine_exog(np.ones((4, 2)), np.ones((3, 1)))
+
+    with pytest.raises(ValueError, match=(
+        "Wrong number of exogenous signals passed to intervention.")):
+        interv.combine_exog(np.ones((4, 2)), np.ones((4, 2)))
+
+    with pytest.raises(ValueError, match=(
+        "Wrong number of exogenous signals passed to intervention.")):
+        interv.combine_exog(np.ones((4, 2)), np.ones((4, 0)))
+
+
+    X = np.random.rand(4, 1)
+    assert np.allclose(ident_interv.combine_exog(X, None), X)
+    assert np.allclose(interv.combine_exog(None, X), X)
+    
+
+    

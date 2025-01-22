@@ -312,10 +312,10 @@ class ExogIntervention(Intervention):
             )
         
         _, n = X.shape
-        X_idxs = np.arange(n)
+        X_idxs = np.arange(n + 1)
 
         if not set(self.intervened_idxs).issubset(X_idxs):
-            ValueError((
+            raise ValueError((
                 "Some intervention indexes are too big for input array:"
                 f"\n\t Intervention indexes = {self.intervened_idxs}"
                 f"\n\t Input array shape = {X.shape}"
@@ -347,11 +347,36 @@ class ExogIntervention(Intervention):
             exog_X (ndarray): A 2D array of exogenous signals with shape 
                 (m, n_exog). Rows are observations and columns are variables.
         """
+        if (endo_X is None) and (exog_X is None):
+            raise ValueError("Both endo_X and exog_X are None.")
+    
+        if exog_X is None:
+            if self.intervened_idxs:
+                raise ValueError(
+                    "Exogenous states was None but intervention expects "
+                    "exogenous states."
+                )
+            return endo_X
+        
+        elif not self.intervened_idxs:
+                raise ValueError(
+                    "Exogenous states provided but intervention does not expect"
+                    " exogenous states"
+                )
+        
+        if endo_X is None:
+            max_idx = max(self.intervened_idxs)
+            all_idx = np.arange(max_idx + 1)
+            extra_idx = set(self.intervened_idxs).symmetric_difference(all_idx)
+            if extra_idx:
+                raise ValueError(
+                    "Endogenous states was None but intervention expects "
+                    "endogenous states."
+                )
+            return exog_X
+        
         m_endo, n_endo = endo_X.shape
         m_exog, n_exog = exog_X.shape
-
-        if exog_X is None:
-            return endo_X
 
         if m_exog != m_endo:
             raise ValueError(
