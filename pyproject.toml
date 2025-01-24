@@ -15,11 +15,9 @@ dependencies = [
     "pyclustering@git+https://github.com/djpasseyjr/pyclustering",
     "pysindy",
     "scikit-learn",
-    "sktime",
     "statsforecast",
     "statsmodels",
     "typing_extensions"
-
 ]
 
 [project.optional-dependencies]
