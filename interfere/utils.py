@@ -32,25 +32,3 @@ def copy_doc(copy_func: Callable[..., Any]) -> WrappedFuncDeco[P, T]:
         return func
 
     return wrapped
-
-
-def to_interfere_time_series(y: pd.DataFrame):
-    """Converts time series DataFrames from the sktime to interfere format.
-    
-    Args:
-        y (Iterable[pd.DataFrame]): An iterable containing DataFrames with
-            datetime indexes
-
-    Returns:
-        t (np.ndarray): A length `m` 1D array containing the time points from
-            the index. 
-        X (np.ndarray): A 2D (m x n) array containing the time series. Rows are
-            observations and columns are variables. Rows correspond to values in
-            t.
-    """
-    t = np.squeeze(IxToX().fit_transform(y)).values.astype("float")
-    # Convert to seconds.
-    t /= 1_000_000_000.0
-
-    X = y.values
-    return t, X
