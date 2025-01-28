@@ -25,6 +25,7 @@ REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
+    interfere.methods.DLM,
     interfere.methods.ResComp,
     interfere.methods.SINDY, 
     LTSF,
