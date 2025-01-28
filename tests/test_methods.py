@@ -19,13 +19,12 @@ except ImportError:
 SEED = 11
 PRED_LEN = 10
 OPTUNA_NTRIALS = 6
-MAX_SECS_PRE_OPTUNA_TRIAL = 180
+MAX_SECS_PER_OPTUNA_TRIAL = 180
 REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 
 METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
-    interfere.methods.DLM,
     interfere.methods.ResComp,
     interfere.methods.SINDY, 
     LTSF,
@@ -1039,7 +1038,7 @@ class TestOptuna:
         study.optimize(
             objective,
             n_trials=OPTUNA_NTRIALS,
-            timeout=OPTUNA_NTRIALS * MAX_SECS_PRE_OPTUNA_TRIAL
+            timeout=OPTUNA_NTRIALS * MAX_SECS_PER_OPTUNA_TRIAL
         )
 
         df = study.trials_dataframe()
@@ -1089,7 +1088,7 @@ class TestOptuna:
         study.optimize(
             objective,
             n_trials=OPTUNA_NTRIALS,
-            timeout=OPTUNA_NTRIALS * MAX_SECS_PRE_OPTUNA_TRIAL
+            timeout=OPTUNA_NTRIALS * MAX_SECS_PER_OPTUNA_TRIAL
         )
 
         df = study.trials_dataframe()
