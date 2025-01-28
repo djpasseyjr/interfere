@@ -4,6 +4,7 @@ from typing import Type
 import interfere
 import interfere._methods
 import interfere._methods.sindy
+from interfere._methods.deep_learning import LTSF
 import interfere.methods
 import numpy as np
 import pytest
@@ -24,9 +25,10 @@ REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
+    interfere.methods.DLM,
     interfere.methods.ResComp,
     interfere.methods.SINDY, 
-    interfere.methods.LTSF,
+    LTSF,
     interfere.methods.VAR,
     interfere.methods.LSTM,
     interfere.methods.NHITS,

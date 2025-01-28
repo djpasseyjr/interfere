@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 import numpy as np
 import pandas as pd
 
@@ -15,7 +15,7 @@ except ImportError as e:
 )
 
 from ..base import ForecastMethod, DEFAULT_RANGE
-from ..utils import copy_doc, to_sktime_time_series
+from ..utils import copy_doc
 
 
 class LTSF(ForecastMethod):
@@ -165,12 +165,12 @@ class LTSF(ForecastMethod):
 
 
     @copy_doc(ForecastMethod.get_params)
-    def get_params(self, deep: bool = True) -> Dict:
+    def get_params(self, deep: bool = True) -> dict:
         return self.method_params
     
 
     @copy_doc(ForecastMethod.get_test_params)
-    def get_test_params() -> Dict[str, Any]:
+    def get_test_params() -> dict[str, Any]:
         return {
             'seq_len': 2,
             'pred_len': 1,
@@ -189,11 +189,32 @@ class LTSF(ForecastMethod):
             "lr": [0.001, 0.1],
         }
     
-    def _get_optuna_params(trial):
+    def _get_optuna_params(trial, max_lags=25) -> dict[str, object]:
         return {
-            "seq_len": trial.suggest_int("seq_len", 1, 25),
+            "seq_len": trial.suggest_int("seq_len", 1, max_lags),
             "lr": trial.suggest_float("lr", 1e-5, 1e-1, log=True),
-            "pred_len": trial.suggest_int("pred_len", 1, 25),
+            "pred_len": trial.suggest_int("pred_len", 1, 50),
             "num_epochs": trial.suggest_categorical(
-                "num_epochs", [50, 100, 300])
+                "num_epochs", [50, 100, 300, 500, 1000])
         }
+    
+
+def to_sktime_time_series(time_points: np.ndarray, X: np.ndarray):
+    """Converts time series from interfere format to sktime format.
+
+    Args:
+        time_points (np.ndarray): A 1D array of time points that correspond to
+            the rows of of all arrays in Xs.
+        Xs Iterable[np.ndarray]: An iterable containing 2D (m x n_i) array
+            where rows are observations and columns are variables. The number of
+            rows, `m` must equal the length of `time_points`.
+    Returns:
+        y (pd.DataFrame): A DataFrame containing the endogenous variables.
+            Columns are variables and rows are observations.
+        X (pd.DataFrame): A DataFrame containing the exogenoug variables.
+            Columns are variables and rows are observations.
+    """
+    index = pd.to_datetime(
+        pd.to_numeric(time_points), unit='s', errors='coerce')
+    sktime_X = pd.DataFrame(X, index=index)
+    return sktime_X

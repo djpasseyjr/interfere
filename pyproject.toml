@@ -23,7 +23,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "sdeint"
+    "sdeint",
+    "sktime"
 ]
 notebooks = [
     "jupyter"
