@@ -109,7 +109,7 @@ class LSTM(NixtlaAdapter):
         )
     
 
-    def _get_optuna_params(trial):
+    def _get_optuna_params(trial, max_lags=50):
         return {
             "h": trial.suggest_int("h", 1, 16),
 
@@ -118,8 +118,7 @@ class LSTM(NixtlaAdapter):
 
             "encoder_n_layers": trial.suggest_int("encoder_n_layers", 1, 4),
 
-            "context_size": trial.suggest_categorical(
-                "context_size", [5, 10, 50]),
+            "context_size": trial.suggest_int("context_size", 1, max_lags),
 
             "decoder_hidden_size": trial.suggest_categorical(
                 "decoder_hidden_size", [64, 128, 256, 512]),

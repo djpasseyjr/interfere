@@ -574,7 +574,7 @@ class ResComp(ForecastMethod):
         )
     
 
-    def _get_optuna_params(trial):
+    def _get_optuna_params(trial, max_lags=None):
         return {
             "gamma": trial.suggest_float("gamma", 0.1, 20),
             "sigma": trial.suggest_float("sigma", 0, 1),

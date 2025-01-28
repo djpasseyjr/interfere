@@ -98,12 +98,13 @@ class NHITS(NixtlaAdapter):
         return {"max_steps": 50}
 
 
-    def _get_optuna_params(trial):
+    def _get_optuna_params(trial, max_lags=50):
         return {
 
             "h": trial.suggest_int("h", 1, 16),
 
-            
+            "input_size": trial.suggest_int("input_size", 1, max_lags),
+
             "n_pool_kernel_size": trial.suggest_categorical(
                 "n_pool_kernel_size",
                 [
