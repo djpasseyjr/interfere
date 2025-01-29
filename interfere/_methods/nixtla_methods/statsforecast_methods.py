@@ -47,7 +47,7 @@ class ARIMA(NixtlaAdapter):
         return {}
     
 
-    def _get_optuna_params(trial, max_lags=15) -> Dict[str, List[Any]]:
+    def _get_optuna_params(trial, max_lags=15, **kwargs) -> Dict[str, Any]:
         """Returns a parameter grid for testing grid search"""
         return {
             "order": (

@@ -103,7 +103,7 @@ class LTSF(ForecastMethod):
         m = len(t)
         y = to_sktime_time_series(np.arange(m), endog_states)
         
-        if endog_states is not None:
+        if exog_states is not None:
             X = to_sktime_time_series(np.arange(m), exog_states)
         else:
             X = None
@@ -189,11 +189,13 @@ class LTSF(ForecastMethod):
             "lr": [0.001, 0.1],
         }
     
-    def _get_optuna_params(trial, max_lags=25) -> dict[str, object]:
+    def _get_optuna_params(
+        trial, max_lags=25, max_horizon=50, **kwargs) -> dict[str, object]:
+
         return {
             "seq_len": trial.suggest_int("seq_len", 1, max_lags),
             "lr": trial.suggest_float("lr", 1e-5, 1e-1, log=True),
-            "pred_len": trial.suggest_int("pred_len", 1, 50),
+            "pred_len": trial.suggest_int("pred_len", 1, max_horizon),
             "num_epochs": trial.suggest_categorical(
                 "num_epochs", [50, 100, 300, 500, 1000])
         }

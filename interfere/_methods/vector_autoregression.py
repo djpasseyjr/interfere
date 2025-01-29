@@ -125,7 +125,7 @@ class VAR(ForecastMethod):
         return {}
     
 
-    def _get_optuna_params(trial, max_lags=20):
+    def _get_optuna_params(trial, max_lags=20, **kwargs):
         return {
             "ic": trial.suggest_categorical("ic", ["aic", "fpe"]),
             "maxlags": trial.suggest_int("maxlags", 5, max_lags),

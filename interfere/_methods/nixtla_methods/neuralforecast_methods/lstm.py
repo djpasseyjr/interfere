@@ -109,7 +109,7 @@ class LSTM(NixtlaAdapter):
         )
     
 
-    def _get_optuna_params(trial, max_lags=50):
+    def _get_optuna_params(trial, max_lags=50, **kwargs):
         return {
             "h": trial.suggest_int("h", 1, 16),
 
