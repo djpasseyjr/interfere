@@ -180,7 +180,7 @@ class SINDY(ForecastMethod):
         }
     
 
-    def _get_optuna_params(trial):
+    def _get_optuna_params(trial, **kwargs):
         return {
             'optimizer__threshold': trial.suggest_float(
                 'optimizer__threshold', 1e-5, 5, log=True),

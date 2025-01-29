@@ -969,7 +969,12 @@ class TestOptuna:
         Returns:
             Root mean squared scaled forecast error.
         """
-        params = method_type._get_optuna_params(trial)
+        n_train_obs, _ = train_states.shape
+        max_horizon = 10
+        max_lags = n_train_obs - max_horizon - 1
+
+        params = method_type._get_optuna_params(
+            trial, max_lags=max_lags, max_horizon=max_horizon)
         method = method_type(**params)
 
         endo_train_states = train_states
@@ -1251,3 +1256,6 @@ def test_sindy_refit():
                 prior_t = t
             )
             assert pred.shape == (5, 1)
+
+
+TestOptuna().test_optimize_method(LTSF)
