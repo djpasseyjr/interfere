@@ -32,6 +32,8 @@ from .planted_aquarium import PlantedTankNitrogenCycle
 from .pyclustering_models import (
     HodgkinHuxleyPyclustering, LEGIONPyclustering, StuartLandauKuramoto
 )
+from .michaelis_menten import MichaelisMenten
+from .mutualistic_pop import MutualisticPopulation
 from .ornstein_uhlenbeck import OrnsteinUhlenbeck
 from .quadratic_sdes import Belozyorov3DQuad, Liping3DQuadFinance, Lorenz, Rossler, Thomas
 from .simple_linear_sdes import (
@@ -41,4 +43,6 @@ from .simple_linear_sdes import (
     imag_roots_4d_linear_sde,
     attracting_fixed_point_4d_linear_sde
 )
+from .sis import SIS
 from .statespace_models import VARMADynamics
+from .wilson_cowan import WilsonCowan

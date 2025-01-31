@@ -35,7 +35,11 @@ from sample_models import (
     kuramoto_model,
     kuramoto_sakaguchi_model,
     stuart_landau_kuramoto_model,
-    hodgkin_huxley_model
+    hodgkin_huxley_model,
+    michaelis_menten_model,
+    mutualistic_population_model,
+    sis_model,
+    wilson_cowan_model
 )
 
 SEED = 11
@@ -91,6 +95,10 @@ MODELS = [
     kuramoto_sakaguchi_model(),
     stuart_landau_kuramoto_model(),
     hodgkin_huxley_model(),
+    michaelis_menten_model(),
+    mutualistic_population_model(),
+    sis_model(),
+    wilson_cowan_model(),
 ]
 
 @pytest.mark.parametrize("model", MODELS + CML_MODELS)
@@ -287,8 +295,8 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         assert np.allclose(X_do, X_do_rerun), (
-            f"Random state does not preserve values after intervention for "
-            " {model}."
+            "Random state does not preserve values after intervention for "
+            f" {model}."
         )       
 
 

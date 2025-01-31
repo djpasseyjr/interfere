@@ -147,3 +147,50 @@ def hodgkin_huxley_model() ->  interfere.dynamics.HodgkinHuxleyPyclustering:
     """
     return interfere.dynamics.HodgkinHuxleyPyclustering(
         [0, 0, 0, 15, 15, 15, 25, 25, 25, 40], sigma=0.1)
+
+
+def mutualistic_population_model() -> interfere.dynamics.MutualisticPopulation:
+    """Initializes a mutualistic population model.
+
+    Returns:
+        An instance of interfere.dynamics.MutualisticPopulation.
+    """
+    alpha = RNG.random(10)
+    theta = RNG.random(10)
+    adjacency_matrix = (RNG.random((10, 10)) < 0.5).astype(float)
+    return interfere.dynamics.MutualisticPopulation(
+        alpha, theta, adjacency_matrix)
+
+
+def michaelis_menten_model() -> interfere.dynamics.MichaelisMenten:
+    """Initializes a michaelis menten model.
+
+    Returns:
+        An instance of interfere.dynamics.MichaelisMenten.
+    """
+    h = 0.5
+    adjacency_matrix = (RNG.random((10, 10)) < 0.5).astype(float)
+    return interfere.dynamics.MichaelisMenten(adjacency_matrix, h=h)
+
+
+def sis_model() -> interfere.dynamics.SIS:
+    """Initializes a SIS model.
+
+    Returns:
+        An instance of interfere.dynamics.SIS.
+    """
+    delta = RNG.random(10)
+    adjacency_matrix = (RNG.random((10, 10)) < 0.1).astype(float)
+    return interfere.dynamics.SIS(delta, adjacency_matrix)
+
+
+def wilson_cowan_model() -> interfere.dynamics.WilsonCowan:
+    """Initializes a Wilson–Cowan model.
+
+    Returns:
+        An instance of interfere.dynamics.WilsonCowan.
+    """
+    tau = 0.25
+    mu = 0.25
+    adjacency_matrix = (RNG.random((10, 10)) < 0.5).astype(float)
+    return interfere.dynamics.WilsonCowan(tau, mu, adjacency_matrix)
