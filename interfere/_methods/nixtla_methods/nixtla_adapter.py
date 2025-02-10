@@ -105,6 +105,10 @@ class NixtlaAdapter(ForecastMethod):
         logging.getLogger(
             "pytorch_lightning.callbacks.model_summary").setLevel(
                 logging.WARNING)
+        logging.getLogger(
+            "pytorch_lightning.trainer.connectors.signal_connector").setLevel(
+                logging.WARNING)
+
 
     @copy_doc(ForecastMethod._fit)
     def _fit(
