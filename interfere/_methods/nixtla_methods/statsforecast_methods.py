@@ -23,9 +23,21 @@ class ARIMA(NixtlaAdapter):
         fixed: Optional[dict] = None,
         alias: str = "ARIMA",
         prediction_intervals: Optional[statsforecast.utils.ConformalIntervals] = None,
+        p = None,
+        q = None,
     ):
         self.method_params = locals()
         self.method_params.pop("self")
+
+        # Optionally accepts individual order parameters.
+        p = self.method_params.pop("p", None)
+        q = self.method_params.pop("q", None)
+        if p:
+            self.method_params["order"][0] = p
+        if q:
+            self.method_params["oreder"][1] = q
+
+        # Denote method type and forecaster class.
         self.method_type = statsforecast.models.ARIMA
         self.nixtla_forecaster_class = statsforecast.StatsForecast
 
