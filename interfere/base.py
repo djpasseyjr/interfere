@@ -410,16 +410,23 @@ class ExogIntervention(Intervention):
                 columns corresponds to the order of indexes in 
                 `self.intervened_idx`.
         """
+        if len(self.intervened_idxs) == 0:
+            return None
+
         # Exogeneous interventions do not depend on x so we can use a dummy var.
         dummy_x = np.zeros(np.max(self.intervened_idxs) + 1)
+
         # The size of the dummy variable only needs to be as big as the max
         # intervened index and self.split_exog will still work.
         # This is done to avoid the need for an additional argument containing
         # the dimension of the system.
 
+        # Apply intervention to all dummy states.
         X_do = np.vstack([
             self.__call__(dummy_x, ti) for ti in t
         ])
+
+        # Use split_exog to return only exogenous states.
         _, exog_X_do = self.split_exog(X_do)
         return exog_X_do
 

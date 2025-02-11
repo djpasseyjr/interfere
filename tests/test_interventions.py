@@ -240,4 +240,12 @@ def test_combine_exog():
     assert np.allclose(interv.combine_exog(None, X), X)
     
 
-    
+def test_eval_at_times():
+    t = np.arange(0, 1, 0.05)
+    x0 = np.ones(3)
+    model = interfere.dynamics.Lorenz()
+    X1 = model.simulate(t, x0, intervention=interfere.IdentityIntervention())
+    assert X1.shape == (len(t), 3)
+
+    X2 = model.simulate(t, x0, intervention=interfere.PerfectIntervention(0, 5))
+    assert np.all(X2[:, 0] == 5)
