@@ -41,7 +41,7 @@ The vision of Interfere is simple: What if we used high quality scientific model
 Over the past twenty years we've seen an emergence of multiple frameworks for identifying causal relationships [@imbens_causal_2015], [@pearl_causality_2009], [@wieczorek_information_2019]. The most influential frameworks are probabilistic and while it is not a requirement of the frameworks, in practice, a static linear relationship is usually assumed. However, when attempting to anticipate the response of complex systems in the medium and long term, static linear models are insufficient. Thus there is a need for causal models with more complexity. (For example, static linear models cannot predict scenarios where things get worse before they get better.) Currently, there are very few techniques that are able to fit non-linear dynamic causal models to data. We see an opportunity to bring the insights from recent breakthroughs in causal inference to the world of mechanistic modeling.  In order to facilitate this cross pollination, we chose a key causal problem, predicting how a complex system responds to a previously unobserved intervention in the medium and long term, and designed the Interfere package as a focal point for building and benchmarking tools that attempt to solve this problem.
 
 
-![Comparing deterministic and stochastic systems.\label{fig:det_vs_stoch}](/images/det_v_stoch.png)
+![Comparing deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
 
 # Acknowledgements
 This work was supported by NSF GRFP.
