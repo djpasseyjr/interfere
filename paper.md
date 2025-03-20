@@ -1,36 +1,35 @@
 ---
-title: 'Interfere: Intervention Response Simulation and Prediction for Stochastic Non-Linear Dynamics'
+title: 'Gala: A Python package for galactic dynamics'
 tags:
--Python
--dynamics
--stochastic differential equations
--forecasting
--time series
--non linear
--chaotic
--simulation
--modeling
--complex systems
--causality
--intervention
--manipulation
+  - Python
+  - astronomy
+  - dynamics
+  - galactic dynamics
+  - milky way
 authors:
--name: D. J. Passey
-    orcid: 0000-0002-9310-3361
+  - name: Adrian M. Price-Whelan
+    orcid: 0000-0000-0000-0000
     equal-contrib: true
-    affiliation: 1
--name: Peter J. Mucha
-    orcid: 0000-0002-0648-7230
-    equal-contrib: true
+    affiliation: "1, 2" # (Multiple affiliations must be quoted)
+  - name: Author Without ORCID
+    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
     affiliation: 2
+  - name: Author with no affiliation
+    corresponding: true # (This is how to denote the corresponding author)
+    affiliation: 3
+  - given-names: Ludwig
+    dropping-particle: van
+    surname: Beethoven
+    affiliation: 3
 affiliations:
--name: University of North Carolina at Chapel Hill, United States
+ - name: Lyman Spitzer, Jr. Fellow, Princeton University, United States
    index: 1
-   ror: 0130frc33
--name: Dartmouth College, United States
+   ror: 00hx57361
+ - name: Institution Name, Country
    index: 2
-   ror: 049s0rh22
-date: 20 March 2025
+ - name: Independent Researcher, Country
+   index: 3
+date: 13 August 2017
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -38,7 +37,6 @@ bibliography: paper.bib
 aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
 aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
-
 # Summary
 
 The forces on stars, galaxies, and dark matter under external gravitational
