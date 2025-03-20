@@ -1,45 +1,36 @@
 ---
-title: 'The Causal Testing Framework'
+title: 'Interfere: Intervention Response Simulation and Prediction for Stochastic Non-Linear Dynamics'
 tags:
   - Python
-  - causal testing
-  - causal inference
+  - dynamics
+  - stochastic differential equations
+  - forecasting
+  - time series
+  - non linear
+  - chaotic
+  - simulation
+  - modeling
+  - complex systems
   - causality
-  - software testing
-  - metamorphic testing
+  - intervention
+  - manipulation
 authors:
-  - name: Michael Foster
-    orcid: 0000-0001-8233-9873
+-name: D. J. Passey
+    orcid: 0000-0002-9310-3361
+    equal-contrib: true
     affiliation: 1
-    corresponding: true
-  - name: Andrew Clark
-    orcid: 0000-0002-6830-0566
-    affiliation: 1
-  - name: Christopher Wild
-    orcid: 0009-0009-1195-1497
-    affiliation: 1
-  - name: Farhad Allian
-    orcid: 0000-0002-4569-0370
-    affiliation: 1
-  - name: Robert Turner
-    orcid: 0000-0002-1353-1404
-    affiliation: 1
-  - name: Richard Somers
-    orcid: 0000-0002-1101-9722
-    affiliation: 1
-  - name: Nicholas Latimer
-    orcid: 0000-0001-5304-5585
-    affiliation: 1
-  - name: Neil Walkinshaw
-    orcid: 0000-0003-2134-6548
-    affiliation: 1
-  - name: Robert M. Hierons
-    orcid: 0000-0002-4771-1446
-    affiliation: 1
+-name: Peter J. Mucha
+    orcid: 0000-0002-0648-7230
+    equal-contrib: true
+    affiliation: 2
 affiliations:
- - name: University of Sheffield, UK
+-name: University of North Carolina at Chapel Hill, United States
    index: 1
-date: 2 December 2024
+   ror: 0130frc33
+-name: Dartmouth College, United States
+   index: 2
+   ror: 049s0rh22
+date: 20 March 2025
 bibliography: paper.bib
 ---
 
