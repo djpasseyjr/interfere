@@ -15,21 +15,21 @@ tags:
   - intervention
   - manipulation
 authors:
--name: D. J. Passey
+  - name: D. J. Passey
     orcid: 0000-0002-9310-3361
     equal-contrib: true
     affiliation: 1
--name: Peter J. Mucha
+  - name: Peter J. Mucha
     orcid: 0000-0002-0648-7230
     equal-contrib: true
     affiliation: 2
 affiliations:
--name: University of North Carolina at Chapel Hill, United States
-   index: 1
-   ror: 0130frc33
--name: Dartmouth College, United States
-   index: 2
-   ror: 049s0rh22
+  - name: University of North Carolina at Chapel Hill, United States
+    index: 1
+    ror: 0130frc33
+  - name: Dartmouth College, United States
+    index: 2
+    ror: 049s0rh22
 date: 20 March 2025
 bibliography: paper.bib
 ---
