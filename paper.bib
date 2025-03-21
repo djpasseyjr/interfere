@@ -354,3 +354,143 @@
 	note = {Publisher: Elsevier},
 	pages = {1370--1383},
 }
+
+@misc{garza2022statsforecast,
+    author={Azul Garza, Max Mergenthaler Canseco, Cristian Challú, Kin G. Olivares},
+    title = {{StatsForecast}: Lightning fast forecasting with statistical and econometric models},
+    year={2022},
+    howpublished={{PyCon} Salt Lake City, Utah, US 2022},
+    url={https://github.com/Nixtla/statsforecast}
+}
+
+@misc{olivares2022library_neuralforecast,
+    author={Kin G. Olivares and
+            Cristian Challú and
+            Azul Garza and
+            Max Mergenthaler Canseco and
+            Artur Dubrawski},
+    title = {{NeuralForecast}: User friendly state-of-the-art neural forecasting models.},
+    year={2022},
+    howpublished={{PyCon} Salt Lake City, Utah, US 2022},
+    url={https://github.com/Nixtla/neuralforecast}
+}
+
+@article{kaptanoglu2022,
+doi = {10.21105/joss.03994},
+url = {https://doi.org/10.21105/joss.03994},
+year = {2022},
+publisher = {The Open Journal},
+volume = {7},
+number = {69},
+pages = {3994},
+author = {Alan A. Kaptanoglu and Brian M. de Silva and Urban Fasel and Kadierdan Kaheman and Andy J. Goldschmidt and Jared Callaham and Charles B. Delahunt and Zachary G. Nicolaou and Kathleen Champion and Jean-Christophe Loiseau and J. Nathan Kutz and Steven L. Brunton},
+title = {PySINDy: A comprehensive Python package for robust sparse system identification},
+journal = {Journal of Open Source Software}
+}
+
+@inproceedings{seabold2010statsmodels,
+  title={statsmodels: Econometric and statistical modeling with python},
+  author={Seabold, Skipper and Perktold, Josef},
+  booktitle={9th Python in Science Conference},
+  year={2010},
+}
+
+@inproceedings{akiba2019optuna,
+  title={{O}ptuna: A Next-Generation Hyperparameter Optimization Framework},
+  author={Akiba, Takuya and Sano, Shotaro and Yanase, Toshihiko and Ohta, Takeru and Koyama, Masanori},
+  booktitle={The 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
+  pages={2623--2631},
+  year={2019}
+}
+
+@article{harding_global_2024,
+    title = {Global forecasts in reservoir computers},
+    volume = {34},
+    issn = {1054-1500},
+    url = {https://doi.org/10.1063/5.0181694},
+    doi = {10.1063/5.0181694},
+    abstract = {A reservoir computer is a machine learning model that can be used to predict the future state(s) of time-dependent processes, e.g., dynamical systems. In practice, data in the form of an input-signal are fed into the reservoir. The trained reservoir is then used to predict the future state of this signal. We develop a new method for not only predicting the future dynamics of the input-signal but also the future dynamics starting at an arbitrary initial condition of a system. The systems we consider are the Lorenz, Rossler, and Thomas systems restricted to their attractors. This method, which creates a global forecast, still uses only a single input-signal to train the reservoir but breaks the signal into many smaller windowed signals. We examine how well this windowed method is able to forecast the dynamics of a system starting at an arbitrary point on a system’s attractor and compare this to the standard method without windows. We find that the standard method has almost no ability to forecast anything but the original input-signal while the windowed method can capture the dynamics starting at most points on an attractor with significant accuracy.},
+    number = {2},
+    urldate = {2025-02-19},
+    journal = {Chaos: An Interdisciplinary Journal of Nonlinear Science},
+    author = {Harding, S. and Leishman, Q. and Lunceford, W. and Passey, D. J. and Pool, T. and Webb, B.},
+    month = feb,
+    year = {2024},
+    pages = {023136},
+}
+
+@article{challu_nhits_2023,
+    title = {{NHITS}: {Neural} {Hierarchical} {Interpolation} for {Time} {Series} {Forecasting}},
+    volume = {37},
+    copyright = {Copyright (c) 2023 Association for the Advancement of Artificial Intelligence},
+    issn = {2374-3468},
+    shorttitle = {{NHITS}},
+    url = {https://ojs.aaai.org/index.php/AAAI/article/view/25854},
+    doi = {10.1609/aaai.v37i6.25854},
+    abstract = {Recent progress in neural forecasting accelerated improvements in the performance of large-scale forecasting systems. Yet, long-horizon forecasting remains a very difficult task. Two common challenges afflicting the task are the volatility of the predictions and their computational complexity. We introduce NHITS, a model which addresses both challenges by incorporating novel hierarchical interpolation and multi-rate data sampling techniques. These techniques enable the proposed method to assemble its predictions sequentially, emphasizing components with different frequencies and scales while decomposing the input signal and synthesizing the forecast. We prove that the hierarchical interpolation technique can efficiently approximate arbitrarily long horizons in the presence of smoothness. Additionally, we conduct extensive large-scale dataset experiments from the long-horizon forecasting literature, demonstrating the advantages of our method over the state-of-the-art methods, where NHITS provides an average accuracy improvement of almost 20\% over the latest Transformer architectures while reducing the computation time by an order of magnitude (50 times). Our code is available at https://github.com/Nixtla/neuralforecast.},
+    language = {en},
+    number = {6},
+    urldate = {2025-03-21},
+    journal = {Proceedings of the AAAI Conference on Artificial Intelligence},
+    author = {Challu, Cristian and Olivares, Kin G. and Oreshkin, Boris N. and Ramirez, Federico Garza and Canseco, Max Mergenthaler and Dubrawski, Artur},
+    month = jun,
+    year = {2023},
+    note = {Number: 6},
+    keywords = {ML: Deep Neural Architectures},
+    pages = {6989--6997},
+}
+
+@article{brunton_discovering_2016,
+	title = {Discovering governing equations from data by sparse identification of nonlinear dynamical systems},
+	volume = {113},
+	issn = {0027-8424, 1091-6490},
+	url = {https://pnas.org/doi/full/10.1073/pnas.1517384113},
+	doi = {10.1073/pnas.1517384113},
+	abstract = {Significance
+            Understanding dynamic constraints and balances in nature has facilitated rapid development of knowledge and enabled technology, including aircraft, combustion engines, satellites, and electrical power. This work develops a novel framework to discover governing equations underlying a dynamical system simply from data measurements, leveraging advances in sparsity techniques and machine learning. The resulting models are parsimonious, balancing model complexity with descriptive ability while avoiding overfitting. There are many critical data-driven problems, such as understanding cognition from neural recordings, inferring climate patterns, determining stability of financial markets, predicting and suppressing the spread of disease, and controlling turbulence for greener transportation and energy. With abundant data and elusive laws, data-driven discovery of dynamics will continue to play an important role in these efforts.
+          , 
+            Extracting governing equations from data is a central challenge in many diverse areas of science and engineering. Data are abundant whereas models often remain elusive, as in climate science, neuroscience, ecology, finance, and epidemiology, to name only a few examples. In this work, we combine sparsity-promoting techniques and machine learning with nonlinear dynamical systems to discover governing equations from noisy measurement data. The only assumption about the structure of the model is that there are only a few important terms that govern the dynamics, so that the equations are sparse in the space of possible functions; this assumption holds for many physical systems in an appropriate basis. In particular, we use sparse regression to determine the fewest terms in the dynamic governing equations required to accurately represent the data. This results in parsimonious models that balance accuracy with model complexity to avoid overfitting. We demonstrate the algorithm on a wide range of problems, from simple canonical systems, including linear and nonlinear oscillators and the chaotic Lorenz system, to the fluid vortex shedding behind an obstacle. The fluid example illustrates the ability of this method to discover the underlying dynamics of a system that took experts in the community nearly 30 years to resolve. We also show that this method generalizes to parameterized systems and systems that are time-varying or have external forcing.},
+	language = {en},
+	number = {15},
+	urldate = {2023-10-10},
+	journal = {Proceedings of the National Academy of Sciences},
+	author = {Brunton, Steven L. and Proctor, Joshua L. and Kutz, J. Nathan},
+	month = apr,
+	year = {2016},
+	pages = {3932--3937},
+	file = {Brunton et al. - 2016 - Discovering governing equations from data by spars.pdf:/Users/djpassey/Zotero/storage/NURVLGA5/Brunton et al. - 2016 - Discovering governing equations from data by spars.pdf:application/pdf},
+}
+
+@article{pathak_model-free_2018,
+    title = {Model-{Free} {Prediction} of {Large} {Spatiotemporally} {Chaotic} {Systems} from {Data}: {A} {Reservoir} {Computing} {Approach}},
+    volume = {120},
+    shorttitle = {Model-{Free} {Prediction} of {Large} {Spatiotemporally} {Chaotic} {Systems} from {Data}},
+    url = {https://link.aps.org/doi/10.1103/PhysRevLett.120.024102},
+    doi = {10.1103/PhysRevLett.120.024102},
+    abstract = {We demonstrate the effectiveness of using machine learning for model-free prediction of spatiotemporally chaotic systems of arbitrarily large spatial extent and attractor dimension purely from observations of the system’s past evolution. We present a parallel scheme with an example implementation based on the reservoir computing paradigm and demonstrate the scalability of our scheme using the Kuramoto-Sivashinsky equation as an example of a spatiotemporally chaotic system.},
+    number = {2},
+    urldate = {2025-02-19},
+    journal = {Physical Review Letters},
+    author = {Pathak, Jaideep and Hunt, Brian and Girvan, Michelle and Lu, Zhixin and Ott, Edward},
+    month = jan,
+    year = {2018},
+    note = {Publisher: American Physical Society},
+    pages = {024102},
+}
+@article{vlachas_backpropagation_2020,
+    title = {Backpropagation algorithms and {Reservoir} {Computing} in {Recurrent} {Neural} {Networks} for the forecasting of complex spatiotemporal dynamics},
+    volume = {126},
+    issn = {08936080},
+    url = {https://linkinghub.elsevier.com/retrieve/pii/S0893608020300708},
+    doi = {10.1016/j.neunet.2020.02.016},
+    abstract = {We examine the eﬃciency of Recurrent Neural Networks in forecasting the spatiotemporal dynamics of high dimensional and reduced order complex systems using Reservoir Computing (RC) and Backpropagation through time (BPTT) for gated network architectures. We highlight advantages and limitations of each method and discuss their implementation for parallel computing architectures. We quantify the relative prediction accuracy of these algorithms for the longterm forecasting of chaotic systems using as benchmarks the Lorenz-96 and the KuramotoSivashinsky (KS) equations. We ﬁnd that, when the full state dynamics are available for training, RC outperforms BPTT approaches in terms of predictive performance and in capturing of the long-term statistics, while at the same time requiring much less training time. However, in the case of reduced order data, large scale RC models can be unstable and more likely than the BPTT algorithms to diverge. In contrast, RNNs trained via BPTT show superior forecasting abilities and capture well the dynamics of reduced order systems. Furthermore, the present study quantiﬁes for the ﬁrst time the Lyapunov Spectrum of the KS equation with BPTT, achieving similar accuracy as RC. This study establishes that RNNs are a potent computational framework for the learning and forecasting of complex spatiotemporal systems.},
+    language = {en},
+    urldate = {2025-02-19},
+    journal = {Neural Networks},
+    author = {Vlachas, P.R. and Pathak, J. and Hunt, B.R. and Sapsis, T.P. and Girvan, M. and Ott, E. and Koumoutsakos, P.},
+    month = jun,
+    year = {2020},
+    pages = {191--217},
+}
+
+@article{novikov2019, doi = {10.21105/joss.01230}, url = {https://doi.org/10.21105/joss.01230}, year = {2019}, publisher = {The Open Journal}, volume = {4}, number = {36}, pages = {1230}, author = {Andrei V. Novikov}, title = {PyClustering: Data Mining Library}, journal = {Journal of Open Source Software} }
