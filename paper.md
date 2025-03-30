@@ -33,18 +33,45 @@ affiliations:
 date: 20 March 2025
 bibliography: paper.bib
 ---
-![Forty models from the Interfere package.](images/forty_models.png)
+
 # Summary
-The vision of Interfere is simple: What if we used high quality scientific models to benchmark our causal prediction tools? When attempting to infer causal relationships from data, randomized experimental data and counterfactuals are key, but obtaining such datasets is expensive and difficult. Across many fields, like economics, neuroscience, ecology, systems biology and others, mechanistic models are developed to simulate scenarios and predict the response of systems to interventions [@brayton_frbus_2014], [@izhikevich_large-scale_2008], [@banks_parameter_2017], [@baker_mechanistic_2018]. Because these models are painstaking calibrated with the real world, they have the ability to generate synthetic counterfactual data containing complexity characteristics of the real processes they emulate. With this vision in mind, Interfere offers the first steps towards such a vision: (1) A general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an initial benchmark set of dynamic counterfactual scenarios. 
+The vision of Interfere is simple: What if we used high quality scientific models to benchmark our causal prediction tools? For methods attempting to infer causal relationships from data, randomized experimental data and counterfactuals are key, but obtaining such datasets is expensive and difficult. Across economics, neuroscience, ecology, systems biology and others, mechanistic models are developed to simulate scenarios and predict the response of systems to interventions [@brayton_frbus_2014], [@izhikevich_large-scale_2008], [@banks_parameter_2017], [@baker_mechanistic_2018]. Because these models are painstaking calibrated with the real world, they have the ability to generate synthetic counterfactual data with complexity characteristics of the real processes they emulate. With this vision in mind, Interfere offers the first steps towards such a vision: (1) A general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an initial benchmark set of dynamic counterfactual scenarios. 
+
+![Three dimensional trajectories of forty scenarios simulated with the Interfere package. Many of the models pictured have more than three dimensions and in that case, only the three components of the trajectory with the highest variance are shown. (I'm going to add intervention response trajectories to this) \label{fig:fourty_models}](images/forty_models.png)
 
 # Statement of need
-Over the past twenty years we've seen an emergence of multiple frameworks for identifying causal relationships [@imbens_causal_2015], [@pearl_causality_2009], [@wieczorek_information_2019]. The most influential frameworks are probabilistic and while is not a requirement of the frameworks, typically in practice, a linear relationship is assumed [@runge_discovering_2022]. However, when attempting to anticipate the response of complex systems in the medium and long term, linear models are insufficient. (For example, static linear models cannot predict scenarios where things get worse before they get better.) Thus, there is a need for causal models with more complexity. Currently, there are very few techniques that are able to fit causal dynamic non-linear models to data. Because of this, we see an opportunity to bring together both the insights from recent breakthroughs in causal inference and the descriptive power of mechanistic modeling.  In order to facilitate this cross pollination, we identified a key causal problem: predicting how a complex system responds to a previously unobserved intervention, and designed the Interfere package as a focal point for building and benchmarking tools aimed at intervention response prediction. The dynamic models contained in interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions. As such, the interfere package creates a much needed link between the causal inference community and mechanistic modeling community.
+Over the past twenty years there has been an emergence of multiple frameworks for identifying causal relationships in observational data [@imbens_causal_2015], [@pearl_causality_2009], [@wieczorek_information_2019]. The most influential frameworks are probabilistic and while is not a requirement of the frameworks, in practice, a linear relationship is usually assumed [@runge_discovering_2022]. However, when attempting to anticipate the response of complex systems in the medium and long term, linear models are insufficient. (For example, static linear models cannot predict scenarios where things get worse before they get better.) Thus, there is a need for causal models with more complexity. Currently, there are very few techniques that are able to fit causal dynamic non-linear models to data. Because of this, we see an opportunity to bring together both the insights from recent breakthroughs in causal inference and the descriptive power of mechanistic modeling.  In order to facilitate this cross pollination, we identified a key causal problem: predicting how a complex system responds to a previously unobserved intervention, and designed the Interfere package as a focal point for building and benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions. As such, the Interfere package creates a much-needed link between the causal inference community and mechanistic modeling community.
 
-![Comparing deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
+![Example experimental setup possible with Interfere: Comparing intervention response prediction for deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
+
+
+# Primary Contributions
+
+The Interfere package provides three primary contributions to the scientific community.
+
+## 1. Dynamically Diverse Counterfactuals at Scale
+
+The "dynamics" submodule in the interfere package contains over fifty dynamic models. It contains a mix of linear, nonlinear, chaotic, continuous time, discrete time, stochastic, and deterministic models. The models come from a variety of diciplines including economics, finance, ecology, biology, neuroscience and public health. Each model inherits the from the Interfere BaseDynamics type and gains the ability to take exogenous control of any observed state and to add measurement noise. Most models also gain the ability to make any observed state stochastic where magnitude of stochasticity can be controlled by a simple scalar parameter or fine tuned with a covariance matrix.
+
+Because of the difficulty of building models of complex systems, predictive methods for complex dynamics are typically benchmarked on less than ten dynamical systems [@challu_nhits_2023], [@brunton_discovering_2016], [@vlachas_backpropagation_2020], [@pathak_model-free_2018], [@prasse_predicting_2022]. As such, Interfere offers a clear improvement over current benchmarking methods for prediction in complex dynamics.
+
+Most importantly, Interfere is built around interventions: the ability to take exogenous control of the state of a complex system and observe the response. Imbuing scientific models with general exogenous control is no small feat because models can be complex and are implemented in a variety of ways. Thus Interfere offers the ability to produce multiple complex dynamic *counterfactual scenarios* at scale. This unqiue feature enables large scale evaluation of dynamic causal prediction methods—tested against systems with properties of interest to scientists.
+
+## 2. Cross Disciplinary Forecast Methods
+
+A second contribution of interfere is the integration of dynamic *forecasting* methodologies from deep learning, applied mathematics and social science. The Interere "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and intervene on the states of the models during prediction. This cross diciplinary mix of techniques affords new insights into the problem of intervention response prediction.
+
+## 3. Opening Up Intervention Response to the Scientific Community
+
+The third major contribution of Interfere is that it poses the intervention response problem—a highly applicable question, to the broader community. The Interfere Benchmark 1.0.0 has the potential provide simple comprehensive evaluation of computational methods on the intervention response problem and therefore streamline future progress towards correctly anticipating how complex systems will respond to new scenarios.
 
 # Usage
 
-The Interfere package is designed around three tasks: Counterfactual simulation, predictive method optimization and prediction. An example of counterfactual simulation can be summarized in the following code:
+The Interfere package is designed around three tasks: Counterfactual simulation, predictive method optimization and prediction. 
+
+## 1. Counterfactual Simulation of Intervention Response
+The following code contains and example of counterfactual intervention response simulation.
+
 ```python
 import numpy as np
 import interfere
@@ -53,26 +80,24 @@ import optuna
 initial_cond = np.random.rand(3)
 t_train = np.arange(0, 10, 0.05)
 dynamic_model = interfere.dynamics.Belozyorov3DQuad()
-
 # Observation Period.
 Y = dynamic_model.simulate(t_train, initial_cond)
-
 # Forecasting period.
 t_test = np.arange(t_train[-1], 12, 0.05)
-
-# Treatment
+# Dynamic treatment do(x1(t) = sin(t))
 interv = interfere.SignalIntervention(np.sin, 1)
 Y_treat = dynamic_model.simulate(t_test, Y, intervention=interv)
-
 # Counterfactual
 Y_cntr = dynamic_model.simulate(t_test, initial_cond)
 ```
 
-Using the data above, we can fit a method to the observation period and attempt to predict both the intervention response and the counterfactual.
+## 2. Cross Validation and Hyperparameter Optimization
+We can fit a method to the observation period generated in the previous section using Interfere's cross validation objective function along with a hyperparameter optimizer (Optuna). Every Interfere method comes with preset hyperparameter ranges to explore.
 
 ```python
+method_type = interfere.VAR
 cv_objv = interfere.CrossValObjective(
-        method_type=interfere.SINDY,
+        method_type=method_type,
         data=Y,
         times=t_train,
         train_window_percent=0.3,
@@ -83,30 +108,24 @@ study = optuna.create_study(name="Interfere Demo Study")
 study.optimize(cv_objv, ntrials=10)
 
 params = study.best_params
-sindy = interfere.SINDY(**params)
-sindy.fit(t_train, interv.split_exog(Y))
-
 ```
 
-# Primary Contributions
+## 3. Intervention Response Prediction
 
-The Interfere package provide three primary contributions to the scientific community.
+Using the best parameters from the hyperparameter optimization run, we can fit a method to the observation data, treating the states we plan to manipulate as exogenous. We then supply an exogenous signal to the method and forecast a response.
 
-## 1. Dynamically Diverse Counterfactuals at Scale
+```python
+method = method_type(**params)
+Y_endog, Y_exog = interv.split_exog(Y)
+method.fit(t_train, Y_endog, Y_exog)
 
-The "dynamics" submodule in the interfere package contains over fifty dynamic models. It contains a mix of linear, nonlinear, chaotic, continuous time, discrete time, stochastic, and deterministic models. The models come from a variety of diciplines including economics, finance, ecology, biology, neuroscience and public health. Each model inherits the from the Interfere BaseDynamics type and gains the ability to take exogenous control of any observed state and to add measurement noise. Most models also gain the ability to make any observed state stochastic where magnitude of stochasticity can be controlled by a simple scalar parameter or fine tuned with a covariance matrix.
-
-Because of the difficulty of building models of complex systems, predictive methods for complex dynamics are typically benchmarked on less than ten dynamical systems [@challu_nhits_2023], [@brunton_discovering_2016], [@vlachas_backpropagation_2020], [@pathak_model-free_2018], [@prasse_predicting_2022]. As such, Interfere offers a clear improvement over current benchmarking methods for prediction in complex dynamics.
-
-Most importantly, Interfere is built around interventions—the ability to manipulate the state of a complex system and observe the response. This is no simple feat for complex scientific models that are implemented with a variety of simulation packages. Thus Interfere offers the ability to produce multiple complex dynamic *counterfactual scenarios* at scale. This unqiue feature enables large scale evaluation of dynamic causal prediction methods—tested against systems with properties of interest to scientists.
-
-## 2. Cross Disciplinary Forecast Methods
-
-A second contribution of interfere is the integration of dynamic forecasting methodologies from deep learning, applied mathematics and social science. The Interere "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and intervene on the states of the models during prediction. This cross diciplinary mix of techniques affords new insights into the problem of intervention response prediction.
-
-## 3. Opening Up Intervention Response to the Scientific Community
-
-The third major contribution of Interfere is that it poses the intervention response problem—a highly applicable question, to the broader community. The Interfere Benchmark 1.0.0 has the potential provide simple comprehensive evaluation of computational methods on the intervention response problem and therefore streamline future progress towards correctly anticipating how complex systems will respond to new scenarios.
+# Simulate intervention response.
+pred_Y_treat = method.simulate(
+    t_test,
+    prior_states=Y,
+    intervention=interv
+)
+```
 
 
 # Related Software and Mathematical Foundations
@@ -114,7 +133,9 @@ The third major contribution of Interfere is that it poses the intervention resp
 ## Predictive Methods
 The Interfere package draws extensively on the Nixtla open source ecosystem for time series forecasting. Nixtla's NeuralForecast proves three of the methods that are integrated with Interfere's interface and StatsForecast provides one of the methods [@olivares2022library_neuralforecast], [@garza2022statsforecast]. Nixtla also provided the inspiration for the cross validation and hyperparameter optimization workflow. Interfere also integrates with predictive methods from the PySINDy and StatsModels packages [@kaptanoglu2022], [@seabold2010statsmodels]. An additional reservoir computing method for global forecasts comes from [@harding_global_2024]. Hyperparameter optimization is designed around the Optuna framework [@akiba2019optuna].
 
-## Dynamic Models
+Finding forecasting methods to integrate with Interfere was difficult due to the (1) lack of multivariate dynamic forecasting methods (2) lack of dynamic methods that allow exogenous variables (3) the fact that many methods only offer a fixed forecast window do not implement recursive prediction.
+
+## Dynamic Models 
 
 See the table below for a full list of dynamic models with attributions that are currently implemented in the interfere package. The dynamic models in were implemented directly from mathematical descriptions except for two which adapt existing simulations from the PyClustering package [@novikov2019].
 
