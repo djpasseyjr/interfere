@@ -130,5 +130,5 @@ class VAR(ForecastMethod):
             "ic": trial.suggest_categorical("ic", ["aic", "fpe"]),
             "maxlags": trial.suggest_int("maxlags", 5, max_lags),
             "trend" : trial.suggest_categorical(
-                "trend", ["c", "ct", "ctt", "n"]),
+                "trend", ["c", "ct", "ctt"]),
         }
