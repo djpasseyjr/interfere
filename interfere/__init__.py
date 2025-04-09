@@ -2,7 +2,7 @@ from .base import (
     DynamicModel,
     ForecastMethod
 )
-from . import benchmarking
+from .cross_validation import CrossValObjective
 from . import dynamics
 from .interventions import (
     perfect_intervention,
