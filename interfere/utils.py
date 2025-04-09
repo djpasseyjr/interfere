@@ -1,10 +1,7 @@
 """Useful extra functions."""
 
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, TypeVar
 from typing_extensions import ParamSpec, TypeAlias
-
-import numpy as np
-import pandas as pd
 
 
 T = TypeVar('T')
