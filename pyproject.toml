@@ -9,25 +9,30 @@ authors = [
   {name = "DJ Passey", email = "djpassey@unc.edu"}
 ]
 dependencies = [
-    "neuralforecast",
-    "numpy <= 1.26.4",
-    "pandas",
+    "matplotlib",
+    "networkx",
+    "numpy<2",
+    "optuna",
     "pyclustering@git+https://github.com/djpasseyjr/pyclustering",
     "pysindy",
     "scikit-learn",
-    "statsforecast",
     "statsmodels",
     "typing_extensions"
 ]
 
 [project.optional-dependencies]
+methods = [
+    "neuralforecast",
+    "statsforecast",
+    "sktime",
+]
+
 dev = [
+    "neuralforecast",
+    "statsforecast",
     "pytest",
     "sdeint",
     "sktime"
-]
-notebooks = [
-    "jupyter"
 ]
 
 [tool.setuptools.packages]
