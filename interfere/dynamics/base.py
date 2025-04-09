@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 import numpy as np
 from scipy import integrate

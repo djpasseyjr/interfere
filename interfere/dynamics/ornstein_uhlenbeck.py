@@ -30,12 +30,15 @@ class OrnsteinUhlenbeck(StochasticDifferentialEquation):
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.  
         """
+        # Set dimension
+        super().__init__(len(mu), measurement_noise_std, sigma)
+
         # Input validation
         if any([
             mu.shape[0] != theta.shape[0],
             theta.shape[0] != theta.shape[1],
-            theta.shape[0] != sigma.shape[0],
-            sigma.shape[1] != mu.shape[0]
+            theta.shape[0] != self.sigma.shape[0],
+            self.sigma.shape[1] != mu.shape[0]
         ]):
             raise ValueError(
                 "Parameters for OrnsteinUhlenback must have matching "
@@ -44,12 +47,10 @@ class OrnsteinUhlenbeck(StochasticDifferentialEquation):
                 f"\n\tmu.shape = {mu.shape}"
                 f"\n\tsigma.shape = {sigma.shape}"
             )
-        # Set dimension
-        super().__init__(len(mu), measurement_noise_std)
+
         # Assign class attributes
         self.theta = theta
         self.mu = mu
-        self.sigma = sigma
 
     def drift(self, x: np.ndarray, t: float):
         return self.theta @ (self.mu - x)

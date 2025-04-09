@@ -115,16 +115,14 @@ class DampedOscillator(StochasticDifferentialEquation):
             m < 0,
             c < 0,
             k < 0,
-            sigma < 0
         )):
             raise ValueError("Damped oscilator parameters must be positive.")
         
         dims = 2
-        super().__init__(dims, measurement_noise_std)
+        super().__init__(dims, measurement_noise_std, sigma)
         self.m = m
         self.c = c
         self.k = k
-        self.sigma = sigma
 
         self.A = np.array([
             [0.0, 1.0],
