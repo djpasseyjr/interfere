@@ -46,22 +46,23 @@ class LinearSDE(StochasticDifferentialEquation):
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
         """
+        # Set dimension and stochasticity
+        dim = A.shape[0]
+        super().__init__(dim, measurement_noise_std, sigma)
 
         # Input vaidation
         if any((
             A.shape[0] != A.shape[1],
-            A.shape[0] != sigma.shape[0],
-            sigma.shape[0] != sigma.shape[1]
+            A.shape[0] != self.sigma.shape[0],
+            self.sigma.shape[0] != self.sigma.shape[1]
         )):
             raise ValueError("Parameters for LinearSDE must have matching dimensions. "
                 "Argument shapes: "
                 f"\n\tA.shape = {A.shape}"
-                f"\n\tsigma.shape = {sigma.shape}"
+                f"\n\tsigma.shape = {self.sigma.shape}"
             )
-        dim = A.shape[0]
-        super().__init__(dim, measurement_noise_std)
         self.A = A
-        self.sigma = sigma
+
 
     def drift(self, x, t):
         return self.A @ x
@@ -167,12 +168,11 @@ def imag_roots_2d_linear_sde(
             independent gaussian noise with standard deviation 1 and 10
             will be added to x1 and x2 respectively at each point in time.
 """
-    Sigma = sigma * np.eye(2)
     A = np.array([
         [0, -4],
         [1, 0]
     ])
-    return LinearSDE(A, Sigma, measurement_noise_std)
+    return LinearSDE(A, sigma, measurement_noise_std)
 
 
 def imag_roots_4d_linear_sde(
@@ -199,9 +199,8 @@ def imag_roots_4d_linear_sde(
     Args:
         sigma (float): controls the magnitude of the brownian noise.        
     """
-    Sigma = sigma * np.eye(MATRIX_ALL_IMAG_EIGS.shape[0])
     A = MATRIX_ALL_IMAG_EIGS
-    return LinearSDE(A, Sigma, measurement_noise_std)
+    return LinearSDE(A, sigma, measurement_noise_std)
 
 
 def attracting_fixed_point_4d_linear_sde(
@@ -241,6 +240,5 @@ def attracting_fixed_point_4d_linear_sde(
     Returns:
         A LinearSDE with a stable attracting fixed point.
     """
-    Sigma = sigma * np.eye(MATRIX_ALL_REAL_NEG_EIGS.shape[0])
     A = MATRIX_ALL_REAL_NEG_EIGS
-    return LinearSDE(A, Sigma, measurement_noise_std)
+    return LinearSDE(A, sigma, measurement_noise_std)
