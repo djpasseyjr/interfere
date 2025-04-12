@@ -321,3 +321,67 @@ class Thomas(StochasticDifferentialEquation):
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
         return self.sigma
+
+
+class MooreSpiegel(StochasticDifferentialEquation):
+
+
+    def __init__(
+        self,
+        R: float = 31,
+        T: float = 5,
+        sigma: Union[float, np.ndarray] = 0.0,
+        measurement_noise_std: Optional[np.ndarray] = None
+    ):
+        """Initializes Moore-Spiegel system.
+
+            dx/dt =y
+            dy/dt = z
+            dz/dt = -z - (T - R + R x^2)y - Tx
+
+        The deterministic system is made stochastic by defining
+
+        dx = [dx/dt, dy/dt, dz/dt]^T
+        dW = [dw1, dw2, dw3]^T
+
+        so that
+        dX = dx * dt + sigma * dW
+
+        The Moore–Spiegel system is a nonlinear thermo-mechanical oscillator 
+        with displacement x(t). The system describes a fluid element 
+        oscillating vertically in a temperature gradient with a linear 
+        restoring force.
+
+
+        Args:
+            R (float): A parameter of the model.  Analogous to the Prandtl 
+                number times the Rayleigh number
+            T (float): A parameter of the model. Analogous to the Prandtl number
+                times the Taylor number.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
+            measurement_noise_std (ndarray): None, or a vector with shape (n,)
+                where each entry corresponds to the standard deviation of the
+                measurement noise for that particular dimension of the dynamic
+                model. For example, if the dynamic model had two variables x1
+                and x2 and `measurement_noise_std = [1, 10]`, then
+                independent gaussian noise with standard deviation 1 and 1
+                will be added to x1 and x2 respectively at each point in time. 
+        """
+        self.R = R
+        self.T = T
+
+        super().__init__(3, measurement_noise_std, sigma)
+        
+
+    def drift(self, x: np.ndarray, t: float):
+        x, y, z = x[0], x[1], x[2]
+        dxdt = y
+        dydt = z
+        dzdt = - z - (self.T - self.R + self.R * x**2) * y - self.T * x
+        return np.array([dxdt, dydt, dzdt])
+
+
+    def noise(self, x: np.ndarray, t: float):
+        return self.sigma

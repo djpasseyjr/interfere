@@ -85,6 +85,7 @@ MODELS = [
     interfere.dynamics.Thomas(),
     interfere.dynamics.Rossler(),
     interfere.dynamics.Lorenz(),
+    interfere.dynamics.MooreSpiegel(T=40),
     lotka_voltera_model(),
     ornstein_uhlenbeck_model(),
     coupled_logistic_model(),
@@ -145,7 +146,7 @@ class TestSimulate:
         X = model.simulate(t, x0, rng=rng)
 
         assert X.shape == (m, n), (
-            f"Output is the wrong shape"" for {model}.")
+            f"Output is the wrong shape for {type(model)}.")
 
 
     def test_initial_condition(self, model: DynamicModel):
@@ -164,11 +165,11 @@ class TestSimulate:
 
         if x0.ndim == 1:
             assert np.allclose(X[0], x0), (
-                f"Initial condition is incorrect for {model}.")
+                f"Initial condition is incorrect for {type(model)}.")
             
         elif x0.ndim == 2:
             assert np.allclose(X[0, :], x0[-1, :]), (
-                f"Initial condition is incorrect for {model}.")
+                f"Initial condition is incorrect for {type(model)}.")
 
 
     def test_noise_preservation(self, model: DynamicModel):
@@ -200,7 +201,7 @@ class TestSimulate:
          # Added a tolerance because Stuart Landau model has some round off
         # error. 
         assert np.max(X - X_rerun) < 1e-15, (
-            f"Random state does not preserve noise for {model}.")
+            f"Random state does not preserve noise for {type(model)}.")
         
     
     def test_not_deterministic(self, model: DynamicModel):
@@ -229,7 +230,7 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         assert not np.all(X == X_new_realization), (
-            f"{model} has deterministic measurement noise."
+            f"{type(model)} has deterministic measurement noise."
         )
 
     
@@ -258,12 +259,12 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         assert X_do.shape == (m, n), (
-            f"Incorrect output size after intervention for {model}.")
+            f"Incorrect output size after intervention for {type(model)}.")
         
         _, interv_states = interv.split_exog(X_do)
         assert np.isclose(
             np.mean(interv_states), interv.constants[0], atol=0.1), (
-            f"Intervention is incorrect for {model}.")
+            f"Intervention is incorrect for {type(model)}.")
 
 
     def test_intervention_random_state(self, model: DynamicModel):
@@ -296,7 +297,7 @@ class TestSimulate:
 
         assert np.allclose(X_do, X_do_rerun), (
             "Random state does not preserve values after intervention for "
-            f" {model}."
+            f" {type(model)}."
         )       
 
 
@@ -328,7 +329,7 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         assert not np.all(X == X_rerun), (
-            f"{model} is not behaving stochastically."
+            f"{type(model)} is not behaving stochastically."
         )
 
 
@@ -365,7 +366,7 @@ class TestSimulate:
         # Added a tolerance because Stuart Landau model has some round off
         # error. 
         assert np.max(X - X_rerun) < 1e-15, (
-            f"{model} is not generating reproducible stochasticity."
+            f"{type(model)} is not generating reproducible stochasticity."
         )
 
 
@@ -397,8 +398,29 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         assert not np.all(X == X_rerun), (
-            f"{model} is not behaving stochastically with interventions."
+            f"{type(model)} is not behaving stochastically with interventions."
         )
+
+    
+    def test_stochastic_init(self, model: DynamicModel):
+        """Tests that the stochastic matrix initializer works correctly."""
+        n = model.dim
+        true_sigma = np.eye(n)
+
+        for sigma in [1, np.ones(n), np.eye(n)]:
+            # Reinitialize model with the same args but change sigma
+            ini = model.__init__
+
+            # Grab arg names.
+            kwargs = {
+                kw: getattr(model, kw)
+                for kw in ini.__code__.co_varnames[1:ini.__code__.co_argcount]
+                if hasattr(model, kw)
+            }
+
+            new_model = type(model)(**{**kwargs, "sigma": sigma})
+            assert np.all(new_model.sigma == true_sigma), (
+                f"Stochastic initialization failed for {type(model).__name__}")
 
 
 def test_stochastic_array_builder():
