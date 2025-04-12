@@ -89,8 +89,7 @@ class LSTM(NixtlaAdapter):
 
     def get_test_params() -> Dict[str, Any]:
         return dict(
-            h=12, 
-            input_size=-1,
+            h=1, 
             loss=MAE(),
             scaler_type='robust',
             encoder_n_layers=2,
