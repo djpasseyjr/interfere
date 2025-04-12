@@ -19,7 +19,9 @@ class GeometricBrownianMotion(StochasticDifferentialEquation):
 
         Args:
             mu (ndarray): A (n,) vector.
-            sigma (ndarray): A (n,) matrix.
+            sigma (float or ndarray): The stochastic noise parameter. Can be a
+                float, a 1D matrix or a 2D matrix. Dimension must match
+                dimension of model.
             measurement_noise_std (ndarray): None, or a vector with shape (n,)
                 where each entry corresponds to the standard deviation of the
                 measurement noise for that particular dimension of the dynamic
@@ -47,4 +49,4 @@ class GeometricBrownianMotion(StochasticDifferentialEquation):
         return self.mu * x
     
     def noise(self, x: np.ndarray, t: float):
-        return np.diag(self.sigma) * x
+        return self.sigma * x
