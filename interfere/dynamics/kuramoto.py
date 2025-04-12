@@ -85,11 +85,10 @@ class Kuramoto(StochasticDifferentialEquation):
                 x1 and x2 respectively at each point in time. 
         """
         dim = adjacency_matrix.shape[0]
+        super().__init__(dim, measurement_noise_std, sigma)
         self.omega = omega
         self.K = K
         self.adjacency_matrix = adjacency_matrix
-        self.Sigma = sigma * np.diag(np.ones(dim))
-        super().__init__(dim, measurement_noise_std)
 
 
     @copy_doc(StochasticDifferentialEquation._simulate)
@@ -152,7 +151,7 @@ class Kuramoto(StochasticDifferentialEquation):
             self.adjacency_matrix * np.sin(theta_j - theta_i)).dot(one)
         
     def noise(self, theta: np.ndarray, t) -> np.ndarray:
-        return self.Sigma
+        return self.sigma
 
 
 class KuramotoSakaguchi(Kuramoto):

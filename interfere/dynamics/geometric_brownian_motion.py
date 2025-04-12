@@ -28,19 +28,20 @@ class GeometricBrownianMotion(StochasticDifferentialEquation):
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.  
         """
+        # Set dimension
+        super().__init__(len(mu), measurement_noise_std, sigma)
+
         # Input validation
-        if mu.shape[0] != sigma.shape[0]:
+        if mu.shape[0] != self.sigma.shape[0]:
             raise ValueError(
                 "Parameters for Arithmetic Brownian motion must have matching dimensions. "
                 "Argument shapes: "
                 f"\n\tmu = {mu.shape}"
                 f"\n\tsigma = {sigma.shape}"
             )
-        # Set dimension
-        super().__init__(len(mu), measurement_noise_std)
+        
         # Assign class attributes
         self.mu = mu
-        self.sigma = sigma
 
     def drift(self, x: np.ndarray, t: float):
         return self.mu * x

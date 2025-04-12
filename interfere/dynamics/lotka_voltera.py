@@ -15,7 +15,8 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
         growth_rates: np.ndarray,
         capacities: np.ndarray,
         interaction_mat: np.ndarray,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
+        sigma = None,
     ):
         """Initializes class for simulating Lotka Voltera dynamics.
 
@@ -62,8 +63,17 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
         self.growth_rates = growth_rates
         self.capacities = capacities
         self.interaction_mat = interaction_mat
+
+        if not isinstance(self, LotkaVolteraSDE) and (
+            (sigma is not None) or (sigma != 0)
+        ):
+            raise ValueError(
+                "Type interfere.dynamics.LotkaVoltera cannot be stochastic. Use"
+                " interfere.dynamics.LotkaVolteraSDE."
+            )
+        
         # Set dimension of the system.
-        super().__init__(dim, measurement_noise_std)
+        super().__init__(dim, measurement_noise_std, sigma)
 
     def dXdt(self, x: np.ndarray, t: Optional[float] = None):
         """Coputes derivative of a generalized Lotka Voltera model.
@@ -127,8 +137,12 @@ class LotkaVolteraSDE(StochasticDifferentialEquation, LotkaVoltera):
         # function by skipping StochasticDifferentialEquation in this
         # class's multiple resolution order.
         super(StochasticDifferentialEquation, self).__init__(
-            growth_rates, capacities, interaction_mat, measurement_noise_std)
-        self.sigma = sigma
+            growth_rates=growth_rates,
+            capacities=capacities,
+            interaction_mat=interaction_mat,
+            measurement_noise_std=measurement_noise_std,
+            sigma=sigma
+        )
 
     def drift(self, x, t):
         return self.dXdt(x, t)

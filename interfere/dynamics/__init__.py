@@ -35,7 +35,14 @@ from .pyclustering_models import (
 from .michaelis_menten import MichaelisMenten
 from .mutualistic_pop import MutualisticPopulation
 from .ornstein_uhlenbeck import OrnsteinUhlenbeck
-from .quadratic_sdes import Belozyorov3DQuad, Liping3DQuadFinance, Lorenz, Rossler, Thomas
+from .quadratic_sdes import (
+    Belozyorov3DQuad,
+    Liping3DQuadFinance,
+    Lorenz,
+    Rossler,
+    Thomas,
+    MooreSpiegel
+)
 from .simple_linear_sdes import (
     DampedOscillator,
     LinearSDE,

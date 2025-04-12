@@ -42,18 +42,18 @@ class VARMADynamics(DynamicModel):
                 independent gaussian noise with standard deviation 1 and 10
                 will be added to x1 and x2 respectively at each point in time.
         """
+        n, m = phi_matrices[0].shape
+        super().__init__(n, measurement_noise_std, sigma)
+
         phi_dims = [n for phi_i in phi_matrices for n in phi_i.shape]
         theta_dims = [n for theta_i in theta_matrices for n in theta_i.shape]
-        sigma_dims = [*sigma.shape]
-        n, m = phi_matrices[0].shape
+        sigma_dims = [*self.sigma.shape]
         if not np.all(np.hstack([phi_dims, theta_dims, sigma_dims]) == n):
             raise ValueError("All theta and phi matrices and the sigma matrix"
                              " should be square and have the same dimension.")
         
         self.phi_matrices = phi_matrices
         self.theta_matrices = theta_matrices
-        self.sigma = sigma
-        super().__init__(n, measurement_noise_std)
 
     def _simulate(
         self,
