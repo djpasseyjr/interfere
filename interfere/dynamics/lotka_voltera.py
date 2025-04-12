@@ -64,13 +64,17 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
         self.capacities = capacities
         self.interaction_mat = interaction_mat
 
-        if not isinstance(self, LotkaVolteraSDE) and (
-            (sigma is not None) or (sigma != 0)
-        ):
-            raise ValueError(
-                "Type interfere.dynamics.LotkaVoltera cannot be stochastic. Use"
-                " interfere.dynamics.LotkaVolteraSDE."
-            )
+        # Check if a stochastic simulation is not being used.
+        if not isinstance(self, LotkaVolteraSDE):
+
+            # Check if the user still supplied a stochastic argument.
+            if (sigma is not None) and (sigma != 0):
+                raise ValueError(
+                    "Type interfere.dynamics.LotkaVoltera cannot be stochastic."
+                    " Use interfere.dynamics.LotkaVolteraSDE or set sigma=None "
+                    "during initialization. "
+                    f"\n\n\tsigma={sigma}"
+                )
         
         # Set dimension of the system.
         super().__init__(dim, measurement_noise_std, sigma)
