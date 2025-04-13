@@ -24,18 +24,32 @@ class ARIMA(NixtlaAdapter):
         alias: str = "ARIMA",
         prediction_intervals: Optional[statsforecast.utils.ConformalIntervals] = None,
         p = None,
+        d = None,
         q = None,
     ):
         self.method_params = locals()
         self.method_params.pop("self")
 
-        # Optionally accepts individual order parameters.
+        # Optionally accepts individual order parameters to optimize separately.
+
+        # Time lags.
         p = self.method_params.pop("p", None)
+
+        # Seasonal differencing.
+        d = self.method_params.pop("d", None)
+
+        # Autocorrelation lags.
         q = self.method_params.pop("q", None)
+
         if p:
-            self.method_params["order"][0] = p
+            ord = self.method_params["order"]
+            self.method_params["order"] = (p, ord[1], ord[2])
+        if d:
+            ord = self.method_params["order"]
+            self.method_params["order"] = (ord[0], d, ord[2])
         if q:
-            self.method_params["oreder"][1] = q
+            ord = self.method_params["order"]
+            self.method_params["order"] = (ord[0], ord[1], q)
 
         # Denote method type and forecaster class.
         self.method_type = statsforecast.models.ARIMA
@@ -64,7 +78,7 @@ class ARIMA(NixtlaAdapter):
         return {
             "order": (
                 trial.suggest_int("p",1, max_lags),
-                1, # Seasonal differencing.
+                trial.suggest_int("d", 1, max_lags), # Seasonal differencing.
                 trial.suggest_int("q",1, 15)
             ),
             "include_mean": trial.suggest_categorical(

@@ -594,4 +594,9 @@ def test_cvr_cv_call_methods(
     study.optimize(cv, n_trials=1)
     score = study.best_value
 
+    # Make sure that the method can initialize using the best parameters.
+    ps = study.best_params
+    best_method = method_type(**ps)
+
+    # Score must not be NaN.
     assert isinstance(score, float)
