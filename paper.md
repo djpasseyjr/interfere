@@ -143,34 +143,35 @@ See the table below for a full list of dynamic models with attributions that are
 
 | Dynamic Model Class                 | Description and Source                                                                                       | Properties                            |
 |------------------------------------|---------------------------------------------------------------------------------------------------------------|----------------------------------------|
-| ArithmeticBrownianMotion           | Brownian motion with linear drift and constant diffusion [@oksendal_stochastic_2005]                          | Stochastic, Linear                     |
+| Arithmetic Brownian Motion         | Brownian motion with linear drift and constant diffusion [@oksendal_stochastic_2005]                          | Stochastic, Linear                     |
 | Coupled Logistic Map               | Discrete-time logistic map with spatial coupling [@lloyd_coupled_1995]                                       | Nonlinear, Chaotic                    |
-| StochasticCoupledMapLattice        | Coupled map lattice with stochastic noise [@kaneko_coupled_1991]                                              | Nonlinear, Stochastic, Chaotic        |
-| MichaelisMenten                    | Model for enzyme kinetics and biochemical reaction networks [@srinivasan_guide_2022]                          | Nonlinear, Stochastic                 |
-| LotkaVolteraSDE                    | Stochastic Lotka-Volterra predator-prey model [@hening_stochastic_2018]                                      | Nonlinear, Stochastic                 |
+| Stochastic Coupled Map Lattice     | Coupled map lattice with stochastic noise [@kaneko_coupled_1991]                                              | Nonlinear, Stochastic, Chaotic        |
+| Michaelis Menten                   | Model for enzyme kinetics and biochemical reaction networks [@srinivasan_guide_2022]                          | Nonlinear, Stochastic                 |
+| Lotka Voltera SDE                  | Stochastic Lotka-Volterra predator-prey model [@hening_stochastic_2018]                                      | Nonlinear, Stochastic                 |
 | Kuramoto                           | Coupled oscillator model to study synchronization [@rodrigues_kuramoto_2016]                                 | Nonlinear, Stochastic                 |
-| KuramotoSakaguchi                  | Kuramoto model variant with phase frustration [@sakaguchi_soluble_1986]                                      | Nonlinear, Stochastic                 |
-| HodgkinHuxleyPyclustering          | Neuron action-potential dynamics based on Hodgkin-Huxley equations [@hodgkin_quantitative_1952]              | Nonlinear                             |
-| StuartLandauKuramoto               | Coupled oscillators with amplitude-phase dynamics [@cliff_unifying_2023]                                     | Nonlinear, Stochastic                 |
-| MutualisticPopulation              | Dynamics of interacting mutualistic species [@prasse_predicting_2022]                                        | Nonlinear                             |
-| OrnsteinUhlenbeck                  | Mean-reverting stochastic differential equation [@gardiner_stochastic_2009]                                  | Stochastic, Linear                    |
-| Belozyorov3DQuad                   | 3-dimensional quadratic chaotic system [@belozyorov_exponential_2015]                                        | Nonlinear, Chaotic                    |
-| Liping3DQuadFinance                | Chaotic dynamics applied in financial modeling [@liping_new_2021]                                            | Nonlinear, Chaotic                    |
+| Kuramoto Sakaguchi                 | Kuramoto model variant with phase frustration [@sakaguchi_soluble_1986]                                      | Nonlinear, Stochastic                 |
+| Hodgkin Huxley Pyclustering        | Neuron action-potential dynamics based on Hodgkin-Huxley equations [@hodgkin_quantitative_1952]              | Nonlinear                             |
+| Stuart Landau Kuramoto             | Coupled oscillators with amplitude-phase dynamics [@cliff_unifying_2023]                                     | Nonlinear, Stochastic                 |
+| Mutualistic Population             | Dynamics of interacting mutualistic species [@prasse_predicting_2022]                                        | Nonlinear                             |
+| Ornstein Uhlenbeck                 | Mean-reverting stochastic differential equation [@gardiner_stochastic_2009]                                  | Stochastic, Linear                    |
+| Belozyorov 3D Quad                 | 3-dimensional quadratic chaotic system [@belozyorov_exponential_2015]                                        | Nonlinear, Chaotic                    |
+| Liping 3D Quad Finance             | Chaotic dynamics applied in financial modeling [@liping_new_2021]                                            | Nonlinear, Chaotic                    |
 | Lorenz                             | Classic chaotic system describing atmospheric convection [@lorenz_deterministic_2017]                        | Nonlinear, Chaotic                    |
 | Rossler                            | Simplified 3D chaotic attractor system [@rossler_equation_1976]                                              | Nonlinear, Chaotic                    |
 | Thomas                             | Chaotic attractor with simple structure and rich dynamics [@thomas_deterministic_1999]                       | Nonlinear, Chaotic                    |
-| DampedOscillator                   | Harmonic oscillator with damping and noise (Classical linear model)                                          | Linear, Stochastic                    |
+| Damped Oscillator                  | Harmonic oscillator with damping and noise (Classical linear model)                                          | Linear, Stochastic                    |
 | SIS                                | Epidemiological model (Susceptible-Infected-Susceptible) [@prasse_predicting_2022]                           | Nonlinear, Stochastic                 |
-| VARMADynamics                      | Vector AutoRegressive Moving Average for time series modeling [@hamilton_time_2020]                          | Linear, Stochastic                    |
-| WilsonCowan                        | Neural mass model for neuronal population dynamics [@wilson_excitatory_1972]                                 | Nonlinear                             |
-| GeometricBrownianMotion            | Stochastic model widely used in financial mathematics [@black_pricing_1973]                                  | Nonlinear, Stochastic                 |
-| PlantedTankNitrogenCycle           | Biochemical cycle modeling nitrogen transformation in aquatic systems [@fazio_mathematical_2006]             | Nonlinear                             |
-| GenerativeForecaster               | Predictive forecasting models trained on simulation, then used to generate data (Written for Interfere)      | Stochastic                            |
-| StandardNormalNoise                | IID noise from standard normal distribution [@cliff_unifying_2023]                                           | Stochastic                            |
-| StandardCauchyNoise                | IID noise from standard Cauchy distribution [@cliff_unifying_2023]                                           | Stochastic                            |
-| StandardExponentialNoise           | IID noise from standard exponential distribution [@cliff_unifying_2023]                                      | Stochastic                            |
-| StandardGammaNoise                 | IID noise from standard gamma distribution [@cliff_unifying_2023]                                            | Stochastic                            |
-| StandardTNoise                     | IID noise from Student’s t-distribution [@cliff_unifying_2023]                                               | Stochastic                            |
+| VARMA Dynamics                     | Vector AutoRegressive Moving Average for time series modeling [@hamilton_time_2020]                          | Linear, Stochastic                    |
+| Wilson Cowan                       | Neural mass model for neuronal population dynamics [@wilson_excitatory_1972]                                 | Nonlinear                             |
+| Geometric Brownian Motion          | Stochastic model widely used in financial mathematics [@black_pricing_1973]                                  | Nonlinear, Stochastic                 |
+| Planted Tank Nitrogen Cycle        | Biochemical cycle modeling nitrogen transformation in aquatic systems [@fazio_mathematical_2006]             | Nonlinear                             |
+| Generative Forecaster              | Predictive forecasting models trained on simulation, then used to generate data (Written for Interfere)      | Stochastic                            |
+| Standard Normal Noise              | IID noise from standard normal distribution [@cliff_unifying_2023]                                           | Stochastic                            |
+| Standard Cauchy Noise              | IID noise from standard Cauchy distribution [@cliff_unifying_2023]                                           | Stochastic                            |
+| Standard Exponential Noise         | IID noise from standard exponential distribution [@cliff_unifying_2023]                                      | Stochastic                            |
+| Standard Gamma Noise               | IID noise from standard gamma distribution [@cliff_unifying_2023]                                            | Stochastic                            |
+| Standard T Noise                   | IID noise from Student’s t-distribution [@cliff_unifying_2023]                                               | Stochastic                            |
+
 
 # Acknowledgements
 This work was supported by NSF GRFP.
