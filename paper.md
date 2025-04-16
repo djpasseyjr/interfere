@@ -1,5 +1,5 @@
 ---
-title: 'Interfere: Intervention Response Simulation and Prediction for Stochastic Non-Linear Dynamics'
+title: 'Interfere: Intervention Response Simulation and Prediction for Stochastic Nonlinear Dynamics'
 tags:
   - Python
   - dynamics
@@ -17,11 +17,11 @@ tags:
 authors:
   - name: D. J. Passey
     orcid: 0000-0002-9310-3361
-    equal-contrib: true
+    ##equal-contrib: true
     affiliation: 1
   - name: Peter J. Mucha
     orcid: 0000-0002-0648-7230
-    equal-contrib: true
+    ##equal-contrib: true
     affiliation: 2
 affiliations:
   - name: University of North Carolina at Chapel Hill, United States
@@ -35,12 +35,14 @@ bibliography: paper.bib
 ---
 
 # Summary
-The vision of Interfere is simple: What if we used high quality scientific models to benchmark our causal prediction tools? For methods attempting to infer causal relationships from data, randomized experimental data and counterfactuals are key, but obtaining such datasets is expensive and difficult. Across economics, neuroscience, ecology, systems biology and others, mechanistic models are developed to simulate scenarios and predict the response of systems to interventions [@brayton_frbus_2014], [@izhikevich_large-scale_2008], [@banks_parameter_2017], [@baker_mechanistic_2018]. Because these models are painstaking calibrated with the real world, they have the ability to generate synthetic counterfactual data with complexity characteristics of the real processes they emulate. With this vision in mind, Interfere offers the first steps towards such a vision: (1) A general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an initial benchmark set of dynamic counterfactual scenarios. 
+The vision of Interfere is simple: What if we used high quality scientific models to benchmark causal prediction tools? Randomized experimental data and counterfactuals are essential for testing methods that attempt to infer causal relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models have been developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018] **(If this citation collection formats right, do the same to others)** . Because these models are painstaking calibrated with the real world, they have the ability to generate diverse and complex synthetic counterfactual data that are characteristic of the real processes they emulate. Interfere offers the first steps towards implementing a vision that leverages such models to test causal prediction tools, combining (1) a general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an initial benchmark set of dynamic counterfactual scenarios. 
 
-![Three dimensional trajectories of forty scenarios simulated with the Interfere package. Many of the models pictured have more than three dimensions and in that case, only the three components of the trajectory with the highest variance are shown. (I'm going to add intervention response trajectories to this) \label{fig:fourty_models}](images/forty_models.png)
+![Three dimensional trajectories of forty scenarios simulated with the Interfere package. Many of the models pictured have more than three dimensions (in such cases, only the three components of the trajectory with highest variance are shown). **(I'm going to add intervention response trajectories to this)** \label{fig:fourty_models}](images/forty_models.png)
 
-# Statement of need
-Over the past twenty years there has been an emergence of multiple frameworks for identifying causal relationships in observational data [@imbens_causal_2015], [@pearl_causality_2009], [@wieczorek_information_2019]. The most influential frameworks are probabilistic and while is not a requirement of the frameworks, in practice, a linear relationship is usually assumed [@runge_discovering_2022]. However, when attempting to anticipate the response of complex systems in the medium and long term, linear models are insufficient. (For example, static linear models cannot predict scenarios where things get worse before they get better.) Thus, there is a need for causal models with more complexity. Currently, there are very few techniques that are able to fit causal dynamic non-linear models to data. Because of this, we see an opportunity to bring together both the insights from recent breakthroughs in causal inference and the descriptive power of mechanistic modeling.  In order to facilitate this cross pollination, we identified a key causal problem: predicting how a complex system responds to a previously unobserved intervention, and designed the Interfere package as a focal point for building and benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions. As such, the Interfere package creates a much-needed link between the causal inference community and mechanistic modeling community.
+# Statement of Need
+Over the past twenty years there has been an emergence of multiple frameworks for identifying causal relationships in observational data [@imbens_causal_2015], [@pearl_causality_2009], [@wieczorek_information_2019]. The most influential frameworks are probabilistic and, while is not a requirement of all frameworks, in practice a linear relationship is often assumed [@runge_discovering_2022]. However, when attempting to anticipate the response of complex systems in the medium and long term, linear models are insufficient. For example, static linear models cannot predict scenarios where things get worse before they get better. However, there are relatively few techniques that are able to fit causal dynamic nonlinear models to data. Because of this, we see an opportunity to bring together the insights from recent breakthroughs in causal inference with the descriptive power of mechanistic modeling.  
+
+In order to facilitate this cross pollination, we focus on a key causal problem --- predicting how a complex system responds to a previously unobserved intervention --- **(double check em dashes rendered correctly)** and designed the Interfere package for benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions. As such, the Interfere package creates a much-needed link between the causal inference community and mechanistic modeling community. **(Add cookbook, pedantic description of what the problem is and what exactly we want to do so that a CS person can understand.) (Think about adding Forward Euler)**
 
 ![Example experimental setup possible with Interfere: Comparing intervention response prediction for deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
 
@@ -142,27 +144,27 @@ See the table below for a full list of dynamic models with attributions that are
 | Dynamic Model Class                 | Short Description                                                           | Source                                                                                                       | Properties                            |
 |-------------------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|---------------------------------------|
 | ArithmeticBrownianMotion            | Brownian motion with linear drift and constant diffusion                    | [@oksendal_stochastic_2005] | Stochastic, Linear                    |
-| Coupled Logistic Map                | Discrete-time logistic map with spatial coupling                            | [@lloyd_coupled_1995] | Non-linear, Chaotic                   |
-| StochasticCoupledMapLattice         | Coupled map lattice with stochastic noise                                   | [@kaneko_coupled_1991] | Non-linear, Stochastic, Chaotic       |
-| MichaelisMenten                     | Model for enzyme kinetics and biochemical reaction networks                 | [@srinivasan_guide_2022] | Non-linear, Stochastic                |
-| LotkaVolteraSDE                     | Stochastic Lotka-Volterra predator-prey model                    | [@hening_stochastic_2018] | Non-linear, Stochastic                |
-| Kuramoto                            | Coupled oscillator model to study synchronization                           | [@rodrigues_kuramoto_2016]                                                     | Non-linear, Stochastic                |
-| KuramotoSakaguchi                   | Kuramoto model variant with phase frustration                               | [@sakaguchi_soluble_1986]  | Non-linear, Stochastic                |
-| HodgkinHuxleyPyclustering           | Neuron action-potential dynamics based on Hodgkin-Huxley equations          |[@hodgkin_quantitative_1952] | Non-linear                            |
-| StuartLandauKuramoto                | Coupled oscillators with amplitude-phase dynamics                           | [@cliff_unifying_2023]| Non-linear, Stochastic                |
-| MutualisticPopulation               | Dynamics of interacting mutualistic species                                 | [@prasse_predicting_2022]                       | Non-linear                            |
+| Coupled Logistic Map                | Discrete-time logistic map with spatial coupling                            | [@lloyd_coupled_1995] | Nonlinear, Chaotic                   |
+| StochasticCoupledMapLattice         | Coupled map lattice with stochastic noise                                   | [@kaneko_coupled_1991] | Nonlinear, Stochastic, Chaotic       |
+| MichaelisMenten                     | Model for enzyme kinetics and biochemical reaction networks                 | [@srinivasan_guide_2022] | Nonlinear, Stochastic                |
+| LotkaVolteraSDE                     | Stochastic Lotka-Volterra predator-prey model                    | [@hening_stochastic_2018] | Nonlinear, Stochastic                |
+| Kuramoto                            | Coupled oscillator model to study synchronization                           | [@rodrigues_kuramoto_2016]                                                     | Nonlinear, Stochastic                |
+| KuramotoSakaguchi                   | Kuramoto model variant with phase frustration                               | [@sakaguchi_soluble_1986]  | Nonlinear, Stochastic                |
+| HodgkinHuxleyPyclustering           | Neuron action-potential dynamics based on Hodgkin-Huxley equations          |[@hodgkin_quantitative_1952] | Nonlinear                            |
+| StuartLandauKuramoto                | Coupled oscillators with amplitude-phase dynamics                           | [@cliff_unifying_2023]| Nonlinear, Stochastic                |
+| MutualisticPopulation               | Dynamics of interacting mutualistic species                                 | [@prasse_predicting_2022]                       | Nonlinear                            |
 | OrnsteinUhlenbeck                   | Mean-reverting stochastic differential equation                             |[@gardiner_stochastic_2009] | Stochastic, Linear                    |
-| Belozyorov3DQuad                    | 3-dimensional quadratic chaotic system                                      | [@belozyorov_exponential_2015]| Non-linear, Chaotic                   |
-| Liping3DQuadFinance                 | Chaotic dynamics applied in financial modeling                              | [@liping_new_2021] | Non-linear, Chaotic                   |
-| Lorenz                              | Classic chaotic system describing atmospheric convection                    | [@lorenz_deterministic_2017] | Non-linear, Chaotic                   |
-| Rossler                             | Simplified 3D chaotic attractor system                                      | [@rossler_equation_1976] | Non-linear, Chaotic                   |
-| Thomas                              | Chaotic attractor with simple structure and rich dynamics                   | [@thomas_deterministic_1999]               | Non-linear, Chaotic                   |
+| Belozyorov3DQuad                    | 3-dimensional quadratic chaotic system                                      | [@belozyorov_exponential_2015]| Nonlinear, Chaotic                   |
+| Liping3DQuadFinance                 | Chaotic dynamics applied in financial modeling                              | [@liping_new_2021] | Nonlinear, Chaotic                   |
+| Lorenz                              | Classic chaotic system describing atmospheric convection                    | [@lorenz_deterministic_2017] | Nonlinear, Chaotic                   |
+| Rossler                             | Simplified 3D chaotic attractor system                                      | [@rossler_equation_1976] | Nonlinear, Chaotic                   |
+| Thomas                              | Chaotic attractor with simple structure and rich dynamics                   | [@thomas_deterministic_1999]               | Nonlinear, Chaotic                   |
 | DampedOscillator                    | Harmonic oscillator with damping and noise                                  | (Classical linear model) | Linear, Stochastic                    |
-| SIS                                 | Epidemiological model (Susceptible-Infected-Susceptible)                    |[@prasse_predicting_2022] | Non-linear, Stochastic                |
+| SIS                                 | Epidemiological model (Susceptible-Infected-Susceptible)                    |[@prasse_predicting_2022] | Nonlinear, Stochastic                |
 | VARMADynamics                       | Vector AutoRegressive Moving Average for time series modeling               | [@hamilton_time_2020]                                          | Linear, Stochastic                    |
-| WilsonCowan                         | Neural mass model for neuronal population dynamics                          | [@wilson_excitatory_1972]  | Non-linear                            |
-| GeometricBrownianMotion             | Stochastic model widely used in financial mathematics                       | [@black_pricing_1973]               | Non-linear, Stochastic                |
-| PlantedTankNitrogenCycle            | Biochemical cycle modeling nitrogen transformation in aquatic systems       | [@fazio_mathematical_2006] | Non-linear                            |
+| WilsonCowan                         | Neural mass model for neuronal population dynamics                          | [@wilson_excitatory_1972]  | Nonlinear                            |
+| GeometricBrownianMotion             | Stochastic model widely used in financial mathematics                       | [@black_pricing_1973]               | Nonlinear, Stochastic                |
+| PlantedTankNitrogenCycle            | Biochemical cycle modeling nitrogen transformation in aquatic systems       | [@fazio_mathematical_2006] | Nonlinear                            |
 | GenerativeForecaster                | Predictive forecasting models trained on simulation, then used to generate data                    | (Written for Interfere)               | Stochastic                |
 | StandardNormalNoise                 | IID noise from standard normal distribution                                 | [@cliff_unifying_2023]                                                              | Stochastic                            |
 | StandardCauchyNoise                 | IID noise from standard Cauchy distribution                                 | [@cliff_unifying_2023]                                                                | Stochastic                            |
