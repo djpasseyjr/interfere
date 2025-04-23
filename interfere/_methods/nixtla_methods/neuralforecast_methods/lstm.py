@@ -101,6 +101,8 @@ class LSTM(NixtlaAdapter):
         )
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, max_lags=50, **kwargs):
         return {
             "h": trial.suggest_int("h", 1, 16),

@@ -38,6 +38,8 @@ class AverageMethod(ForecastMethod):
     def get_test_params() -> Dict[str, Any]:
         return {}
     
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, **kwargs) -> Dict[str, Any]:
         return {}
         

@@ -55,11 +55,7 @@ class NixtlaAdapter(ForecastMethod):
 
 
     def get_test_params() -> Dict[str, Any]:
-        '''Returns default parameters conducive to fast test cases'''
-    
-
-    def get_test_param_grid() -> Dict[str, List[Any]]:
-        '''Returns a parameter grid for testing grid search'''
+        '''Returns default parameters conducive to fast test cases'''    
     """
 
     def __init__(

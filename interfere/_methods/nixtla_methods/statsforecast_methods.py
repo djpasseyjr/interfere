@@ -2,8 +2,10 @@ from typing import Any, List, Dict, Optional, Tuple
 
 import statsforecast.models
 
+from ...base import ForecastMethod
 from .nixtla_adapter import NixtlaAdapter
 from ...utils import copy_doc
+
 
 
 class ARIMA(NixtlaAdapter): 
@@ -73,6 +75,8 @@ class ARIMA(NixtlaAdapter):
         return {}
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, max_lags=15, **kwargs) -> Dict[str, Any]:
         """Returns a parameter grid for testing grid search"""
         return {

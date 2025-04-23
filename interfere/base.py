@@ -296,8 +296,8 @@ class ExogIntervention(Intervention):
     the intervened signal from the non intervened signal. (i.e. replacing
     values with the exogenous values.)
     """
-    def __init__(self, intervened_idxs: List[int]):
-        self.intervened_idxs = intervened_idxs
+    def __init__(self, iv_idxs: List[int]):
+        self.iv_idxs = iv_idxs
     
     def split_exog(self, X: np.ndarray):
         """Splits exogeneous columns from endogenous.
@@ -314,16 +314,16 @@ class ExogIntervention(Intervention):
         _, n = X.shape
         X_idxs = np.arange(n + 1)
 
-        if not set(self.intervened_idxs).issubset(X_idxs):
+        if not set(self.iv_idxs).issubset(X_idxs):
             raise ValueError((
                 "Some intervention indexes are too big for input array:"
-                f"\n\t Intervention indexes = {self.intervened_idxs}"
+                f"\n\t Intervention indexes = {self.iv_idxs}"
                 f"\n\t Input array shape = {X.shape}"
             ))
 
-        if self.intervened_idxs:
-            exog_X = X[..., self.intervened_idxs]
-            endo_X = np.delete(X, self.intervened_idxs, axis=-1)
+        if self.iv_idxs:
+            exog_X = X[..., self.iv_idxs]
+            endo_X = np.delete(X, self.iv_idxs, axis=-1)
 
             # Check for empty arrays.
             if endo_X.shape[1] == 0:
@@ -351,23 +351,23 @@ class ExogIntervention(Intervention):
             raise ValueError("Both endo_X and exog_X are None.")
     
         if exog_X is None:
-            if self.intervened_idxs:
+            if self.iv_idxs:
                 raise ValueError(
                     "Exogenous states was None but intervention expects "
                     "exogenous states."
                 )
             return endo_X
         
-        elif not self.intervened_idxs:
+        elif not self.iv_idxs:
                 raise ValueError(
                     "Exogenous states provided but intervention does not expect"
                     " exogenous states"
                 )
         
         if endo_X is None:
-            max_idx = max(self.intervened_idxs)
+            max_idx = max(self.iv_idxs)
             all_idx = np.arange(max_idx + 1)
-            extra_idx = set(self.intervened_idxs).symmetric_difference(all_idx)
+            extra_idx = set(self.iv_idxs).symmetric_difference(all_idx)
             if extra_idx:
                 raise ValueError(
                     "Endogenous states was None but intervention expects "
@@ -384,15 +384,15 @@ class ExogIntervention(Intervention):
                 f"rows. \nNum endog rows = {m_endo} Num exog rows = {m_endo}"
             )
         
-        if n_exog != len(self.intervened_idxs):
+        if n_exog != len(self.iv_idxs):
             raise ValueError(
                 "Wrong number of exogenous signals passed to intervention. "
-                f"Expected {len(self.intervened_idxs)} received {m_exog}.")
+                f"Expected {len(self.iv_idxs)} received {m_exog}.")
         
         n = n_endo + n_exog
         X = np.zeros((m_endo, n))
-        X[:, self.intervened_idxs] = exog_X
-        endo_idxs = [i for i in range(n) if i not in self.intervened_idxs]
+        X[:, self.iv_idxs] = exog_X
+        endo_idxs = [i for i in range(n) if i not in self.iv_idxs]
         X[:, endo_idxs] = endo_X
         return X
     
@@ -410,11 +410,11 @@ class ExogIntervention(Intervention):
                 columns corresponds to the order of indexes in 
                 `self.intervened_idx`.
         """
-        if len(self.intervened_idxs) == 0:
+        if len(self.iv_idxs) == 0:
             return None
 
         # Exogeneous interventions do not depend on x so we can use a dummy var.
-        dummy_x = np.zeros(np.max(self.intervened_idxs) + 1)
+        dummy_x = np.zeros(np.max(self.iv_idxs) + 1)
 
         # The size of the dummy variable only needs to be as big as the max
         # intervened index and self.split_exog will still work.
@@ -468,7 +468,7 @@ class ForecastMethod(BaseEstimator):
             prior_states: A (p, n + k) array of endogenous and exogenous
                 signals. Rows are observations corresponding to
                 `t` and columns are variables. The k exogenous
-                variable indexes are contained in `intervention.intervened_idxs`
+                variable indexes are contained in `intervention.iv_idxs`
             intervention: An interfere.ExogIntervention.
             prior_t: Optional (p,) array of times corresponding to
                 historic observations. Defaults to equally spaced points
@@ -480,7 +480,7 @@ class ForecastMethod(BaseEstimator):
         Returns:
             simulated_states: A (m, n + k) array of simulated exogenous and
                 endogenous signals. The k exogenous variable indexes are
-                contained in `intervention.intervened_idxs`.
+                contained in `intervention.iv_idxs`.
         """
         if intervention is not None:
             (prior_endog_states, 
@@ -950,10 +950,53 @@ class ForecastMethod(BaseEstimator):
         """
         raise NotImplementedError()
     
-
+    @staticmethod
     @abstractmethod
     def get_test_params() -> Dict[str, Any]:
         """Returns initialization parameters for testing. 
         
         Should be condusive to fast test cases."""
         raise NotImplementedError
+    
+    
+    @staticmethod
+    @abstractmethod
+    def _get_optuna_params(trial, max_lags=None, max_horizon=None, **kwargs) -> Dict[str, Any]:
+        """Define hyperparameter search space for this forecasting method using Optuna.
+        
+        This method is used by the hyperparameter optimization framework to determine
+        which parameters to tune for the forecasting method. It should return a dictionary 
+        mapping parameter names to Optuna parameter suggestions.
+        
+        Args:
+            trial: An Optuna trial object that provides methods for hyperparameter suggestions
+                such as suggest_float, suggest_int, suggest_categorical.
+            max_lags: Maximum number of lag periods (previous observations) that can be 
+                    considered. This is typically determined by the cross-validation 
+                    framework based on the available data. For autoregressive methods,
+                    this constrains how many past observations can be used.
+            max_horizon: Maximum prediction horizon (future steps) that can be forecasted.
+                        This is typically determined by the cross-validation framework
+                        and constrains how far into the future the method should predict.
+            **kwargs: Additional keyword arguments that may be passed by the hyperparameter
+                    optimization framework. Subclasses can accept additional parameters
+                    specific to their implementation needs.
+        
+        Returns:
+            Dict[str, Any]: A dictionary mapping parameter names to their values,
+                            which will be passed to the forecasting method's __init__
+                            method during hyperparameter optimization.
+        
+        Example:
+            ```python
+            @staticmethod
+            def _get_optuna_params(trial, max_lags=20, **kwargs):
+                return {
+                    "lag": trial.suggest_int("lag", 1, max_lags),
+                    "alpha": trial.suggest_float("alpha", 0.01, 1.0),
+                    "regularization": trial.suggest_categorical(
+                        "regularization", ["l1", "l2", "elasticnet"])
+                }
+            ```
+        """
+        raise NotImplementedError()

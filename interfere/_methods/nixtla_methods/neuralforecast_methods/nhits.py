@@ -98,6 +98,8 @@ class NHITS(NixtlaAdapter):
         return {"max_steps": 50}
 
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, max_lags=50, **kwargs):
         return {
 

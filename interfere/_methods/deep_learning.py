@@ -182,6 +182,8 @@ class LTSF(ForecastMethod):
         }
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(
         trial, max_lags=25, max_horizon=50, **kwargs) -> dict[str, object]:
 

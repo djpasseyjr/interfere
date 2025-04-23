@@ -116,10 +116,9 @@ class VAR(ForecastMethod):
         return {}
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, max_lags=20, **kwargs):
         return {
-            "ic": trial.suggest_categorical("ic", ["aic", "fpe"]),
-            "maxlags": trial.suggest_int("maxlags", 5, max_lags),
-            "trend" : trial.suggest_categorical(
-                "trend", ["c", "ct", "ctt"]),
+            # Method-specific parameter suggestions
         }

@@ -567,6 +567,8 @@ class ResComp(ForecastMethod):
         )
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, **kwargs):
         return {
             "gamma": trial.suggest_float("gamma", 0.1, 20),

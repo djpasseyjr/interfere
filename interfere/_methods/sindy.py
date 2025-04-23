@@ -164,6 +164,8 @@ class SINDY(ForecastMethod):
         }
     
 
+    @staticmethod
+    @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, **kwargs):
         return {
             'optimizer__threshold': trial.suggest_float(
