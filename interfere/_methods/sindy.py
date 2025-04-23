@@ -164,22 +164,6 @@ class SINDY(ForecastMethod):
         }
     
 
-    def get_test_param_grid():
-        return {
-            "optimizer": [ps.optimizers.STLSQ()],
-            "optimizer__threshold": [0.001, 0.1],
-            "differentiation_method": [
-                ps.SINDyDerivative(kind='finite_difference', k=1),
-                ps.SINDyDerivative(kind='spline', s=0.1)
-            ],
-            "feature_library": [
-                ps.feature_library.PolynomialLibrary(),
-                ps.feature_library.FourierLibrary()
-            ],
-            "discrete_time": [True, False]
-        }
-    
-
     def _get_optuna_params(trial, **kwargs):
         return {
             'optimizer__threshold': trial.suggest_float(

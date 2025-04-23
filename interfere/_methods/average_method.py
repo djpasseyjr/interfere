@@ -35,9 +35,6 @@ class AverageMethod(ForecastMethod):
             [self.avgs for ti in t]
         )
     
-    def get_test_param_grid() -> Dict[str, List[Any]]:
-        return {}
-    
     def get_test_params() -> Dict[str, Any]:
         return {}
     

@@ -567,13 +567,6 @@ class ResComp(ForecastMethod):
         )
     
 
-    def get_test_param_grid():
-        return dict(
-            res_sz = [10],
-            sigma = [0.001, 0.01, 0.1, 10],
-        )
-    
-
     def _get_optuna_params(trial, **kwargs):
         return {
             "gamma": trial.suggest_float("gamma", 0.1, 20),

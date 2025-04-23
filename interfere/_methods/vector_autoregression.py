@@ -112,15 +112,6 @@ class VAR(ForecastMethod):
         return self.method_params
     
 
-    @copy_doc(ForecastMethod.get_test_param_grid)
-    def get_test_param_grid() -> Dict[str, List[Any]]:
-        return {
-            "maxlags": [1, 2, 10],
-            "trend" : ["ctt", "n"]
-        }
-    
-
-    @copy_doc(ForecastMethod.get_test_params)
     def get_test_params() -> Dict[str, Any]:
         return {}
     

@@ -952,15 +952,6 @@ class ForecastMethod(BaseEstimator):
     
 
     @abstractmethod
-    def get_test_param_grid() -> Dict[str, List[Any]]:
-        """Returns a dict of hyper parameters for testing grid search.
-        
-        Should be small and not take a long time to iterate through.
-        """
-        raise NotImplementedError()
-    
-
-    @abstractmethod
     def get_test_params() -> Dict[str, Any]:
         """Returns initialization parameters for testing. 
         

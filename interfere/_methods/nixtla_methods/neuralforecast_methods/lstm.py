@@ -101,13 +101,6 @@ class LSTM(NixtlaAdapter):
         )
     
 
-    def get_test_param_grid() -> Dict[str, List[Any]]:
-        return dict(
-            encoder_hidden_size = [8, 16],
-            learning_rate = [1e-12, 0.001]
-        )
-    
-
     def _get_optuna_params(trial, max_lags=50, **kwargs):
         return {
             "h": trial.suggest_int("h", 1, 16),

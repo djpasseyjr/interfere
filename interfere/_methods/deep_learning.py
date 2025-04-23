@@ -182,13 +182,6 @@ class LTSF(ForecastMethod):
         }
     
 
-    @copy_doc(ForecastMethod.get_test_param_grid)
-    def get_test_param_grid():
-        return {
-            "seq_len": [2, 5],
-            "lr": [0.001, 0.1],
-        }
-    
     def _get_optuna_params(
         trial, max_lags=25, max_horizon=50, **kwargs) -> dict[str, object]:
 
