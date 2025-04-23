@@ -29,7 +29,7 @@ class PerfectIntervention(ExogIntervention):
 
     def __init__(
         self,
-        intervened_idxs: Union[int, Iterable[int]],
+        iv_idxs: Union[int, Iterable[int]],
         constants: Union[float, Iterable[float]]
     ):
         """Creates a perfect intervention function.
@@ -38,7 +38,7 @@ class PerfectIntervention(ExogIntervention):
         This function generates intervention functions that replace
 
         Args:
-            intervened_idxs (int or collection of ints): The indexes where the intervention
+            iv_idxs (int or collection of ints): The indexes where the intervention
                 will be applied.
             constants (float or collection of floats): The values that the variables
                 at corresponding to each index will be pinned to.
@@ -51,17 +51,17 @@ class PerfectIntervention(ExogIntervention):
             intervention([10.0, 4.0, 4.0], 0) == [1.6, 4.0, 0.7] # (True.)
         """
         # The case where indexs and constants are floats or ints
-        if isinstance(intervened_idxs, (int, float)):
-            intervened_idxs = [int(intervened_idxs)]
+        if isinstance(iv_idxs, (int, float)):
+            iv_idxs = [int(iv_idxs)]
             
         if isinstance(constants, (int, float)):
             constants = [float(constants)]
 
-        if len(constants) != len(intervened_idxs):
+        if len(constants) != len(iv_idxs):
             raise ValueError(
                 "Intervened indexes must be same length as provided constants")
 
-        self.intervened_idxs = intervened_idxs
+        self.iv_idxs = iv_idxs
         self.constants = constants
 
     def __call__(self, x: np.ndarray, t: float):
@@ -78,7 +78,7 @@ class PerfectIntervention(ExogIntervention):
                 the state of the dynamic model after the intervention is applied.
         """
         x_do = x.copy()
-        for i, c in zip(self.intervened_idxs, self.constants):
+        for i, c in zip(self.iv_idxs, self.constants):
             x_do[..., i] = c
         return x_do
     
@@ -87,7 +87,7 @@ class PerfectIntervention(ExogIntervention):
         if not isinstance(other, PerfectIntervention):
             return False
         equal = True
-        equal = equal and np.all(self.intervened_idxs == other.intervened_idxs)
+        equal = equal and np.all(self.iv_idxs == other.iv_idxs)
         equal = equal and np.all(self.constants == other.constants)
         return equal
         
@@ -96,7 +96,7 @@ class SignalIntervention(ExogIntervention):
 
     def __init__(
         self,
-        intervened_idxs: Union[int, Iterable[int]],
+        iv_idxs: Union[int, Iterable[int]],
         signals: Union[
             ScalarFunction,
             Iterable[ScalarFunction],
@@ -110,24 +110,24 @@ class SignalIntervention(ExogIntervention):
             This function generates intervention functions that replace
 
             Args:
-                intervened_idxs (int or collection of ints): The indexes where the intervention
+                iv_idxs (int or collection of ints): The indexes where the intervention
                     will be applied.
                 signals (Scalar function or collection of scalar functions): 
                     The functions that will replace the value of variables at
-                    `intervened_idxs` at each time point.
+                    `iv_idxs` at each time point.
         """
-        if isinstance(intervened_idxs, int):
+        if isinstance(iv_idxs, int):
 
-            i = intervened_idxs
+            i = iv_idxs
             s = signals
-            intervened_idxs = [intervened_idxs]
+            iv_idxs = [iv_idxs]
             signals = [s]
 
-        if len(signals) != len(intervened_idxs):
+        if len(signals) != len(iv_idxs):
             raise ValueError(
                 "Number of intervened indexes must equal number of signals.")
 
-        self.intervened_idxs = intervened_idxs
+        self.iv_idxs = iv_idxs
         self.signals = signals
 
 
@@ -145,7 +145,7 @@ class SignalIntervention(ExogIntervention):
                 the state of the dynamic model after the intervention is applied.
         """
         x_do = x.copy()
-        for i, s in zip(self.intervened_idxs, self.signals):
+        for i, s in zip(self.iv_idxs, self.signals):
             x_do[..., i] = s(t)
         return x_do
 

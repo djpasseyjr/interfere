@@ -47,7 +47,7 @@ class CounterfactualForecastingMetric(ABC):
             intervention_idxs = []
 
         if isinstance(intervention_idxs, ExogIntervention):
-            intervention_idxs = intervention_idxs.intervened_idxs
+            intervention_idxs = intervention_idxs.iv_idxs
         
         return  [np.delete(X, intervention_idxs, axis=1) for X in Xs]
 

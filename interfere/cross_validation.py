@@ -359,7 +359,7 @@ class CrossValObjective:
                             train_states,
                             val_states,
                             pred_val_states,
-                            self.intervention.intervened_idxs
+                            self.intervention.iv_idxs
                         )
 
                         # Store results.
