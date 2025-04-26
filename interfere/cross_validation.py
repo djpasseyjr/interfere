@@ -1,8 +1,8 @@
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import traceback
 
 import interfere
-from interfere.metrics import RootMeanStandardizedSquaredError as RMSSE
+from interfere.metrics import rmse
 import numpy as np
 from optuna.trial import Trial
 
@@ -24,7 +24,10 @@ class CrossValObjective:
         exog_idxs: Optional[list[int]] = None,
         val_scheme: str = "forecast",
         num_val_prior_states: int = 10,
-        metric: interfere.metrics.CounterfactualForecastingMetric = RMSSE(),
+        metric: Union[
+            interfere.metrics.CounterfactualForecastingMetric,
+            Callable[[np.ndarray, np.ndarray], float]
+         ] = rmse,
         metric_direction: str = "minimize",
         hyperparam_func: Optional[
             Callable[[Trial], Dict[str, Any]]] = None,
@@ -60,8 +63,9 @@ class CrossValObjective:
             exog_idxs (list[int]): A list of exogenous variable column indexes.
             num_val_prior_states (int): Designates how many observations to use
                 as initial condition/prior state for prediction.
-            metric (interfere.metrics.CounterfactualForecastingMetric): Metric
-                to optimize.
+            metric (interfere.metrics.CounterfactualForecastingMetric or
+                callable[[np.ndarray, np.ndarray], float]): Metric to optimize.
+                Exogenous variables are excluded from error/accuracy calculation.
             metric_direction (str): Direction to optimize. One of ["maximize",
                 "minimize"].
             hyperparam_func (callable): Accepts an optuna Trial object and
@@ -340,7 +344,7 @@ class CrossValObjective:
                                 f"Error in model fit: \n\n{fit_error}")
 
                         # Make prediction.
-                        pred_val_en = method.predict(
+                        pred_val_endog = method.predict(
                             val_t,
                             prior_endog_states=val_prior_en,
                             prior_exog_states=val_prior_ex,
@@ -349,18 +353,29 @@ class CrossValObjective:
                         )
 
                         pred_val_states = self.intervention.combine_exog(
-                            pred_val_en, val_ex)
+                            pred_val_endog, val_ex)
 
                         # Replace nans.
                         pred_val_states[np.isnan(pred_val_states)] = self.repl_nan_val
 
                         # Compute score.
-                        val_score = self.metric(
-                            train_states,
-                            val_states,
-                            pred_val_states,
-                            self.intervention.iv_idxs
-                        )
+                        if isinstance(self.metric, interfere.metrics.CounterfactualForecastingMetric):
+                            val_score = self.metric(
+                                train_states,
+                                val_states,
+                                pred_val_states,
+                                self.intervention.iv_idxs
+                            )
+                        else:
+                            # Remove exogenous variables from error/accuracy
+                            # calculation.
+                            val_endog, val_exog = self.intervention.split_exog(
+                                val_states)
+
+                            val_score = self.metric(
+                                val_endog,
+                                pred_val_endog
+                            )
 
                         # Store results.
                         cv_results["scores"].append(val_score)
