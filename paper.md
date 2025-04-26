@@ -1,5 +1,5 @@
 ---
-title: 'Interfere: Evaluating Dynamic Causal Prediction Algorithms With Complex Simulation Data'
+title: 'Interfere: Studying Intervention Response Prediction in Complex Dynamic Models'
 tags:
   - Python
   - dynamics
@@ -37,29 +37,41 @@ bibliography: paper.bib
 
 The vision of Interfere is simple: What if we used high quality scientific models to benchmark causal prediction tools? Randomized experimental data and counterfactuals are essential for testing methods that attempt to infer causal relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models are commonly developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018] . Because these models are painstaking calibrated with the real world, they have the ability to generate diverse and complex synthetic counterfactual data that are characteristic of the real processes they emulate. Interfere offers the first steps towards this vision by combining (1) a general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an [initial benchmark data set](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) of dynamic counterfactual scenarios.
 
-![Three dimensional trajectories of sixty scenarios simulated with the Interfere
+![Three-dimensional trajectories of sixty scenarios simulated with the Interfere
 package. All models depicted are either differential equations or discrete time
 difference equations. The trajectory in blue represents the natural behavior of
-the system and the red depicts how the system responds to an intervnetion.
+the system and the red depicts how the system responds to an intervention.
 Many of the models pictured have more than three dimensions (in such cases,
-only the three dimensions of the trajectory with highest variance
+only the three dimensions of the trajectory with the highest variance
 are shown). These sixty scenarios make up the Interfere Benchmark for
 intervention response prediction which is available online for download
 \label{fig:sixty_models}](images/sixty_models.png)
 
 # Statement of Need
 
-Over the past twenty years the scientific community has experience the emergence of multiple frameworks for identifying causal relationships in observational data [@imbens_causal_2015; @pearl_causality_2009; @wieczorek_information_2019]. The most influential frameworks are probabilistic and, while is not an necessary condition for identifying causality, historically a linear relationship was often assumed. However, when attempting to anticipate the response of complex systems in the medium and long term, a linear approximation of the dynamics is insufficient.  Therefore, scientists have increasingly begun to employ non linear techniques for causal analysis e.g. [@runge_discovering_2022; ]. Still, there are relatively few techniques that are able to fit causal dynamic nonlinear models to data. Because of this, we see an opportunity to bring together the insights from recent breakthroughs in causal inference with historical work in dynamic model development.
+Over the past twenty years the scientific community has experience the emergence
+of multiple frameworks for identifying causal relationships in observational
+data [@imbens_causal_2015; @pearl_causality_2009; @wieczorek_information_2019].
+The most influential frameworks are probabilistic and, while is not a necessary
+condition for identifying causality, historically a linear relationship was
+often assumed. However, when attempting to anticipate the response of complex
+systems in the medium and long term, a linear approximation of the dynamics is
+insufficient.  Therefore, scientists have increasingly begun to employ
+non-linear techniques for causal analysis e.g. [@runge_discovering_2022]. Still,
+there are relatively few techniques that are able to fit causal dynamic
+nonlinear models to data. Because of this, we see an opportunity to bring
+together the insights from recent advancements in causal inference with
+historical work in dynamic modeling and simulation.
 
-In order to facilitate this cross pollination, we focus on a key causal problem --- predicting how a complex system responds to a previously unobserved intervention --- and designed the Interfere package for benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions alongside probabilistic tool. As such, the Interfere package presents an opportunity for cross pollination between the causal inference community and the modeling and simulation community.
+In order to facilitate this cross pollination, we focus on a key causal problem --- predicting how a complex system responds to a previously unobserved intervention --- and designed the Interfere package for benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions alongside probabilistic tools. As such, the Interfere package presents an opportunity for cross pollination between the causal inference community and the modeling and simulation community.
 
 ![Example experimental setup possible with Interfere: Comparing intervention response prediction for deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
 
 # Usage
 
-The Interfere package is designed around four tasks: (1) Simulation, (2) )intervention,
+The Interfere package is designed around four tasks: (1) Simulation, (2)intervention,
 (3) forecasting method optimization and (4) intervention response prediction. The following
-section will describe each task in detail with example code.
+section will describe each task in detail alongside example code.
 
 ## 1. Simulation.
 
@@ -69,7 +81,7 @@ differential equations simulated with Ito's method (e.g. $d\mathbf{X} = A
 0.5 x[n-1]$),
 simulated via initial conditions and stepping forward in time. Each dynamic model class included in the Interfere package has a simulate method.  To run a
 simulation, the package requires an array of equally spaced time values and an
-initial condition or past observations.
+initial conditions or past observations. For example:
 
 ```python
 import numpy as np
@@ -85,16 +97,16 @@ dynamics = interfere.dynamics.Belozyorov3DQuad(sigma=0.5)
 sim_states = dynamics.simulate(t_train, initial_cond)
 ```
 
-![Original System Trajectory Simulation of natural, uninterupted evolution of a chaotic
+![**Simulation of System:** The natural, uninterupted evolution of a chaotic
 system studied in [@belozyorov_exponential_2015] with the addition of a small
-amount of stochastic noise. For this example, we've let
-$x=x_1$, $y=x_2$ and and do not plot $x_0$ for simplicity. \label{fig:orig_traj}](images/original_trajectory.png)
+amount of stochastic noise. For simplicity, we've let
+$x=x_1$, $y=x_2$ and and do not plot $x_0$ for. \label{fig:orig_traj}](images/original_trajectory.png)
 
 ## 2. Intervention
 
-Next, we can take exogenous control of $x$ by pinning it to $sin(t)$ and simulate the response of
- $y$. The resulting simulation describes how the behavior of the system is
- altered by this intervention. See \ref{fig:interv_effect} for an example.
+Next, we can take exogenous control of $x$ by pinning it to $\sin(t)$ and simulate the response of
+ $y$. The resulting simulation reveals how the behavior of the system is
+ altered by this particular intervention. See \ref{fig:interv_effect} for an example.
 
 ```python
 # Time points for the intervention simulation
@@ -111,8 +123,8 @@ interv_states = dynamics.simulate(
 )
 ```
 
-![System Trajectory with Intervention: The figure above demonstrates the
-effect that taking exogenous control of $x(t)$ by via $\text{do}(x(t)=sin(t))$
+![**System trajectory with intervention:** The figure above demonstrates the
+effect that taking exogenous control of $x(t)$ by via $\text{do}(x(t)=\sin(t))$
 has on $y$. The intervention (black) and
 response (blue), depict a clear departure from
 the natural evolution behavior of the system. \label{fig:interv_effect}](images/intervention_effect.png)
@@ -178,7 +190,8 @@ pred_traj = method.simulate(
 )
 ```
 
-![Example of forecasting the response of the system to an intervention. Here,
+![**Forecasting Intervention Response:** Example of forecasting the response of
+the Belozyorov system to a sinusoidal intervention. Here,
 the intervention consists of 
 taking exogenous control of $x(t)$ (black). The ground truth response, $y(t)$ for
 $t > 10$ is plotted in blue. Here, an equation discovery algorithm, SINDy
