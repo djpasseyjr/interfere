@@ -43,8 +43,8 @@ difference equations. The trajectory in blue represents the natural behavior of
 the system and the red depicts how the system responds to an intervention.
 Many of the models pictured have more than three dimensions (in such cases,
 only the three dimensions of the trajectory with the highest variance
-are shown). These sixty scenarios make up the Interfere Benchmark for
-intervention response prediction which is available online for download
+are shown). These sixty scenarios make up the [Interfere Benchmark 1.1.1](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) for
+intervention response prediction which is available online for download.
 \label{fig:sixty_models}](images/sixty_models.png)
 
 # Statement of Need
@@ -65,8 +65,6 @@ historical work in dynamic modeling and simulation.
 
 In order to facilitate this cross pollination, we focus on a key causal problem --- predicting how a complex system responds to a previously unobserved intervention --- and designed the Interfere package for benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for causal inference that can likely only be addressed with the incorporation of mechanistic assumptions alongside probabilistic tools. As such, the Interfere package presents an opportunity for cross pollination between the causal inference community and the modeling and simulation community.
 
-![Example experimental setup possible with Interfere: Comparing intervention response prediction for deterministic and stochastic systems.\label{fig:det_vs_stoch}](images/det_v_stoch.png)
-
 # Usage
 
 The Interfere package is designed around four tasks: (1) Simulation, (2)intervention,
@@ -75,7 +73,7 @@ section will describe each task in detail alongside example code.
 
 ## 1. Simulation.
 
-The models implemented in the interfere package are mainly stochastic
+The models implemented in the Interfere package are mainly stochastic
 differential equations simulated with Ito's method (e.g. $d\mathbf{X} = A
 \mathbf{X} + d\mathbf{W}$) or difference equations (e.g. $x[n+1] = 0.25 x[n] -
 0.5 x[n-1]$),
@@ -201,11 +199,16 @@ curve).](images/prediction_comparison.png)
 
 # Primary Contributions
 
-The Interfere package provides three primary contributions to the scientific community.
+The Interfere package provides three primary contributions to the scientific
+community.
+
+![Example experimental setup possible with Interfere: Comparing intervention
+response prediction for deterministic and stochastic versions of the same system.
+Can stochasticity help reveal associations between variables? \label{fig:det_vs_stoch}](images/det_v_stoch.png)
 
 ## 1. Dynamically Diverse Counterfactuals at Scale
 
-The "dynamics" submodule in the interfere package contains over fifty dynamic models. It contains a mix of linear, nonlinear, chaotic, continuous time, discrete time, stochastic, and deterministic models. The models come from a variety of disciplines including economics, finance, ecology, biology, neuroscience and public health. Each model inherits the from the Interfere BaseDynamics type and gains the ability to take exogenous control of any observed state and to add measurement noise. Most models also gain the ability to make any observed state stochastic where magnitude of stochasticity can be controlled by a simple scalar parameter or fine tuned with a covariance matrix.
+The "dynamics" submodule in the Interfere package contains over fifty dynamic models. It contains a mix of linear, nonlinear, chaotic, continuous time, discrete time, stochastic, and deterministic models. The models come from a variety of disciplines including economics, finance, ecology, biology, neuroscience and public health. Each model inherits the from the Interfere BaseDynamics type and gains the ability to take exogenous control of any observed state and to add measurement noise. Most models also gain the ability to make any observed state stochastic where magnitude of stochasticity can be controlled by a simple scalar parameter or fine tuned with a covariance matrix.
 
 Because of the difficulty of building models of complex systems, predictive methods for complex dynamics are typically benchmarked on less than ten dynamical systems [@challu_nhits_2023; @brunton_discovering_2016; @vlachas_backpropagation_2020; @pathak_model-free_2018; @prasse_predicting_2022]. As such, Interfere offers a clear improvement over current benchmarking methods for prediction in complex dynamics.
 
@@ -213,7 +216,7 @@ Most importantly, Interfere is built around interventions: the ability to take e
 
 ## 2. Cross Disciplinary Forecast Methods
 
-A second contribution of interfere is the integration of dynamic *forecasting* methodologies from deep learning, applied mathematics and social science. The Interfere "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and intervene on the states of the models during prediction. This cross disciplinary mix of techniques affords new insights into the problem of intervention response prediction.
+A second contribution of Interfere is the integration of dynamic *forecasting* methodologies from deep learning, applied mathematics and social science. The Interfere "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and intervene on the states of the models during prediction. This cross disciplinary mix of techniques affords new insights into the problem of intervention response prediction.
 
 ## 3. Opening Up Intervention Response to the Scientific Community
 
@@ -229,7 +232,7 @@ Finding forecasting methods to integrate with Interfere was difficult due to the
 
 ## Dynamic Models
 
-See the table below for a full list of dynamic models with attributions that are currently implemented in the interfere package. The dynamic models in were implemented directly from mathematical descriptions except for two which adapt existing simulations from the PyClustering package [@novikov2019].
+See the table below for a full list of dynamic models with attributions that are currently implemented in the Interfere package. The dynamic models in were implemented directly from mathematical descriptions except for two which adapt existing simulations from the PyClustering package [@novikov2019].
 
 | Dynamic Model Class            | Description and Source                                                                                  | Properties                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------ |

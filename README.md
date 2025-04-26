@@ -40,27 +40,33 @@ First, let's create and simulate a dynamic model:
 ```python
 import numpy as np
 import interfere
+import optuna
 
 # Set up simulation parameters
 initial_cond = np.random.rand(3)
 t_train = np.arange(0, 10, 0.05)
-dynamics = interfere.dynamics.Belozyorov3DQuad()
+dynamics = interfere.dynamics.Belozyorov3DQuad(sigma=0.5)
 
 # Generate trajectory
-sim_states = dynamic_model.simulate(t_train, initial_cond)
+sim_states = dynamics.simulate(t_train, initial_cond)
 ```
 
 ![Original System Trajectory](images/original_trajectory.png)
 
 ### 2. Applying an Intervention
 
-Next, we'll apply a intervention to one component of the system:
+Next, we'll apply an intervention to one component of the system:
 
 ```python
-t_test = np.arange(t_train[-1], 12, 0.05)
+# Time points for the intervention simulation
+test_t = np.arange(t_train[-1], 15, 0.05)
+
+# Intervention initialization
 intervention = interfere.SignalIntervention(iv_idxs=1, signals=np.sin)
+
+# Simulate intervention
 interv_states = dynamics.simulate(
-    t_test,
+    test_t,
     prior_states=sim_states,
     intervention=intervention,
 )
@@ -70,37 +76,54 @@ interv_states = dynamics.simulate(
 
 ### 3. Model Optimization and Prediction
 
-Finally, we'll optimize a SINDY model and predict the system's response:
+Using the generated data, we can run hyperparameter optimization with a
+forecasting method. All forecasting methods come with reasonable hyperparameter
+ranges built in.
 
 ```python
-import optuna
-
-# Set up cross-validation for optimization
+# Select the SINDy method for hyperparameter optimization.
 method_type = interfere.SINDY
-cv_objv = interfere.CrossValObjective(
+
+# Create an objective function that aims to minimize cross validation error
+# over different hyper parameter configurations for SINDy
+cv_obj = interfere.CrossValObjective(
     method_type=method_type,
-    data=Y,
+    data=sim_states,
     times=t_train,
     train_window_percent=0.3,
     num_folds=5,
-    exog_idxs=interv.iv_idxs,
+    exog_idxs=intervention.iv_idxs,
 )
 
-# Optimize hyperparameters
+# Run the study using optuna.
 study = optuna.create_study()
-study.optimize(cv_objv, n_trials=25)
-params = study.best_params
+study.optimize(cv_obj, n_trials=25)
 
-# Fit model and make predictions
-method = method_type(**params)
-Y_endog, Y_exog = interv.split_exog(Y)
+# Collect the best hyperparameters into a dictionary.
+best_param_dict = study.best_params
+```
+
+### 4. Intervention Response Prediction
+
+Using the best parameters found, we can fit the forecasting method to
+pre-intervention data and then make a prediction about how the system will
+respond to the intervention.
+
+```python
+# Initialize SINDy with the best perfoming parameters.
+method = interfere.SINDY(**study.best_params)
+
+# Use an intervention helper function to split the pre-intervention data
+# into endogenous and exogenous columns.
+Y_endog, Y_exog = intervention.split_exog(sim_states)
+
+# Fit SINDy to the pre-intervention data.
 method.fit(t_train, Y_endog, Y_exog)
 
-# Predict intervention response
-pred_Y_treat = method.simulate(
-    t_test,
-    prior_states=Y,
-    intervention=interv
+# Use the inherited interfere.ForecastingMethod.simulate() method
+# To simulate intervention response using SINDy
+pred_traj = method.simulate(
+    test_t, prior_states=sim_states, intervention=intervention
 )
 ```
 
@@ -136,7 +159,7 @@ The package can be used to simulate and analyze how systems respond to intervent
 
 ## Documentation
 
-For detailed documentation and usage examples, please refer to the [paper](paper.md) and [paper.pdf](paper.pdf).
+For a more detailed explanation of the purpose of the package refer to [paper.pdf](paper.pdf).
 
 ## Contributing
 
