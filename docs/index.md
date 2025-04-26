@@ -1,32 +1,28 @@
-# 🌀 Interfere
+# 🌀 Interfere: Intervention Response Prediction in Complex Dynamic Models
+[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[![PyPI Version](https://img.shields.io/pypi/v/interfere)] [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Interfere is a comprehensive Python toolkit for simulating, intervening on, and
+optimizing forecasting methods to predict the behavior complex dynamical systems. It enables:
 
-A Python package for modeling and predicting the response of complex dynamic systems to interventions.
-
-## Overview
-
-Interfere is a research-oriented Python package that addresses a fundamental question in complex systems: *When can we predict how complex systems will respond to interventions?* This package provides tools for:
-
-- Modeling dynamic nonlinear multivariate stochastic systems.
-- Simulating and analyzing how such systems respond to interventions.
-- Generating complex dynamic counterfactuals.
-- Studying causal relationships in complex systems.
+- Rich collections of continuous and discrete-time dynamic models (ODEs, SDEs,
+  differnce equations, and more).
+- Exogenous interventions to generate control and treatment scenarios at scale.
+- Seamless forecasting integrations (SINDy, VAR, reservoir computing, ARIMA, LSTM, NHITS).
+- Automated sliding-window cross-validation and hyperparameter tuning with Optuna.
+- Unified error metrics and evaluation workflows for intervention-response prediction.
 
 ## Installation
 
-### From GitHub
+Install the core package from PyPI:
 
 ```bash
-pip install git+https://github.com/djpasseyjr/interfere
+pip install interfere
 ```
 
-### From Local Clone
+For Nixtla-based forecasting methods (`ARIMA`, `LSTM`, `NHITS`), install the extras:
 
 ```bash
-git clone https://github.com/djpasseyjr/interfere.git
-cd interfere
-pip install .
+pip install interfere[nixtla]
 ```
 
 ## Quick Start
@@ -131,58 +127,9 @@ pred_traj = method.simulate(
 
 The SINDY method identifies the underlying dynamics of the system using sparse regression techniques, making it particularly effective for discovering interpretable mathematical models of complex systems.
 
-## Dependencies
-
-Core dependencies:
-
-- matplotlib
-- networkx
-- numpy
-- optuna
-- pyclustering
-- pysindy
-- scikit-learn
-- statsmodels
-- typing_extensions
-
-Optional dependencies for additional methods:
-
-- neuralforecast
-- statsforecast
-- sktime
-
-## Example
-
-The package can be used to simulate and analyze how systems respond to interventions. For example, it can model the effect of stochasticity on intervention response forecasting:
-
-![Stochastic vs Deterministic Systems](https://github.com/djpasseyjr/interfere/blob/c7090043aec4a984a45517794d266df4eb105f79/images/det_v_stoch.png?raw=true)
-
 ## Documentation
 
-For a more detailed explanation of the purpose of the package refer to [paper.pdf](paper.pdf).
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Citation
-
-If you use this software in your research, please cite:
-
-```bibtex
-@article{passey2024interfere,
-  title={Interfere: Intervention Response Simulation and Prediction for Stochastic Nonlinear Dynamics},
-  author={Passey, D. J. and Mucha, Peter J.},
-  journal={arXiv preprint},
-  year={2025}
-}
-```
-
-## Contact
-
-- Author: DJ Passey (djpassey@unc.edu)
-- Institution: University of North Carolina at Chapel Hill
+- [Simulation](simulation.md): Simulation engines and available dynamic models.
+- [Intervention](intervention.md): Exogenous intervention interfaces.
+- [Optimization](optimization.md): Automated cross-validation and hyperparameter tuning.
+- [Prediction](prediction.md): Counterfactual forecasting workflows.

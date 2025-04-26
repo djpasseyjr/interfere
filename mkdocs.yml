@@ -1,0 +1,9 @@
+site_name: interfere
+theme: readthedocs
+
+nav:
+  - Home: index.md
+  - Simulation: simulation.md
+  - Intervention: intervention.md
+  - Optimization: optimization.md
+  - Prediction: prediction.md
