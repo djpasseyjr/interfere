@@ -27,7 +27,7 @@ pip install interfere[nixtla]
 
 ## Quick Start
 
-The Interfere package is designed around three main tasks: counterfactual simulation, predictive method optimization, and prediction. Here's a complete example using the SINDY (Sparse Identification of Nonlinear Dynamics) method:
+The Interfere package is designed around three main tasks: counterfactual simulation, predictive method optimization, and prediction. Here's a complete example using the SINDy (Sparse Identification of Nonlinear Dynamics) method:
 
 ### 1. Counterfactual Simulation
 
@@ -78,7 +78,7 @@ ranges built in.
 
 ```python
 # Select the SINDy method for hyperparameter optimization.
-method_type = interfere.SINDY
+method_type = interfere.SINDy
 
 # Create an objective function that aims to minimize cross validation error
 # over different hyper parameter configurations for SINDy
@@ -107,7 +107,7 @@ respond to the intervention.
 
 ```python
 # Initialize SINDy with the best perfoming parameters.
-method = interfere.SINDY(**study.best_params)
+method = interfere.SINDy(**study.best_params)
 
 # Use an intervention helper function to split the pre-intervention data
 # into endogenous and exogenous columns.
@@ -125,7 +125,7 @@ pred_traj = method.simulate(
 
 ![Predicted vs Actual Intervention Response](images/prediction_comparison.png)
 
-The SINDY method identifies the underlying dynamics of the system using sparse regression techniques, making it particularly effective for discovering interpretable mathematical models of complex systems.
+The SINDy method identifies the underlying dynamics of the system using sparse regression techniques, making it particularly effective for discovering interpretable mathematical models of complex systems.
 
 ## Documentation
 

@@ -54,7 +54,7 @@ Use any forecasting method that inherits from `ForecastMethod`.
 | ----------------- | --------------------------------------------------------------- |
 | `AverageMethod` | Baseline forecast using average historical data                 |
 | `VAR`           | Vector autoregression forecast using statsmodels                |
-| `SINDY`         | Sparse model identification for nonlinear dynamics              |
+| `SINDy`         | Sparse model identification for nonlinear dynamics              |
 | `ResComp`       | Reservoir computing forecast with Tikhonov regularization       |
 | `ARIMA`         | Classical time series ARIMA model via Nixtla StatsForecast      |
 | `LSTM`          | Long Short-Term Memory RNN forecaster via Nixtla NeuralForecast |
@@ -80,8 +80,8 @@ t0 = t
 n_endog, n_exog = states.shape[1]-len(interv.iv_idxs), len(interv.iv_idxs)
 endog, exog = interv.split_exog(states)
 
-# Fit SINDY to pre-intervention data
-method = interfere.SINDY()
+# Fit SINDy to pre-intervention data
+method = interfere.SINDy()
 method.fit(t0, endog, exog)
 
 # Forecast with intervention

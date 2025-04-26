@@ -92,7 +92,7 @@ Returns:
 | `PlantedTankNitrogenCycle`                  | OrdinaryDifferentialEquation       | Aquatic nitrogen cycle model                         |
 | `GenerativeForecaster`                      | DynamicModel                       | Generates trajectories using fitted forecasters      |
 | `generative_lorenz_VAR_forecaster`          | GenerativeForecaster (factory)     | Factory: VAR-based Lorenz forecaster                 |
-| `generative_cml_SINDY_forecaster`           | GenerativeForecaster (factory)     | Factory: SINDY-based CML forecaster                  |
+| `generative_cml_SINDy_forecaster`           | GenerativeForecaster (factory)     | Factory: SINDy-based CML forecaster                  |
 | `StandardNormalNoise`                       | DiscreteTimeDynamics               | IID Gaussian noise generator                         |
 | `StandardCauchyNoise`                       | DiscreteTimeDynamics               | IID Cauchy noise generator                           |
 | `StandardExponentialNoise`                  | DiscreteTimeDynamics               | IID exponential noise generator                      |

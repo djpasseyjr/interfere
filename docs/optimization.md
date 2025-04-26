@@ -8,7 +8,7 @@ The `CrossValObjective` class implements an Optuna-compatible objective function
 
 ### Key Parameters
 
-- **method_type** *(Type[ForecastMethod])*: Forecasting method class (e.g., `SINDY`, `VAR`, `ResComp`).
+- **method_type** *(Type[ForecastMethod])*: Forecasting method class (e.g., `SINDy`, `VAR`, `ResComp`).
 - **data** *(np.ndarray)*: Time series array of shape (T, n_vars). Rows are time points, columns are variables.
 - **times** *(np.ndarray)*: 1D array of time stamps corresponding to each row in `data`.
 - **train_window_percent** *(float)*: Fraction of `data` used for training in each fold (0 < p < 1).
@@ -16,11 +16,33 @@ The `CrossValObjective` class implements an Optuna-compatible objective function
 - **exog_idxs** *(Optional[list[int]])*: Indices of columns in `data` treated as exogenous variables during fitting and validation.
 - **val_scheme** *(str)*: Validation strategy: `"forecast"` (score the chunk immediately after training), `"last"` (score a fixed hold-out chunk at end), or `"all"` (score all hold-out chunks).
 - **num_val_prior_states** *(int)*: Number of prior observations used as context for each validation prediction.
-- **metric** *(CounterfactualForecastingMetric)*: Error metric instance (e.g., `RMSSE`, `RootMeanSquaredError`) to optimize.
+- **metric** *(Callable[[np.ndarray, np.ndarray], float])*: Callable metric function accepting `actual` and `predicted` arrays and returning a scalar error (e.g., `interfere.metrics.rmse`).
 - **metric_direction** *(str)*: `"minimize"` or `"maximize"`, passed to Optuna's study.
 - **hyperparam_func** *(Callable)*: Trial-to-parameter mapping function. Defaults to the model's `_get_optuna_params`.
 - **store_preds** *(bool)*: If `True`, stores per-fold predictions in `CrossValObjective.trial_results` for inspection.
 - **raise_errors** *(bool)*: If `True`, propagates exceptions during CV; otherwise, assigns a large penalty value for that trial.
+
+### Metrics
+
+Interfere provides simple callable metrics in the `interfere.metrics` module. Metrics should accept two arrays (`actual`, `predicted`) of the same shape and return a float. Exogenous variables will be automatically dropped during metric evaluation.
+
+| Function                       | Description                                    |
+|--------------------------------|------------------------------------------------|
+| `interfere.metrics.rmse`       | Root mean squared error                        |
+| `interfere.metrics.mae`        | Mean absolute error                            |
+| `interfere.metrics.mse`        | Mean squared error                             |
+| `interfere.metrics.mape`       | Mean absolute percentage error                 |
+| `interfere.metrics.nrmse`      | Normalized root mean squared error             |
+| `interfere.metrics.rmsse`      | Root mean squared scaled error                 |
+
+Example:
+
+```python
+import interfere
+
+# compute error between observed and forecasted values
+error = interfere.metrics.rmse(actual, predicted)
+```
 
 ### Cross-Validation Workflow
 
@@ -35,7 +57,7 @@ The `CrossValObjective` class implements an Optuna-compatible objective function
 |-------------------|----------------------------------------------------|
 | `AverageMethod`   | Forecasts the historical mean                       |
 | `VAR`             | Vector autoregression via StatsModels               |
-| `SINDY`           | Sparse regression-based identification of dynamics  |
+| `SINDy`           | Sparse regression-based identification of dynamics  |
 | `ResComp`         | Reservoir computing with Tikhonov regularization    |
 
 ## Example Usage
@@ -53,7 +75,7 @@ data = dynamics.simulate(t, x0)
 
 # 2. Initialize CrossValObjective
 cv = interfere.CrossValObjective(
-    method_type=interfere.SINDY,
+    method_type=interfere.SINDy,
     data=data,
     times=t,
     train_window_percent=0.5,
