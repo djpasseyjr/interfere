@@ -79,7 +79,7 @@ NOISE_MODELS = [
         
 
 MODELS = [
-    interfere.dynamics.generative_cml_SINDY_forecaster(),
+    interfere.dynamics.generative_cml_SINDy_forecaster(),
     interfere.dynamics.generative_lorenz_VAR_forecaster(),
     interfere.dynamics.PlantedTankNitrogenCycle(),
     interfere.dynamics.Thomas(),

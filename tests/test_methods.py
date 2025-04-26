@@ -26,7 +26,7 @@ METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
     interfere.methods.ResComp,
-    interfere.methods.SINDY, 
+    interfere.methods.SINDy, 
     LTSF,
     interfere.methods.VAR,
     interfere.methods.LSTM,
@@ -1047,7 +1047,7 @@ def test_sindy_refit():
     """Tests that sindy libraries and differentiation don't carry over state."""
     for diff in interfere._methods.sindy.SINDY_DIFF_LIST:
         for lib in interfere._methods.sindy.SINDY_LIB_LIST:
-            method = interfere.methods.SINDY(
+            method = interfere.methods.SINDy(
                 feature_library=lib, differentiation_method=diff)
             n_obs = 10
             t = np.arange(n_obs)

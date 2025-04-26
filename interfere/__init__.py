@@ -13,7 +13,7 @@ from .interventions import (
     IdentityIntervention,
 )
 from . import metrics
-from ._methods.sindy import SINDY
+from ._methods.sindy import SINDy
 from ._methods.vector_autoregression import VAR
 from ._methods.reservoir_computer import ResComp
 from . import utils

@@ -13,6 +13,6 @@ from .._methods.nixtla_methods.statsforecast_methods import ARIMA
 from .._methods.average_method import AverageMethod
 from .._methods.nixtla_methods.neuralforecast_methods import LSTM, NHITS
 from .._methods.reservoir_computer import ResComp
-from .._methods.sindy import SINDY
+from .._methods.sindy import SINDy
 from .._methods.vector_autoregression import VAR
 

@@ -28,7 +28,7 @@ SINDY_DIFF_LIST = [
 ]
 
 
-class SINDY(ForecastMethod):
+class SINDy(ForecastMethod):
 
     @copy_doc(ps.SINDy.__init__)
     def __init__(self, 
@@ -124,14 +124,14 @@ class SINDY(ForecastMethod):
         n_steps = endog_pred.shape[0]
         n_missing = len(t) - n_steps
 
-        # Warn user if SINDY diverges.
+        # Warn user if SINDy diverges.
         if n_missing > 0:
             warn(
-                f"SINDY prediction diverged. Valid prediction for {n_steps} / "
+                f"SINDy prediction diverged. Valid prediction for {n_steps} / "
                 f"{len(t)} time steps."
             )
 
-        # When SINDY diverges, repeat the last valid prediction for the
+        # When SINDy diverges, repeat the last valid prediction for the
         # remaining prediction points.
         endog_pred =  np.vstack(
             [endog_pred] +  [endog_pred[-1, :] for i in range(n_missing)]

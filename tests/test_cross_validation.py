@@ -25,7 +25,7 @@ METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
     interfere.methods.ResComp,
-    interfere.methods.SINDY, 
+    interfere.methods.SINDy, 
     LTSF,
     interfere.methods.VAR,
     interfere.methods.LSTM,

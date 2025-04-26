@@ -10,7 +10,7 @@ from .coupled_map_lattice import coupled_logistic_map
 from .quadratic_sdes import Lorenz
 from ..base import DynamicModel, DEFAULT_RANGE
 from .._methods.vector_autoregression import VAR
-from .._methods.sindy import SINDY
+from .._methods.sindy import SINDy
 from ..base import ForecastMethod
 from ..utils import copy_doc
 
@@ -152,12 +152,12 @@ def generative_lorenz_VAR_forecaster(
         sigma=sigma, measurement_noise_std=measurement_noise_std)
 
 
-def generative_cml_SINDY_forecaster(
+def generative_cml_SINDy_forecaster(
     sigma: Optional[Union[float, np.ndarray]] = None,
     measurement_noise_std: Optional[np.ndarray] = None,
     tsteps: int = 300,
 ):
-    """Creates a generative SINDY model that is fit to a coupled map lattice.
+    """Creates a generative SINDy model that is fit to a coupled map lattice.
 
     Args:
         sigma (float or ndarray): The stochastic noise parameter. Can be a
@@ -198,7 +198,7 @@ def generative_cml_SINDY_forecaster(
             "measurement_noise_std": 0.01 * np.ones(10),
     }).simulate(train_t, train_prior_states, rng=rng)
 
-    method = SINDY(**{
+    method = SINDy(**{
         'optimizer__threshold': 2.619572195011037,
         'optimizer__alpha': 0.0001587441595198887,
         'discrete_time': True,
