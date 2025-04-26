@@ -1,4 +1,4 @@
-# Interfere
+# 🌀 Interfere
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -44,28 +44,26 @@ import interfere
 # Set up simulation parameters
 initial_cond = np.random.rand(3)
 t_train = np.arange(0, 10, 0.05)
-dynamic_model = interfere.dynamics.Belozyorov3DQuad()
+dynamics = interfere.dynamics.Belozyorov3DQuad()
 
-# Generate observation period
-Y = dynamic_model.simulate(t_train, initial_cond)
+# Generate trajectory
+sim_states = dynamic_model.simulate(t_train, initial_cond)
 ```
 
 ![Original System Trajectory](images/original_trajectory.png)
 
 ### 2. Applying an Intervention
 
-Next, we'll apply a sinusoidal intervention to one component of the system:
+Next, we'll apply a intervention to one component of the system:
 
 ```python
-# Generate forecasting period
-test_t = np.arange(t_train[-1], 12, 0.05)
-
-# Create intervention (e.g., controlling x1 with sin(t))
-interv = interfere.SignalIntervention(1, np.sin)
-
-# Simulate
-Y_treat = dynamic_model.simulate(test_t, prior_states=Y, intervention=interv)
-
+t_test = np.arange(t_train[-1], 12, 0.05)
+intervention = interfere.SignalIntervention(iv_idxs=1, signals=np.sin)
+interv_states = dynamics.simulate(
+    t_test,
+    prior_states=sim_states,
+    intervention=intervention,
+)
 ```
 
 ![System Trajectory with Intervention](images/intervention_effect.png)
@@ -85,7 +83,7 @@ cv_objv = interfere.CrossValObjective(
     times=t_train,
     train_window_percent=0.3,
     num_folds=5,
-    exog_idxs=interv.intervened_idxs,
+    exog_idxs=interv.iv_idxs,
 )
 
 # Optimize hyperparameters
