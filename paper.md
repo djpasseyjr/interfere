@@ -1,5 +1,5 @@
 ---
-title: 'Interfere: Intervention Response Simulation and Prediction for Stochastic Nonlinear Dynamics'
+title: 'Interfere: Evaluating Dynamic Causal Prediction Algorithms With Complex Simulation Data'
 tags:
   - Python
   - dynamics
