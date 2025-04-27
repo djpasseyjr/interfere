@@ -9,7 +9,19 @@ optimizing forecasting methods to predict the behavior complex dynamical systems
 - Exogenous interventions to generate control and treatment scenarios at scale.
 - Seamless forecasting integrations (SINDy, VAR, reservoir computing, ARIMA, LSTM, NHITS).
 - Automated sliding-window cross-validation and hyperparameter tuning with Optuna.
-- Unified error metrics and evaluation workflows for intervention-response prediction.
+- Unified error metrics and evaluation workflows for intervention-response
+  prediction.
+
+## Interfere Benchmark Dataset ([Download](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing))
+
+![Sixty dynamic systems and intervention responses.](images/sixty_models.png)
+
+The image above depicts the uninterrupted trajectories of sixty dynamic models
+in blue and their response to a particular intervention in red. This data is
+available for download as the [Interfere Benchmark
+1.1.1](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing).
+It can be used to benchmark a forecasting method's ability to predict the
+response of a dynamic system to interventions.
 
 ## Installation
 

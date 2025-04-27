@@ -13,6 +13,16 @@ Interfere is a research-oriented Python package that addresses a fundamental que
 - Generating complex dynamic counterfactuals.
 - Studying causal relationships in complex systems.
 
+## Interfere Benchmark Dataset ([Download](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing))
+
+![Sixty dynamic systems and intervention responses.](images/sixty_models.png)
+
+The image above depicts the uninterrupted trajectories of sixty dynamic models
+in blue and their response to a particular intervention in red. This data is
+available for download as the [Interfere Benchmark
+1.1.1](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing). It can be used to benchmark a forecasting method's ability to predict the
+response of a dynamic system to interventions.
+
 ## Installation
 
 ### From GitHub
