@@ -3,7 +3,7 @@ name = "interfere"
 version = "1.0.1"
 description = "Predicting how complex systems will respond to interventions."
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "LICENSE"
 keywords = ["complex systems", "dynamics", "nonlinear", "causal inference", "machine learning", "time series", "forecast", "intervention"]
 authors = [
   {name = "DJ Passey", email = "djpassey@unc.edu"}
