@@ -17,11 +17,9 @@ tags:
 authors:
   - name: D. J. Passey
     orcid: 0000-0002-9310-3361
-    ##equal-contrib: true
     affiliation: 1
   - name: Peter J. Mucha
     orcid: 0000-0002-0648-7230
-    ##equal-contrib: true
     affiliation: 2
 affiliations:
   - name: University of North Carolina at Chapel Hill, United States
@@ -139,7 +137,7 @@ hyperparameter ranges for the optimizer to explore.
 ```python
 
 # Select the SINDy method for hyperparameter optimization.
-method_type = interfere.SINDY
+method_type = interfere.SINDy
 
 # Create an objective function that aims to minimize cross validation error
 # over different hyper parameter configurations for SINDy
@@ -172,7 +170,7 @@ input signal to include in the forecast.
 
 ```python
 # Initialize SINDy with the best perfoming parameters.
-method = interfere.SINDY(**study.best_params)
+method = interfere.SINDy(**study.best_params)
 
 # Use an intervention helper function to split the pre-intervention data
 # into endogenous and exogenous columns.
