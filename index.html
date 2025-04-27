@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>interfere</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#interfere-benchmark-dataset-download">Interfere Benchmark Dataset (Download)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-counterfactual-simulation">1. Counterfactual Simulation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-applying-an-intervention">2. Applying an Intervention</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-model-optimization-and-prediction">3. Model Optimization and Prediction</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-intervention-response-prediction">4. Intervention Response Prediction</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="simulation/">Simulation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="optimization/">Optimization</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="prediction/">Prediction</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Home</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="interfere-intervention-response-prediction-in-complex-dynamic-models">🌀 Interfere: Intervention Response Prediction in Complex Dynamic Models</h1>
+<p><a href="https://pypi.org/project/interfere/"><img alt="PyPI Version" src="https://img.shields.io/pypi/v/interfere" /></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a></p>
+<p>Interfere is a comprehensive Python toolkit for simulating, intervening on, and
+optimizing forecasting methods to predict the behavior complex dynamical systems. It enables:</p>
+<ul>
+<li>Rich collections of continuous and discrete-time dynamic models (ODEs, SDEs,
+  differnce equations, and more).</li>
+<li>Exogenous interventions to generate control and treatment scenarios at scale.</li>
+<li>Seamless forecasting integrations (SINDy, VAR, reservoir computing, ARIMA, LSTM, NHITS).</li>
+<li>Automated sliding-window cross-validation and hyperparameter tuning with Optuna.</li>
+<li>Unified error metrics and evaluation workflows for intervention-response
+  prediction.</li>
+</ul>
+<h2 id="interfere-benchmark-dataset-download">Interfere Benchmark Dataset (<a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Download</a>)</h2>
+<p><img alt="Sixty dynamic systems and intervention responses." src="images/sixty_models.png" /></p>
+<p>The image above depicts the uninterrupted trajectories of sixty dynamic models
+in blue and their response to a particular intervention in red. This data is
+available for download as the <a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Interfere Benchmark
+1.1.1</a>.
+It can be used to benchmark a forecasting method's ability to predict the
+response of a dynamic system to interventions.</p>
+<h2 id="installation">Installation</h2>
+<p>Install the core package from PyPI:</p>
+<pre><code class="language-bash">pip install interfere
+</code></pre>
+<p>For Nixtla-based forecasting methods (<code>ARIMA</code>, <code>LSTM</code>, <code>NHITS</code>), install the extras:</p>
+<pre><code class="language-bash">pip install interfere[nixtla]
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<p>The Interfere package is designed around three main tasks: counterfactual simulation, predictive method optimization, and prediction. Here's a complete example using the SINDy (Sparse Identification of Nonlinear Dynamics) method:</p>
+<h3 id="1-counterfactual-simulation">1. Counterfactual Simulation</h3>
+<p>First, let's create and simulate a dynamic model:</p>
+<pre><code class="language-python">import numpy as np
+import interfere
+import optuna
+
+# Set up simulation parameters
+initial_cond = np.random.rand(3)
+t_train = np.arange(0, 10, 0.05)
+dynamics = interfere.dynamics.Belozyorov3DQuad(sigma=0.5)
+
+# Generate trajectory
+sim_states = dynamics.simulate(t_train, initial_cond)
+</code></pre>
+<p><img alt="Original System Trajectory" src="images/original_trajectory.png" /></p>
+<h3 id="2-applying-an-intervention">2. Applying an Intervention</h3>
+<p>Next, we'll apply an intervention to one component of the system:</p>
+<pre><code class="language-python"># Time points for the intervention simulation
+test_t = np.arange(t_train[-1], 15, 0.05)
+
+# Intervention initialization
+intervention = interfere.SignalIntervention(iv_idxs=1, signals=np.sin)
+
+# Simulate intervention
+interv_states = dynamics.simulate(
+    test_t,
+    prior_states=sim_states,
+    intervention=intervention,
+)
+</code></pre>
+<p><img alt="System Trajectory with Intervention" src="images/intervention_effect.png" /></p>
+<h3 id="3-model-optimization-and-prediction">3. Model Optimization and Prediction</h3>
+<p>Using the generated data, we can run hyperparameter optimization with a
+forecasting method. All forecasting methods come with reasonable hyperparameter
+ranges built in.</p>
+<pre><code class="language-python"># Select the SINDy method for hyperparameter optimization.
+method_type = interfere.SINDy
+
+# Create an objective function that aims to minimize cross validation error
+# over different hyper parameter configurations for SINDy
+cv_obj = interfere.CrossValObjective(
+    method_type=method_type,
+    data=sim_states,
+    times=t_train,
+    train_window_percent=0.3,
+    num_folds=5,
+    exog_idxs=intervention.iv_idxs,
+)
+
+# Run the study using optuna.
+study = optuna.create_study()
+study.optimize(cv_obj, n_trials=25)
+
+# Collect the best hyperparameters into a dictionary.
+best_param_dict = study.best_params
+</code></pre>
+<h3 id="4-intervention-response-prediction">4. Intervention Response Prediction</h3>
+<p>Using the best parameters found, we can fit the forecasting method to
+pre-intervention data and then make a prediction about how the system will
+respond to the intervention.</p>
+<pre><code class="language-python"># Initialize SINDy with the best perfoming parameters.
+method = interfere.SINDy(**study.best_params)
+
+# Use an intervention helper function to split the pre-intervention data
+# into endogenous and exogenous columns.
+Y_endog, Y_exog = intervention.split_exog(sim_states)
+
+# Fit SINDy to the pre-intervention data.
+method.fit(t_train, Y_endog, Y_exog)
+
+# Use the inherited interfere.ForecastingMethod.simulate() method
+# To simulate intervention response using SINDy
+pred_traj = method.simulate(
+    test_t, prior_states=sim_states, intervention=intervention
+)
+</code></pre>
+<p><img alt="Predicted vs Actual Intervention Response" src="images/prediction_comparison.png" /></p>
+<p>The SINDy method identifies the underlying dynamics of the system using sparse regression techniques, making it particularly effective for discovering interpretable mathematical models of complex systems.</p>
+<h2 id="documentation">Documentation</h2>
+<ul>
+<li><a href="simulation/">Simulation</a>: Simulation engines and available dynamic models.</li>
+<li><a href="intervention/">Intervention</a>: Exogenous intervention interfaces.</li>
+<li><a href="optimization/">Optimization</a>: Automated cross-validation and hyperparameter tuning.</li>
+<li><a href="prediction/">Prediction</a>: Counterfactual forecasting workflows.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="simulation/" class="btn btn-neutral float-right" title="Simulation">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="simulation/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2025-04-27 19:13:44.158389+00:00
+-->

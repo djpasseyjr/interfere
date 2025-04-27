@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Simulation - interfere</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Simulation";
+        var mkdocs_page_input_path = "simulation.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Simulation</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#simulate-method">simulate() Method</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../optimization/">Optimization</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Simulation</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="simulation">Simulation</h1>
+<p>Simulation in Interfere brings mathematical models to life, offering a unified framework for producing deterministic, stochastic, and hybrid trajectories under controlled interventions. Whether you're exploring classic ODE behavior or complex SDE landscapes, Interfere handles the heavy lifting—time management, noise, and interventions—so you can focus on analysis.</p>
+<p>At the heart of Interfere's simulation engine is the abstract <code>DynamicModel</code> class (in <code>interfere/base.py</code>), which provides:</p>
+<ul>
+<li><strong>Argument Validation</strong>: Ensures <code>t</code>, <code>prior_states</code>, and <code>prior_t</code> shapes are consistent.</li>
+<li><strong>Time Inference</strong>: Infers or checks historic time points (<code>prior_t</code>) if not supplied.</li>
+<li><strong>Noise Injection</strong>: Builds and injects system (stochastic) and measurement noise.</li>
+<li><strong>Intervention Hooks</strong>: Manages optional application of exogenous intervention functions.</li>
+</ul>
+<p>Subclasses implement the protected <code>_simulate()</code> method to define the specific propagation rules.</p>
+<p>With these foundational services—validation, time inference, noise injection, and intervention hooks—Interfere enables seamless simulation of everything from classic ODEs to complex SDEs and discrete-time maps.</p>
+<p>In <code>interfere/dynamics/base.py</code>, three specialized simulation bases implement <code>_simulate()</code>:</p>
+<ul>
+<li><strong>OrdinaryDifferentialEquation</strong>: Integrates ODEs by defining a <code>dXdt(x, t)</code> derivative function and calling <code>scipy.integrate.odeint</code>, applies interventions at each step, and adds measurement noise.</li>
+<li><strong>StochasticDifferentialEquation</strong>: Advances SDEs using an Euler–Maruyama scheme, computing deterministic <code>drift(x, t)</code> and stochastic <code>noise(x, t) dW</code>, supports custom Wiener increments, applies interventions, and adds measurement noise.</li>
+<li><strong>DiscreteTimeDynamics</strong>: Steps discrete-time maps by repeatedly calling a <code>step(x, t)</code> function, applying optional interventions after each step.</li>
+</ul>
+<p>Below is a table of every dynamic model provided in <code>interfere/dynamics</code> (as imported in its <code>__init__.py</code>), showing each model name, its direct base class, and a concise description.</p>
+<h2 id="simulate-method">simulate() Method</h2>
+<p>The <code>simulate</code> method is the primary interface for generating time-series trajectories of a <code>DynamicModel</code>. It handles initial conditions, optional interventions, stochastic process noise, and measurement noise, delivering a complete counterfactual or baseline trajectory.</p>
+<pre><code class="language-python">simulate(
+    self,
+    t: np.ndarray,
+    prior_states: np.ndarray,
+    prior_t: Optional[np.ndarray] = None,
+    intervention: Optional[Callable[[np.ndarray, float], np.ndarray]] = None,
+    rng: np.random.RandomState = DEFAULT_RANGE,
+    **kwargs
+) -&gt; np.ndarray
+</code></pre>
+<p>Parameters:</p>
+<ul>
+<li><strong>t</strong> (<code>np.ndarray</code> of shape <code>(n,)</code>): Strictly increasing time points for simulation ('), requiring at least two entries for integration.</li>
+<li><strong>prior_states</strong> (<code>np.ndarray</code>): Initial condition(s). Can be a 1D array of length <code>dim</code> or a 2D array <code>(p, dim)</code> representing <code>p</code> historic observations.</li>
+<li><strong>prior_t</strong> (<code>Optional[np.ndarray]</code> of shape <code>(p,)</code>): Time stamps for each row of <code>prior_states</code>. If omitted and <code>t</code> is uniform, historic times are inferred as evenly spaced before <code>t[0]</code>.</li>
+<li><strong>intervention</strong> (<code>Optional[Callable[[x: np.ndarray, t: float], np.ndarray]]</code>): A function to impose exogenous control at each step. Defaults to no intervention.</li>
+<li><strong>rng</strong> (<code>numpy.random.RandomState</code>): RNG used for generating process (<code>sigma</code>) and measurement noise.</li>
+<li><strong>kwargs</strong>: Additional subclass-specific options (e.g., <code>dW</code> for custom Wiener increments in SDEs).</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li><strong>np.ndarray</strong> <code>(n, dim)</code>: Simulated state trajectory over <code>t</code>, incorporating any interventions and noise effects.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Base Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArithmeticBrownianMotion</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Brownian motion with linear drift and constant diffusion</td>
+</tr>
+<tr>
+<td><code>GeometricBrownianMotion</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Geometric Brownian motion with multiplicative noise</td>
+</tr>
+<tr>
+<td><code>OrdinaryDifferentialEquation</code></td>
+<td>DynamicModel</td>
+<td>Abstract base for continuous-time ODE integrators</td>
+</tr>
+<tr>
+<td><code>StochasticDifferentialEquation</code></td>
+<td>DynamicModel</td>
+<td>Abstract base for SDE simulators</td>
+</tr>
+<tr>
+<td><code>LinearSDE</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Linear stochastic differential equation</td>
+</tr>
+<tr>
+<td><code>DampedOscillator</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Second-order damped oscillator modeled as SDE</td>
+</tr>
+<tr>
+<td><code>imag_roots_2d_linear_sde</code></td>
+<td>LinearSDE (factory)</td>
+<td>2D linear SDE with purely imaginary eigenvalues</td>
+</tr>
+<tr>
+<td><code>imag_roots_4d_linear_sde</code></td>
+<td>LinearSDE (factory)</td>
+<td>4D linear SDE with purely imaginary eigenvalues</td>
+</tr>
+<tr>
+<td><code>attracting_fixed_point_4d_linear_sde</code></td>
+<td>LinearSDE (factory)</td>
+<td>4D SDE with an attracting fixed point</td>
+</tr>
+<tr>
+<td><code>CoupledMapLattice</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>Deterministic coupled map lattice</td>
+</tr>
+<tr>
+<td><code>StochasticCoupledMapLattice</code></td>
+<td>CoupledMapLattice</td>
+<td>Coupled map lattice with stochastic fluctuations</td>
+</tr>
+<tr>
+<td><code>coupled_logistic_map</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: stochastic logistic map lattice</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_chaotic_brownian</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: chaotic Brownian CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_chaotic_traveling_wave</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: chaotic traveling-wave CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_defect_turbulence</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: defect turbulence CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_frozen_chaos</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: frozen chaos CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_pattern_selection</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: pattern selection CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_spatiotemp_chaos</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: spatiotemporal chaos CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_spatiotemp_intermit1</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: intermittency type 1 CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_spatiotemp_intermit2</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: intermittency type 2 CML</td>
+</tr>
+<tr>
+<td><code>coupled_map_1dlattice_traveling_wave</code></td>
+<td>StochasticCoupledMapLattice (factory)</td>
+<td>Factory: traveling-wave CML</td>
+</tr>
+<tr>
+<td><code>Kuramoto</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Coupled oscillator network</td>
+</tr>
+<tr>
+<td><code>KuramotoSakaguchi</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Kuramoto variant with phase frustration</td>
+</tr>
+<tr>
+<td><code>LotkaVoltera</code></td>
+<td>OrdinaryDifferentialEquation</td>
+<td>Predator–prey ODE model</td>
+</tr>
+<tr>
+<td><code>LotkaVolteraSDE</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Stochastic predator–prey model</td>
+</tr>
+<tr>
+<td><code>MichaelisMenten</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Enzyme kinetics reaction network</td>
+</tr>
+<tr>
+<td><code>MutualisticPopulation</code></td>
+<td>OrdinaryDifferentialEquation</td>
+<td>Interacting mutualistic species model</td>
+</tr>
+<tr>
+<td><code>SIS</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Susceptible–Infected–Susceptible epidemiological model</td>
+</tr>
+<tr>
+<td><code>OrnsteinUhlenbeck</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Mean-reverting Ornstein–Uhlenbeck process</td>
+</tr>
+<tr>
+<td><code>VARMADynamics</code></td>
+<td>DynamicModel</td>
+<td>Vector autoregressive moving-average dynamics</td>
+</tr>
+<tr>
+<td><code>WilsonCowan</code></td>
+<td>OrdinaryDifferentialEquation</td>
+<td>Wilson–Cowan neural population model</td>
+</tr>
+<tr>
+<td><code>Belozyorov3DQuad</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>3D quadratic chaotic system</td>
+</tr>
+<tr>
+<td><code>Liping3DQuadFinance</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>3D quadratic system for financial modeling</td>
+</tr>
+<tr>
+<td><code>Lorenz</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Lorenz chaotic attractor</td>
+</tr>
+<tr>
+<td><code>Rossler</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Rössler attractor</td>
+</tr>
+<tr>
+<td><code>Thomas</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Thomas chaotic attractor</td>
+</tr>
+<tr>
+<td><code>MooreSpiegel</code></td>
+<td>StochasticDifferentialEquation</td>
+<td>Moore–Spiegel chaotic oscillator</td>
+</tr>
+<tr>
+<td><code>PlantedTankNitrogenCycle</code></td>
+<td>OrdinaryDifferentialEquation</td>
+<td>Aquatic nitrogen cycle model</td>
+</tr>
+<tr>
+<td><code>GenerativeForecaster</code></td>
+<td>DynamicModel</td>
+<td>Generates trajectories using fitted forecasters</td>
+</tr>
+<tr>
+<td><code>generative_lorenz_VAR_forecaster</code></td>
+<td>GenerativeForecaster (factory)</td>
+<td>Factory: VAR-based Lorenz forecaster</td>
+</tr>
+<tr>
+<td><code>generative_cml_SINDy_forecaster</code></td>
+<td>GenerativeForecaster (factory)</td>
+<td>Factory: SINDy-based CML forecaster</td>
+</tr>
+<tr>
+<td><code>StandardNormalNoise</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>IID Gaussian noise generator</td>
+</tr>
+<tr>
+<td><code>StandardCauchyNoise</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>IID Cauchy noise generator</td>
+</tr>
+<tr>
+<td><code>StandardExponentialNoise</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>IID exponential noise generator</td>
+</tr>
+<tr>
+<td><code>StandardGammaNoise</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>IID gamma noise generator</td>
+</tr>
+<tr>
+<td><code>StandardTNoise</code></td>
+<td>DiscreteTimeDynamics</td>
+<td>IID Student's t noise generator</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../intervention/" class="btn btn-neutral float-right" title="Intervention">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../intervention/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Optimization - interfere</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Optimization";
+        var mkdocs_page_input_path = "optimization.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../simulation/">Simulation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Optimization</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#crossvalobjective-overview">CrossValObjective Overview</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#key-parameters">Key Parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metrics">Metrics</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#cross-validation-workflow">Cross-Validation Workflow</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supported-forecasting-methods">Supported Forecasting Methods</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#example-usage">Example Usage</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Optimization</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="optimization">Optimization</h1>
+<p>Interfere's optimization module provides a robust cross-validation workflow for hyperparameter tuning of dynamical forecasting methods using Optuna.</p>
+<h2 id="crossvalobjective-overview">CrossValObjective Overview</h2>
+<p>The <code>CrossValObjective</code> class implements an Optuna-compatible objective function for tuning any <code>ForecastMethod</code>. It performs sliding-window cross-validation on time series data, systematically training and scoring forecasting or intervention-response models over multiple folds.</p>
+<h3 id="key-parameters">Key Parameters</h3>
+<ul>
+<li><strong>method_type</strong> <em>(Type[ForecastMethod])</em>: Forecasting method class (e.g., <code>SINDy</code>, <code>VAR</code>, <code>ResComp</code>).</li>
+<li><strong>data</strong> <em>(np.ndarray)</em>: Time series array of shape (T, n_vars). Rows are time points, columns are variables.</li>
+<li><strong>times</strong> <em>(np.ndarray)</em>: 1D array of time stamps corresponding to each row in <code>data</code>.</li>
+<li><strong>train_window_percent</strong> <em>(float)</em>: Fraction of <code>data</code> used for training in each fold (0 &lt; p &lt; 1).</li>
+<li><strong>num_folds</strong> <em>(int)</em>: Total number of folds (including the initial training window).</li>
+<li><strong>exog_idxs</strong> <em>(Optional[list[int]])</em>: Indices of columns in <code>data</code> treated as exogenous variables during fitting and validation.</li>
+<li><strong>val_scheme</strong> <em>(str)</em>: Validation strategy: <code>"forecast"</code> (score the chunk immediately after training), <code>"last"</code> (score a fixed hold-out chunk at end), or <code>"all"</code> (score all hold-out chunks).</li>
+<li><strong>num_val_prior_states</strong> <em>(int)</em>: Number of prior observations used as context for each validation prediction.</li>
+<li><strong>metric</strong> <em>(Callable[[np.ndarray, np.ndarray], float])</em>: Callable metric function accepting <code>actual</code> and <code>predicted</code> arrays and returning a scalar error (e.g., <code>interfere.metrics.rmse</code>).</li>
+<li><strong>metric_direction</strong> <em>(str)</em>: <code>"minimize"</code> or <code>"maximize"</code>, passed to Optuna's study.</li>
+<li><strong>hyperparam_func</strong> <em>(Callable)</em>: Trial-to-parameter mapping function. Defaults to the model's <code>_get_optuna_params</code>.</li>
+<li><strong>store_preds</strong> <em>(bool)</em>: If <code>True</code>, stores per-fold predictions in <code>CrossValObjective.trial_results</code> for inspection.</li>
+<li><strong>raise_errors</strong> <em>(bool)</em>: If <code>True</code>, propagates exceptions during CV; otherwise, assigns a large penalty value for that trial.</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<p>Interfere provides simple callable metrics in the <code>interfere.metrics</code> module. Metrics should accept two arrays (<code>actual</code>, <code>predicted</code>) of the same shape and return a float. Exogenous variables will be automatically dropped during metric evaluation.</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>interfere.metrics.rmse</code></td>
+<td>Root mean squared error</td>
+</tr>
+<tr>
+<td><code>interfere.metrics.mae</code></td>
+<td>Mean absolute error</td>
+</tr>
+<tr>
+<td><code>interfere.metrics.mse</code></td>
+<td>Mean squared error</td>
+</tr>
+<tr>
+<td><code>interfere.metrics.mape</code></td>
+<td>Mean absolute percentage error</td>
+</tr>
+<tr>
+<td><code>interfere.metrics.nrmse</code></td>
+<td>Normalized root mean squared error</td>
+</tr>
+<tr>
+<td><code>interfere.metrics.rmsse</code></td>
+<td>Root mean squared scaled error</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code class="language-python">import interfere
+
+# compute error between observed and forecasted values
+error = interfere.metrics.rmse(actual, predicted)
+</code></pre>
+<h3 id="cross-validation-workflow">Cross-Validation Workflow</h3>
+<ol>
+<li><strong>Partition Data</strong>: Split <code>data</code> into a sliding training window (size = <code>train_window_percent</code> × T) and subsequent validation chunks.</li>
+<li><strong>Slide Window</strong>: For each of the <code>num_folds</code>, advance the training window by one validation chunk and retrain the forecasting method from scratch.</li>
+<li><strong>Score Predictions</strong>: Depending on <code>val_scheme</code>, compute the error metric on hold-out observations immediately after training (<code>"forecast"</code>), at the end (<code>"last"</code>), or on all chunks (<code>"all"</code>).</li>
+<li><strong>Aggregate Result</strong>: Return the aggregated metric across folds to Optuna to guide hyperparameter search.</li>
+</ol>
+<h2 id="supported-forecasting-methods">Supported Forecasting Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AverageMethod</code></td>
+<td>Forecasts the historical mean</td>
+</tr>
+<tr>
+<td><code>VAR</code></td>
+<td>Vector autoregression via StatsModels</td>
+</tr>
+<tr>
+<td><code>SINDy</code></td>
+<td>Sparse regression-based identification of dynamics</td>
+</tr>
+<tr>
+<td><code>ResComp</code></td>
+<td>Reservoir computing with Tikhonov regularization</td>
+</tr>
+</tbody>
+</table>
+<h2 id="example-usage">Example Usage</h2>
+<pre><code class="language-python">import numpy as np
+import interfere
+import optuna
+
+# 1. Simulate training data
+t = np.linspace(0, 10, 500)
+x0 = np.random.rand(3)
+dynamics = interfere.dynamics.Lorenz(sigma=0.3)
+data = dynamics.simulate(t, x0)
+
+# 2. Initialize CrossValObjective
+cv = interfere.CrossValObjective(
+    method_type=interfere.SINDy,
+    data=data,
+    times=t,
+    train_window_percent=0.5,
+    num_folds=4,
+    exog_idxs=[],
+    val_scheme=&quot;forecast&quot;,
+    num_val_prior_states=5,
+    metric=interfere.metrics.RootMeanSquaredError(),
+    metric_direction=&quot;minimize&quot;,
+)
+
+# 3. Optimize with Optuna
+study = optuna.create_study(direction=cv.metric_direction)
+study.optimize(cv, n_trials=20)
+
+print(&quot;Best hyperparameters:&quot;, study.best_params)
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../intervention/" class="btn btn-neutral float-left" title="Intervention"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../prediction/" class="btn btn-neutral float-right" title="Prediction">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../intervention/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../prediction/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
