@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyclustering@git+https://github.com/djpasseyjr/pyclustering"
+        pip install pyclustering@git+https://github.com/djpasseyjr/pyclustering
         pip install ".[dev]"
     - name: Test with pytest
       run: |
