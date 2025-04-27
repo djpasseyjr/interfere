@@ -1,10 +1,26 @@
+import traceback
 from typing import Callable, Optional
 
 import numpy as np
-from pyclustering.nnet.hhn import hhn_network, hhn_parameters
-from pyclustering.nnet.legion import legion_network, legion_parameters
-from pyclustering.nnet import conn_type
-from pyclustering.nnet.fsync import fsync_network
+
+try:
+    from pyclustering.nnet.hhn import hhn_network, hhn_parameters
+    from pyclustering.nnet.legion import legion_network, legion_parameters
+    from pyclustering.nnet import conn_type
+    from pyclustering.nnet.fsync import fsync_network
+    
+except ImportError as e:
+    raise ImportError(
+        "ImportError occured in pyclustering import."
+        "\n\n This likely occurred because `interfere` requires a special fork"
+        " of the `pyclustering` library. To use the neural models, first "
+        "install the fork via: "
+        "\n\n pip install pyclustering@"
+        "git+https://github.com/djpasseyjr/pyclustering"
+        f"\n\nOriginating error text: {e}"
+        f"\n\nTraceback:\n\n {traceback.format_exc()}"   
+)
+
 
 from .base import (
     StochasticDifferentialEquation, DEFAULT_RANGE, DiscreteTimeDynamics

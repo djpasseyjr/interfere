@@ -25,6 +25,11 @@ from interfere.dynamics import (
     coupled_map_1dlattice_traveling_wave
 )
 
+from interfere.dynamics.generative_forecasters import (
+    generative_lorenz_VAR_forecaster,
+    generative_cml_SINDy_forecaster
+)
+
 from sample_models import (
     lotka_voltera_model,
     ornstein_uhlenbeck_model,
@@ -79,8 +84,8 @@ NOISE_MODELS = [
         
 
 MODELS = [
-    interfere.dynamics.generative_cml_SINDy_forecaster(),
-    interfere.dynamics.generative_lorenz_VAR_forecaster(),
+    generative_cml_SINDy_forecaster(),
+    generative_lorenz_VAR_forecaster(),
     interfere.dynamics.PlantedTankNitrogenCycle(),
     interfere.dynamics.Thomas(),
     interfere.dynamics.Rossler(),

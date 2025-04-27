@@ -1,8 +1,15 @@
 """Contains sample models of many kinds for testing.
 """
 
-import interfere
 import numpy as np
+
+import interfere
+from interfere.dynamics.pyclustering_models import (
+    StuartLandauKuramoto,
+    HodgkinHuxleyPyclustering
+)
+
+
 SEED = 10
 RNG = np.random.default_rng(SEED)
 
@@ -125,27 +132,29 @@ def kuramoto_sakaguchi_model() -> interfere.dynamics.KuramotoSakaguchi:
     return interfere.dynamics.KuramotoSakaguchi(omega, K, A, A, sigma)
 
 
-def stuart_landau_kuramoto_model() -> interfere.dynamics.StuartLandauKuramoto:
+def stuart_landau_kuramoto_model() -> StuartLandauKuramoto:
     """Initializes a Stuart-Landau-Kuramoto model.
 
     Returns
-        An instance of interfere.dynamics.StuartLandauKuramoto.
+        An instance of `interfere.dynamics.pyclustering_models.
+        StuartLandauKuramoto`.
     """
     omega = RNG.random(10)
     K = 0.7
     A = RNG.random((10, 10)) < .3
     sigma=0.1
     rho = RNG.random(10)
-    return interfere.dynamics.StuartLandauKuramoto(omega, rho, K, sigma)
+    return StuartLandauKuramoto(omega, rho, K, sigma)
 
 
-def hodgkin_huxley_model() ->  interfere.dynamics.HodgkinHuxleyPyclustering:
+def hodgkin_huxley_model() ->  HodgkinHuxleyPyclustering:
     """Initializes a hodgking huxley model.
 
     Returns:
-        An instance of interfere.dynamics.HodgkinHuxleyPyclustering
+        An instance of `interfere.dynamics.pyclustering_models.
+        HodgkinHuxleyPyclustering`.
     """
-    return interfere.dynamics.HodgkinHuxleyPyclustering(
+    return HodgkinHuxleyPyclustering(
         [0, 0, 0, 15, 15, 15, 25, 25, 25, 40], sigma=0.1)
 
 

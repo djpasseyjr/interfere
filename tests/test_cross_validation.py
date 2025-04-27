@@ -1,12 +1,14 @@
 from unittest.mock import Mock
+from typing import Callable
 
-from interfere._methods.deep_learning import LTSF
-import interfere.methods
-from interfere.metrics import RootMeanStandardizedSquaredError as RMSSE
-from interfere import CrossValObjective
 import numpy as np
 import optuna
 import pytest
+
+from interfere._methods.deep_learning import LTSF
+import interfere.methods
+from interfere.metrics import rmse
+from interfere import CrossValObjective
 
 SEED = 12
 RNG = np.random.default_rng(SEED)
@@ -287,7 +289,7 @@ def test_cvr_cv_init():
     assert cv.num_folds == 3
     assert cv.val_scheme == "forecast"
     assert cv.num_val_prior_states == 10
-    assert isinstance(cv.metric, RMSSE)
+    assert isinstance(cv.metric, Callable)
     assert cv.metric_direction == "minimize"
     assert cv.hyperparam_func == interfere.methods.VAR._get_optuna_params
     assert cv.store_preds == True
