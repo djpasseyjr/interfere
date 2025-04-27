@@ -1,5 +1,5 @@
 # 🌀 Interfere: Intervention Response Prediction in Complex Dynamic Models
-[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Interfere is a comprehensive Python toolkit for simulating, intervening on, and
 optimizing forecasting methods to predict the behavior complex dynamical systems. It enables:

@@ -1,6 +1,6 @@
 # 🌀 Interfere
 
-[![PyPI Version](https://img.shields.io/pypi/v/interfere)] [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Python package for modeling and predicting the response of complex dynamic systems to interventions.
 
