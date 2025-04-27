@@ -1,6 +1,6 @@
 [project]
 name = "interfere"
-version = "1.0.0"
+version = "1.0.1"
 description = "Predicting how complex systems will respond to interventions."
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -9,7 +9,6 @@ authors = [
   {name = "DJ Passey", email = "djpassey@unc.edu"}
 ]
 dependencies = [
-    "matplotlib",
     "networkx",
     "numpy<2",
     "optuna",
