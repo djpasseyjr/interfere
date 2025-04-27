@@ -33,7 +33,7 @@ bibliography: paper.bib
 ---
 # Summary
 
-The vision of Interfere is simple: What if we used high quality scientific models to benchmark causal prediction tools? Randomized experimental data and counterfactuals are essential for testing methods that attempt to infer causal relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models are commonly developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018] . Because these models are painstaking calibrated with the real world, they have the ability to generate diverse and complex synthetic counterfactual data that are characteristic of the real processes they emulate. Interfere offers the first steps towards this vision by combining (1) a general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an [initial benchmark data set](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) of dynamic counterfactual scenarios.
+The vision of Interfere is simple: What if we used high quality scientific models to benchmark causal prediction tools? Randomized experimental data and counterfactuals are essential for testing methods that attempt to infer causal relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models are commonly developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018]. Because these models are painstaking calibrated with the real world, they have the ability to generate diverse and complex synthetic counterfactual data that are characteristic of the real processes they emulate. Interfere offers the first steps towards this vision by combining (1) a general interface for simulating the effect of interventions on dynamic simulation models, (2) a suite of predictive methods and cross validation tools, and (3) an [initial benchmark data set](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) of dynamic counterfactual scenarios.
 
 ![Three-dimensional trajectories of sixty scenarios simulated with the Interfere
 package. All models depicted are either differential equations or discrete time
@@ -43,7 +43,7 @@ Many of the models pictured have more than three dimensions (in such cases,
 only the three dimensions of the trajectory with the highest variance
 are shown). These sixty scenarios make up the [Interfere Benchmark 1.1.1](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) for
 intervention response prediction which is available online for download.
-\label{fig:sixty_models}](images/sixty_models.png)
+\label{fig:sixty_models}](../images/sixty_models.png)
 
 # Statement of Need
 
@@ -96,7 +96,7 @@ sim_states = dynamics.simulate(t_train, initial_cond)
 ![**Simulation of System:** The natural, uninterupted evolution of a chaotic
 system studied in [@belozyorov_exponential_2015] with the addition of a small
 amount of stochastic noise. For simplicity, we've let
-$x=x_1$, $y=x_2$ and and do not plot $x_0$ for. \label{fig:orig_traj}](images/original_trajectory.png)
+$x=x_1$, $y=x_2$ and and do not plot $x_0$. \label{fig:orig_traj}](../images/original_trajectory.png)
 
 ## 2. Intervention
 
@@ -123,7 +123,7 @@ interv_states = dynamics.simulate(
 effect that taking exogenous control of $x(t)$ by via $\text{do}(x(t)=\sin(t))$
 has on $y$. The intervention (black) and
 response (blue), depict a clear departure from
-the natural evolution behavior of the system. \label{fig:interv_effect}](images/intervention_effect.png)
+the natural evolution behavior of the system. \label{fig:interv_effect}](../images/intervention_effect.png)
 
 ## 3. Optimization
 
@@ -193,7 +193,7 @@ taking exogenous control of $x(t)$ (black). The ground truth response, $y(t)$ fo
 $t > 10$ is plotted in blue. Here, an equation discovery algorithm, SINDy
 [@brunton_discovering_2016] is fit to the data that occurs prior to the
 intervention, and makes an attempt to predict the intervention response (red
-curve).](images/prediction_comparison.png)
+curve).](../images/prediction_comparison.png)
 
 # Primary Contributions
 
@@ -202,7 +202,7 @@ community.
 
 ![Example experimental setup possible with Interfere: Comparing intervention
 response prediction for deterministic and stochastic versions of the same system.
-Can stochasticity help reveal associations between variables? \label{fig:det_vs_stoch}](images/det_v_stoch.png)
+Can stochasticity help reveal associations between variables? \label{fig:det_vs_stoch}](../images/det_v_stoch.png)
 
 ## 1. Dynamically Diverse Counterfactuals at Scale
 
