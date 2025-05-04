@@ -59,6 +59,9 @@ error = interfere.metrics.rmse(actual, predicted)
 | `VAR`             | Vector autoregression via StatsModels               |
 | `SINDy`           | Sparse regression-based identification of dynamics  |
 | `ResComp`         | Reservoir computing with Tikhonov regularization    |
+| `ARIMA`           | Classical time series ARIMA model via Nixtla StatsForecast |
+| `LSTM`            | Long Short-Term Memory RNN forecaster via Nixtla NeuralForecast |
+| `NHITS`           | NHITS deep learning forecaster via Nixtla NeuralForecast |
 
 ## Example Usage
 
