@@ -109,7 +109,7 @@ class LotkaVolteraSDE(StochasticDifferentialEquation, LotkaVoltera):
     ):
         """Initializes class for simulating Lotka Voltera dynamics.
 
-            dx_i/dt = r_i * x_i * (1 - x_i / k_i +  [A x]_i / k_i) + sigma * x_i
+            dx_i/dt = r_i * x_i * (1 - (x_i +  [A x]_i) / k_i) + sigma * x_i
            * dW
 
         where r_i and k_i are the growth rates and carrying capacities of
