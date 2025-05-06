@@ -76,7 +76,7 @@ class SIS(
 
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
-        return -self.delta * x + (1 - x) * self.adjacency_matrix @ x
+        return -self.delta * x + (1 - x) * (self.adjacency_matrix @ x)
 
 
     @copy_doc(StochasticDifferentialEquation.noise)
