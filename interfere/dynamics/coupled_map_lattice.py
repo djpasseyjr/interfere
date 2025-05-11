@@ -136,6 +136,7 @@ class CoupledMapLattice(DiscreteTimeDynamics):
         prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
+        **kwargs,
     ) -> np.ndarray:
         initial_condition = prior_states[-1:, :]
         
