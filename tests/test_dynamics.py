@@ -1,5 +1,4 @@
 import interfere
-from interfere.dynamics.decoupled_noise_dynamics import UncorrelatedNoise
 from interfere.base import DynamicModel
 
 import numpy as np
@@ -97,10 +96,12 @@ MODELS = [
     arithmetic_brownian_motion_model(),
     geometric_brownian_motion_model(),
     varima_model(),
+    
     kuramoto_model(),
     kuramoto_sakaguchi_model(),
     stuart_landau_kuramoto_model(),
     hodgkin_huxley_model(),
+    
     michaelis_menten_model(),
     mutualistic_population_model(),
     sis_model(),
@@ -582,6 +583,87 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
         intervention=intervention,
         rng=rng,
         dW=dW
+    )
+
+    # Check that the intervened variable is constant
+    assert np.all(X_perf_inter_sim[:, interv_idx] == interv_const)
+
+    # Check that the simulations match
+    assert np.mean((X_perf_inter - X_perf_inter_sim) ** 2) < 0.01
+
+
+def test_ornstein_uhlenbeck_and_sde_integrator_sri2():
+    """Uses Ornstein Uhlenback model to test interfere's SDE inegrator against
+    the sdeint integrator.
+    """
+    seed = 11
+    rng = np.random.default_rng(seed)
+    n = 3
+    theta = rng.random((n, n)) - 0.5
+    mu = np.ones(n)
+    sigma = rng.random((n, n))- 0.5
+
+    model = interfere.dynamics.OrnsteinUhlenbeck(theta, mu, sigma)
+
+    x0 = rng.random(n)
+    x0_2D = x0.reshape((1, -1))
+    tspan = np.linspace(0, 10, 1000)
+    dt = (tspan[-1] - tspan[0]) / len(tspan)
+
+    # Check that using the same generator corresponds exactly with sdeint
+    rng = np.random.default_rng(seed)
+    Xtrue = sdeint.itoSRI2(model.drift, model.noise, x0, tspan, generator=rng)
+
+    rng = np.random.default_rng(seed)
+    Xsim = model._simulate_sri2(tspan, x0_2D, rng=rng)
+
+    assert np.mean((Xtrue - Xsim) ** 2) < 0.01
+
+    # Initialize the Weiner increments
+    dW = np.random.normal(0, np.sqrt(dt), (len(tspan) - 1, n))
+    _, I = sdeint.wiener.Ikpw(dW, h=dt)
+
+    # Check that the model.simulate_sri2 integrator is correct
+    Xtrue = sdeint.itoSRI2(model.drift, model.noise, x0, tspan, dW=dW, I=I)
+    Xsim = model._simulate_sri2(tspan, x0_2D, dW=dW, I=I)
+    assert np.mean((Xtrue - Xsim) ** 2) < 0.01
+
+    # Construct parameters of the true intervened system
+    theta_perf_inter = model.theta.copy()
+    sigma_perf_inter = model.sigma.copy()
+
+    theta_perf_inter[0, :] = 0
+    sigma_perf_inter[0, :] = 0
+
+    # True perfect intervention noise and drift functions
+    perf_inter_drift = lambda x, t: theta_perf_inter @ (model.mu - x)
+    perf_inter_noise = lambda x, t: sigma_perf_inter
+
+    # Make the intervention function
+    interv_idx = 0
+    interv_const = 1.0
+    intervention = interfere.perfect_intervention(interv_idx, interv_const)
+
+    # Compare the true perfect intervention system to the true one.
+    rng = np.random.default_rng(seed)
+    X_perf_inter = sdeint.itoSRI2(
+        perf_inter_drift,
+        perf_inter_noise,
+        intervention(x0, 0),
+        tspan,
+        generator=rng,
+        dW=dW,
+        I=I
+    )
+
+    rng = np.random.default_rng(seed)
+    X_perf_inter_sim = model._simulate_sri2(
+        tspan,
+        x0_2D,
+        intervention=intervention,
+        rng=rng,
+        dW=dW,
+        I=I
     )
 
     # Check that the intervened variable is constant

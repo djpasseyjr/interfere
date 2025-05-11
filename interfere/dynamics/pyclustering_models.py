@@ -165,8 +165,11 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        dW: Optional[np.ndarray] = None,
+        **kwargs
     ) -> np.ndarray:
+        
+        # Get the Wiener increments if any.
+        dW = kwargs.get("dW", None)
 
         # Model expects 1D initial condition.
         initial_condition = prior_states[-1, :]
@@ -388,7 +391,7 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        dW: Optional[np.ndarray] = None,
+        **kwargs
     ) -> np.ndarray:
         
         initial_condition = prior_states[-1:, :]
@@ -408,6 +411,7 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
             initial_condition,
             intervention=intervention,
             rng=rng
+            **kwargs
         )
         return X_do
     
@@ -512,7 +516,7 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
         prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        dW: Optional[np.ndarray] = None,
+        **kwargs
     ) -> np.ndarray:
         initial_condition = prior_states[-1:, :]
         # Must have a complex initial condition.
@@ -523,7 +527,7 @@ class StuartLandauKuramoto(StochasticDifferentialEquation):
             prior_t,
             intervention=intervention,
             rng=rng,
-            dW=dW
+            **kwargs
         )
         if self.convert_to_real:
             Z_do = np.real(Z_do)

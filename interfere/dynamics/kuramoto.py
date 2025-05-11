@@ -99,7 +99,7 @@ class Kuramoto(StochasticDifferentialEquation):
         prior_t: Optional[np.ndarray] = None,
         intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        dW: Optional[np.ndarray] = None,
+        **kwargs
     ) -> np.ndarray:
         
         initial_condition = prior_states[-1:, :]
@@ -128,7 +128,7 @@ class Kuramoto(StochasticDifferentialEquation):
             prior_t=prior_t,
             intervention=intervention,
             rng=rng,
-            dW=dW
+            **kwargs
         )
         # Return sin of the phase. (This undoes the arcsin transformations.)
         X_do = np.sin(X_do)
