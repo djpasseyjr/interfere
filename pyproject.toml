@@ -14,6 +14,7 @@ dependencies = [
     "optuna",
     "pysindy",
     "scikit-learn",
+    "sdeint",
     "statsmodels",
     "typing_extensions"
 ]
@@ -29,7 +30,6 @@ dev = [
     "neuralforecast",
     "statsforecast",
     "pytest",
-    "sdeint",
     "sktime"
 ]
 
