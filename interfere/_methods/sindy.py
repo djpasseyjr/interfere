@@ -64,6 +64,8 @@ class SINDy(ForecastMethod):
         self.sindy = ps.SINDy(
             optimizer, feature_library, differentiation_method, feature_names, t_default, discrete_time,
         )
+        self.sindy.set_params(**kwargs)
+        
         self.max_sim_value = max_sim_value
 
 
