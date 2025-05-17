@@ -6,7 +6,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["complex systems", "dynamics", "nonlinear", "causal inference", "machine learning", "time series", "forecast", "intervention"]
 authors = [
-  {name = "DJ Passey", email = "djpassey@unc.edu"}
+  {name = "DJ Passey", email = "djpasseyjr@gmail.com"}
 ]
 dependencies = [
     "networkx",
@@ -24,13 +24,15 @@ methods = [
     "neuralforecast",
     "statsforecast",
     "sktime",
+    "tigramite",
 ]
 
 dev = [
     "neuralforecast",
     "statsforecast",
     "pytest",
-    "sktime"
+    "sktime",
+    "tigramite",
 ]
 
 [tool.setuptools.packages]

@@ -23,6 +23,8 @@ MAX_SECS_PER_OPTUNA_TRIAL = 180
 REQUIRED_SUCCESSFUL_OPTUNA_TRIALS = 3
 
 METHODS = [
+    interfere.methods.SURD_SINDy,
+    interfere.methods.PCMCI_SINDy,
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
     interfere.methods.ResComp,

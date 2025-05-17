@@ -30,7 +30,7 @@ SINDY_DIFF_LIST = [
 
 class SINDy(ForecastMethod):
 
-    @copy_doc(ps.SINDy.__init__)
+    @copy_doc(ps.SINDy)
     def __init__(self, 
         optimizer=None,
         feature_library=None,

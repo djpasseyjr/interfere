@@ -24,6 +24,8 @@ DEFAULT_CV_ARGS = {
 
 # List of methods to test.
 METHODS = [
+    interfere.methods.SURD_SINDy,
+    interfere.methods.PCMCI_SINDy,
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
     interfere.methods.ResComp,
