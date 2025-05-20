@@ -18,6 +18,12 @@ authors:
   - name: D. J. Passey
     orcid: 0000-0002-9310-3361
     affiliation: 1
+  - name: Alice C. Schwarze
+    orcid: 0000-0002-9146-8068
+    affiliation: 2
+  - name: Zachary M. Boyd
+    orcid: 0000-0002-6549-7295
+    affiliation: 3
   - name: Peter J. Mucha
     orcid: 0000-0002-0648-7230
     affiliation: 2
@@ -28,7 +34,10 @@ affiliations:
   - name: Dartmouth College, United States
     index: 2
     ror: 049s0rh22
-date: 20 March 2025
+  - name: Brigham Young University, United States
+    index: 3
+    ror: 047rhhm47
+date: 20 May 2025
 bibliography: paper.bib
 ---
 # Summary
