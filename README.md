@@ -25,10 +25,10 @@ response of a dynamic system to interventions.
 
 ## Installation
 
-### From GitHub
+### From `pip`
 
 ```bash
-pip install git+https://github.com/djpasseyjr/interfere
+pip install interfere
 ```
 
 ### From Local Clone
