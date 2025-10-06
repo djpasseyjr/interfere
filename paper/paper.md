@@ -56,6 +56,8 @@ intervention response prediction which is available online for download.
 
 # Statement of Need
 
+![](../images/interfere_usage_combined.png)
+
 Over the past twenty years, the scientific community has experienced the emergence
 of multiple frameworks for identifying causal relationships in observational
 data [@imbens_causal_2015; @pearl_causality_2009; @wieczorek_information_2019].
