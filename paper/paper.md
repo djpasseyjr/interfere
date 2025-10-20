@@ -56,7 +56,20 @@ intervention response prediction which is available online for download.
 
 # Statement of Need
 
-![](../images/interfere_usage_combined.png)
+![**Original System Trajectory:** (Left) The natural, uninterupted evolution of the quaratic Belozyorov system [@belozyorov_exponential_2015] with the addition of a small
+amount of stochastic noise simulated using the Interfere package. (Center)
+**System trajectory plus intervention:** the
+effect that taking exogenous control of $x(t)$ by via $\text{do}(x(t)=\sin(t))$
+has on $y$. The intervention (black) and
+response (blue), depict a clear departure from
+the natural evolution behavior of the system (green and gray). (Right) **Intervention Response Prediction**
+Example of forecasting the response of
+the Belozyorov system to the sinusoidal intervention. The ground truth response, $y(t)$ for
+$t > 10$ is plotted in blue. Here, an equation discovery algorithm, SINDy,
+[@brunton_discovering_2016] is fit to the data that occurs prior to the
+intervention and makes an attempt to predict the intervention response (red
+curve).
+](../images/interfere_usage_combined.png)
 
 Over the past twenty years, the scientific community has experienced the emergence
 of multiple frameworks for identifying causal relationships in observational
