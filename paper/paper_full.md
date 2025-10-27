@@ -1,4 +1,4 @@
----
+<!--
 title: 'Interfere: Studying Intervention Response Prediction in Complex Dynamic Models'
 tags:
   - Python
@@ -39,7 +39,11 @@ affiliations:
     ror: 047rhhm47
 date: 20 May 2025
 bibliography: paper.bib
----
+-->
+# Interfere: Studying Intervention Response Prediction in Complex Dynamic Models
+
+**Authors:** D. J. Passey, Alice C. Schwarze, Zachary M. Boyd, Peter J. Mucha
+
 # Summary
 
 The vision of Interfere is simple: What if we used high-quality scientific models to create causal dynamic benchmark scenarios? Randomized experimental data and intervention response time series are essential for testing methods that attempt to infer dynamic relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models are commonly developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018]. Because these models are calibrated to the real world, they have the ability to generate diverse, complex, synthetic intervention responses that are characteristic of the real processes they emulate. Interfere offers the first steps towards this vision by combining (1) a general interface for simulating the effect of interventions on dynamic models, (2) a suite of predictive methods and cross validated hyper parameter optimization tools, and (3) the first known [extensible benchmark data set](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) of dynamic intervention response scenarios see Figure \ref{fig:sixty_models}.
