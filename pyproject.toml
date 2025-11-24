@@ -33,6 +33,11 @@ dev = [
     "pytest",
     "sktime",
     "tigramite",
+    "pytest-cov",
+    "pytest",
+    "pylint",
+    "black",
+    "pydantic"
 ]
 
 [tool.setuptools.packages]
