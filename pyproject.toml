@@ -25,6 +25,7 @@ methods = [
     "statsforecast",
     "sktime",
     "tigramite",
+    "pydantic"
 ]
 
 dev = [
