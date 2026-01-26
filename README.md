@@ -143,25 +143,40 @@ The SINDy method identifies the underlying dynamics of the system using sparse r
 
 ## Dependencies
 
-Core dependencies:
+Core dependencies: `pip install interfere`
 
-- matplotlib
-- networkx
-- numpy
-- optuna
-- pyclustering
-- pysindy
-- scikit-learn
-- statsmodels
-- typing_extensions
+- `matplotlib`
+- `networkx`
+- `numpy`
+- `optuna`
+- `pyclustering`
+- `pysindy`
+- `scikit-learn`
+- `statsmodels`
+- `typing_extensions`
 
-Optional dependencies for additional methods:
+Optional dependencies for additional forecasting methods: `pip install "interfere[methods]"`
 
-- neuralforecast
-- statsforecast
-- sktime
+- `neuralforecast`
+- `statsforecast`
+- `sktime`
 
-## Example
+Dependencies for experimental models and forecasters. (Install all with `pip install "interfere[dev]"`)
+
+-  `pyclustering @ git+https://github.com/djpasseyjr/pyclustering`
+-  `surd @ git+https://github.com/djpasseyjr/surd.git`
+
+## Running Tests
+
+Install the full set of dependencies and run tests like this:
+```bash
+git clone https://github.com/djpasseyjr/interfere.git
+cd interfere
+pip install ".[dev]"
+python -m pytest -v tests
+```
+The full dependencies are pretty big. I recommended to doing the above in a virtual environment.
+## Example Use
 
 The package can be used to simulate and analyze how systems respond to interventions. For example, it can model the effect of stochasticity on intervention response forecasting:
 
