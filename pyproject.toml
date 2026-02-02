@@ -41,11 +41,17 @@ dev = [
     "pytest",
     "pylint",
     "black",
-    "pydantic"
 ]
 
 [tool.setuptools.packages]
 find = {}
 
+[tool.black]
+line-length = 79
+
 [project.urls]
 Repository = "https://github.com/djpasseyjr/interfere"
+
+[build-system]
+requires = ["setuptools>=62", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
