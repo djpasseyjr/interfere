@@ -1,7 +1,4 @@
-from .base import (
-    DynamicModel,
-    ForecastMethod
-)
+from .base import DynamicModel, ForecastMethod
 from .cross_validation import CrossValObjective
 from . import dynamics
 from .interventions import (

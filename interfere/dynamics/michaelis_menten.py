@@ -11,7 +11,7 @@ class MichaelisMenten(StochasticDifferentialEquation):
 
     Description:
         Michaelis–Menten regulatory dynamics. The nodal state xi
-        is the expression level of gene i , the Hill coefficient is denoted 
+        is the expression level of gene i , the Hill coefficient is denoted
         by h, and the link weights Aij > 0 are the reaction rate constants.
 
         dxi/dt = -xi + ∑ Aij xj^h / (1 + xj^h)
@@ -28,7 +28,7 @@ class MichaelisMenten(StochasticDifferentialEquation):
 
         Description:
             Michaelis–Menten regulatory dynamics. The nodal state xi
-            is the expression level of gene i , the Hill coefficient is denoted 
+            is the expression level of gene i , the Hill coefficient is denoted
             by h, and the link weights Aij > 0 are the reaction rate constants.
 
             dxi/dt = -xi + ∑ Aij xj^h / (1 + xj^h)
@@ -49,22 +49,20 @@ class MichaelisMenten(StochasticDifferentialEquation):
                 dimension of model.
 
         References:
-            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics 
+            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics
             without requiring the knowledge of the interaction graph’, PNAS
         """
         if adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
             raise ValueError("Adjacency matrix must be square.")
-            
+
         dim = adjacency_matrix.shape[0]
         self.adjacency_matrix = adjacency_matrix
         self.h = h
         super().__init__(dim, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
         return -x + self.adjacency_matrix @ (x**self.h / (1 + x**self.h))
-
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float) -> np.ndarray:

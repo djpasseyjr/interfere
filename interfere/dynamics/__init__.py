@@ -1,5 +1,5 @@
 from .arithmetic_brownian_motion import ArithmeticBrownianMotion
-from .base import  OrdinaryDifferentialEquation, StochasticDifferentialEquation
+from .base import OrdinaryDifferentialEquation, StochasticDifferentialEquation
 from .coupled_map_lattice import (
     coupled_logistic_map,
     StochasticCoupledMapLattice,
@@ -11,14 +11,14 @@ from .coupled_map_lattice import (
     coupled_map_1dlattice_spatiotemp_chaos,
     coupled_map_1dlattice_spatiotemp_intermit1,
     coupled_map_1dlattice_spatiotemp_intermit2,
-    coupled_map_1dlattice_traveling_wave
+    coupled_map_1dlattice_traveling_wave,
 )
 from .decoupled_noise_dynamics import (
     StandardNormalNoise,
     StandardCauchyNoise,
     StandardExponentialNoise,
     StandardGammaNoise,
-    StandardTNoise
+    StandardTNoise,
 )
 from .geometric_brownian_motion import GeometricBrownianMotion
 from .kuramoto import Kuramoto, KuramotoSakaguchi
@@ -34,14 +34,14 @@ from .quadratic_sdes import (
     Lorenz,
     Rossler,
     Thomas,
-    MooreSpiegel
+    MooreSpiegel,
 )
 from .simple_linear_sdes import (
     DampedOscillator,
     LinearSDE,
     imag_roots_2d_linear_sde,
     imag_roots_4d_linear_sde,
-    attracting_fixed_point_4d_linear_sde
+    attracting_fixed_point_4d_linear_sde,
 )
 from .sis import SIS
 from .statespace_models import VARMADynamics

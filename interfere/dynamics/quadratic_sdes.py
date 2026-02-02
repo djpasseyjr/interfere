@@ -8,30 +8,29 @@ from ..utils import copy_doc
 
 class Belozyorov3DQuad(StochasticDifferentialEquation):
 
-
     def __init__(
         self,
         mu: float = 1.81,
         sigma: float = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes a 3D quadratic SDE.
 
-        dx/dt = -2x + 7y^2 + 13z^2 
+        dx/dt = -2x + 7y^2 + 13z^2
 
         dy/dy = mu*x + 7y + 10z - 3xy
 
         dz/dt = -10y + 7z -3xz
 
-        
+
         dX = dx/dt(x, y, z) * dt + sigma dW
 
         dY = dy/dt(x, y, z) * dt + sigma dW
-        
+
         dZ = dz/dt(x, y, z) * dt + sigma dW
 
-        
-        Taken from 
+
+        Taken from
             Belozyorov (2015). Exponential-Algebraic Maps and Chaos in 3D
             Autonomous Quadratic Systems. Equation (37).
 
@@ -46,7 +45,7 @@ class Belozyorov3DQuad(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time.     
+                will be added to x1 and x2 respectively at each point in time.
         """
         dim = 3
         super().__init__(dim, measurement_noise_std)
@@ -54,15 +53,13 @@ class Belozyorov3DQuad(StochasticDifferentialEquation):
         self.sigma = sigma
         self.Sigma = sigma * np.eye(dim)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float):
         x, y, z = x[0], x[1], x[2]
-        dxdt = -2 * x + 7 * y ** 2 + 13 * z ** 2
+        dxdt = -2 * x + 7 * y**2 + 13 * z**2
         dydt = self.mu * x + 7 * y + 10 * z - 3 * x * y
-        dzdt = -10 * y + 7 * z -3 * x * z
+        dzdt = -10 * y + 7 * z - 3 * x * z
         return np.array([dxdt, dydt, dzdt])
-    
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
@@ -71,11 +68,10 @@ class Belozyorov3DQuad(StochasticDifferentialEquation):
 
 class Liping3DQuadFinance(StochasticDifferentialEquation):
 
-
     def __init__(
         self,
         sigma: float = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes a 3D quadradic chaotic system.
 
@@ -90,7 +86,7 @@ class Liping3DQuadFinance(StochasticDifferentialEquation):
         Taken from :
             Liping (2021). A new financial chaotic model in Atangana-Baleanu
             stochastic fractional differential equations.
-        
+
         A fractional derivative is not used here--the d parameter in the paper
         is assumed to be 1 so the fractional derivative reduces to a normal
         derivative.
@@ -103,38 +99,35 @@ class Liping3DQuadFinance(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time. 
+                will be added to x1 and x2 respectively at each point in time.
         """
         dim = 3
         super().__init__(dim, measurement_noise_std)
         self.sigma = sigma
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float):
         y1, y2, y3 = x[0], x[1], x[2]
         dy1dt = y3 + (y2 - 0.3) * y1
-        dy2dt = 2 - 0.1 * y2 - y1 ** 2
+        dy2dt = 2 - 0.1 * y2 - y1**2
         dy3dt = y1 * y2 - y1 - 0.1 * y3
         return np.array([dy1dt, dy2dt, dy3dt])
-    
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
-        # Returns an array to rescale the brownian noise:        
+        # Returns an array to rescale the brownian noise:
         return self.sigma * np.diag(x)
-    
+
 
 class Lorenz(StochasticDifferentialEquation):
-
 
     def __init__(
         self,
         s: float = 10,
-        beta: float = 8/3,
+        beta: float = 8 / 3,
         rho: float = 28,
-        sigma: Union[float,  np.ndarray] = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        sigma: Union[float, np.ndarray] = 0.0,
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes a 3D quadratic SDE.
 
@@ -154,7 +147,7 @@ class Lorenz(StochasticDifferentialEquation):
 
         where dW is an array of weiner incremements and sigma is a 3x3 matrix.
 
-        
+
         Args:
             s (float): A parameter of the model.
             beta (float): A parameter of the model.
@@ -168,7 +161,7 @@ class Lorenz(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time. 
+                will be added to x1 and x2 respectively at each point in time.
 
 
         See: Lorenz, E. (1963) Deterministic Nonperiodic Flow.
@@ -179,7 +172,6 @@ class Lorenz(StochasticDifferentialEquation):
         self.rho = rho
         super().__init__(dim, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float):
         x, y, z = x[0], x[1], x[2]
@@ -187,15 +179,13 @@ class Lorenz(StochasticDifferentialEquation):
         dydt = x * (self.rho - z) - y
         dzdt = x * y - self.beta * z
         return np.array([dxdt, dydt, dzdt])
-    
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
         return self.sigma
-    
+
 
 class Rossler(StochasticDifferentialEquation):
-
 
     def __init__(
         self,
@@ -203,7 +193,7 @@ class Rossler(StochasticDifferentialEquation):
         b: float = 0.2,
         c: float = 5.7,
         sigma: Union[float, np.ndarray] = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes the Rossler system.
 
@@ -236,7 +226,7 @@ class Rossler(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time. 
+                will be added to x1 and x2 respectively at each point in time.
 
         See: Rössler, O. (1976). Chaotic behavior in simple reaction system.
         """
@@ -246,29 +236,26 @@ class Rossler(StochasticDifferentialEquation):
 
         super().__init__(3, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float):
         x, y, z = x[0], x[1], x[2]
-        dxdt = - y - z
+        dxdt = -y - z
         dydt = x + self.a * y
         dzdt = self.b + z * (x - self.c)
         return np.array([dxdt, dydt, dzdt])
-    
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
         return self.sigma
-    
+
 
 class Thomas(StochasticDifferentialEquation):
-
 
     def __init__(
         self,
         b: float = 0.208186,
         sigma: Union[float, np.ndarray] = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes Thomas's cyclically symmetric attractor system.
 
@@ -300,14 +287,13 @@ class Thomas(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time. 
+                will be added to x1 and x2 respectively at each point in time.
 
         See: Thomas, R. (1999). Deterministic chaos seen in terms of feedback circuits: Analysis, synthesis, 'labyrinth chaos'
         """
         self.b = b
 
         super().__init__(3, measurement_noise_std, sigma)
-
 
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float):
@@ -316,7 +302,6 @@ class Thomas(StochasticDifferentialEquation):
         dydt = np.sin(z) - self.b * y
         dzdt = np.sin(x) - self.b * z
         return np.array([dxdt, dydt, dzdt])
-    
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float):
@@ -325,13 +310,12 @@ class Thomas(StochasticDifferentialEquation):
 
 class MooreSpiegel(StochasticDifferentialEquation):
 
-
     def __init__(
         self,
         R: float = 31,
         T: float = 5,
         sigma: Union[float, np.ndarray] = 0.0,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes Moore-Spiegel system.
 
@@ -347,14 +331,14 @@ class MooreSpiegel(StochasticDifferentialEquation):
         so that
         dX = dx * dt + sigma * dW
 
-        The Moore–Spiegel system is a nonlinear thermo-mechanical oscillator 
-        with displacement x(t). The system describes a fluid element 
-        oscillating vertically in a temperature gradient with a linear 
+        The Moore–Spiegel system is a nonlinear thermo-mechanical oscillator
+        with displacement x(t). The system describes a fluid element
+        oscillating vertically in a temperature gradient with a linear
         restoring force.
 
 
         Args:
-            R (float): A parameter of the model.  Analogous to the Prandtl 
+            R (float): A parameter of the model.  Analogous to the Prandtl
                 number times the Rayleigh number
             T (float): A parameter of the model. Analogous to the Prandtl number
                 times the Taylor number.
@@ -367,21 +351,19 @@ class MooreSpiegel(StochasticDifferentialEquation):
                 model. For example, if the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 1
-                will be added to x1 and x2 respectively at each point in time. 
+                will be added to x1 and x2 respectively at each point in time.
         """
         self.R = R
         self.T = T
 
         super().__init__(3, measurement_noise_std, sigma)
-        
 
     def drift(self, x: np.ndarray, t: float):
         x, y, z = x[0], x[1], x[2]
         dxdt = y
         dydt = z
-        dzdt = - z - (self.T - self.R + self.R * x**2) * y - self.T * x
+        dzdt = -z - (self.T - self.R + self.R * x**2) * y - self.T * x
         return np.array([dxdt, dydt, dzdt])
-
 
     def noise(self, x: np.ndarray, t: float):
         return self.sigma

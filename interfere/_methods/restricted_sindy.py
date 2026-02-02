@@ -1,4 +1,4 @@
-""""""""
+"""""" ""
 from typing import Optional, Type, Union
 from warnings import warn
 
@@ -47,18 +47,21 @@ class PCMCI_SINDy(ForecastMethod):
     def __init__(
         self,
         cond_ind_test: Type[
-            tigramite.independence_tests.independence_tests_base.CondIndTest],
+            tigramite.independence_tests.independence_tests_base.CondIndTest
+        ],
         cond_ind_pval: float = 0.01,
         optimizer: Optional[ps.optimizers.BaseOptimizer] = None,
         feature_library: Optional[
-            ps.feature_library.base.BaseFeatureLibrary] = None,
+            ps.feature_library.base.BaseFeatureLibrary
+        ] = None,
         differentiation_method: Optional[
-            ps.differentiation.BaseDifferentiation] = None,
+            ps.differentiation.BaseDifferentiation
+        ] = None,
         feature_names: Optional[list[str]] = None,
         t_default: int = 1,
         discrete_time: bool = False,
         max_sim_value: int = 10000,
-        **kwargs
+        **kwargs,
     ):
         """Run PCMCI and restrict SINDy to use only links supported by PCMCI.
 
@@ -101,16 +104,15 @@ class PCMCI_SINDy(ForecastMethod):
             t_default=t_default,
             discrete_time=discrete_time,
             max_sim_value=max_sim_value,
-            **kwargs
+            **kwargs,
         )
-
 
     @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
         endog_states: np.ndarray,
-        exog_states: Optional[np.ndarray] = None
+        exog_states: Optional[np.ndarray] = None,
     ):
         # Sample fit of SINDy to get variable and feature names.
         sample_fit = SINDy(**self.sindy_params)
@@ -118,21 +120,17 @@ class PCMCI_SINDy(ForecastMethod):
         # If exogenous states are not provided, set them to zero.
         sample_exog = None if exog_states is None else exog_states[:2, :]
         # Fit SINDy to the first two samples of the data.
-        sample_fit.fit(
-            t[:2],
-            endog_states[:2, :],
-            sample_exog
-        )
-        
+        sample_fit.fit(t[:2], endog_states[:2, :], sample_exog)
+
         self.var_names = sample_fit.sindy.feature_names
         self.feat_names = sample_fit.sindy.feature_library.get_feature_names()
-        
+
         # Build the feature mask.
         feature_mask = self.restrict_features(
             t, endog_states, exog_states, self.var_names, self.feat_names
         )
         # We only need the mask for the endogenous variables.
-        feature_mask = feature_mask[:endog_states.shape[1], :]
+        feature_mask = feature_mask[: endog_states.shape[1], :]
 
         # Create optimizer that limits different features for different
         # variables. This is done by using a feature mask.
@@ -141,12 +139,10 @@ class PCMCI_SINDy(ForecastMethod):
         restricted_optimizer = FeatureMaskOptimizer(
             opt_reinitialized, feature_mask
         )
-        self.sindy = SINDy(**{
-            **self.sindy_params,
-            "optimizer": restricted_optimizer
-        })
+        self.sindy = SINDy(
+            **{**self.sindy_params, "optimizer": restricted_optimizer}
+        )
         self.sindy.fit(t, endog_states, exog_states)
-
 
     @copy_doc(ForecastMethod._predict)
     def _predict(
@@ -164,9 +160,8 @@ class PCMCI_SINDy(ForecastMethod):
             prior_exog_states=prior_exog_states,
             prior_t=prior_t,
             prediction_exog=prediction_exog,
-            rng=rng
+            rng=rng,
         )
- 
 
     def restrict_features(
         self,
@@ -174,28 +169,28 @@ class PCMCI_SINDy(ForecastMethod):
         endog_states: np.ndarray,
         exog_states: Optional[np.ndarray],
         var_names: list[str],
-        feature_names: list[str]
+        feature_names: list[str],
     ):
         """Uses PCMCI to restrict the set of features used in the SINDy model.
 
         Args:
             t (np.ndarray): Array with shape (num_samples,).
-            endog_states (np.ndarray): 
+            endog_states (np.ndarray):
                 Array with shape (num_samples, num_endo_vars).
             exog_states (np.ndarray):
                 Array with shape (num_samples, num_exog_vars).
             var_names (list[str]): List of variable names. First `num_endo_vars`
-                variables correspond to endogenous and the remaining correspond 
-                to exogenous variables. Can only contain 
+                variables correspond to endogenous and the remaining correspond
+                to exogenous variables. Can only contain
                 letters, numbers and underscores. E.g. x0, x_1....
-        feature_names (list[str]): List of feature names. E.g. x0^2. A feature 
+        feature_names (list[str]): List of feature names. E.g. x0^2. A feature
             is assumed to contain a substring containing a variable's name **if
             and only if** that variable is used to compute that feature.
 
         Returns:
-            feature_mask (np.ndarray): Feature mask of shape (num_endo_vars, 
-                num_features). If feature_mask[i, j] == True, then feature j is 
-                allowed in the equation for variable i. Otherwise, it is 
+            feature_mask (np.ndarray): Feature mask of shape (num_endo_vars,
+                num_features). If feature_mask[i, j] == True, then feature j is
+                allowed in the equation for variable i. Otherwise, it is
                 excluded from the equation.
         """
         # Check if the time series is discrete or continuous.
@@ -208,72 +203,67 @@ class PCMCI_SINDy(ForecastMethod):
                 "found that differential equations have too much memory and "
                 "seem to confuse PCMCI."
             )
-        
+
         if exog_states is None:
             exog_states = np.zeros((endog_states.shape[0], 0))
 
         # Concatenate endogenous and exogenous states.
         dataframe = pp.DataFrame(
-            np.hstack((endog_states, exog_states)),
-            var_names=self.var_names
+            np.hstack((endog_states, exog_states)), var_names=self.var_names
         )
 
         pcmci = PCMCI(
-            dataframe=dataframe,
-            cond_ind_test=self.cond_ind_test,
-            verbosity=0
+            dataframe=dataframe, cond_ind_test=self.cond_ind_test, verbosity=0
         )
 
         results = pcmci.run_pcmciplus(
-            tau_min=0,
-            tau_max=1,
-            pc_alpha=self.cond_ind_pval
+            tau_min=0, tau_max=1, pc_alpha=self.cond_ind_pval
         )
 
         # Transform causal graph from PCMCI to a feature mask.
         pcmci_lag1_var_adj = pcmci_graph_to_adjacency_matrix(
-            results['graph'], lag=1)
+            results["graph"], lag=1
+        )
         feature_mask = variable_adjacency_matrix_to_feature_mask(
             var_names, feature_names, pcmci_lag1_var_adj
         )
         return feature_mask
-    
+
     @staticmethod
     @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, **kwargs):
         return {
-            'cond_ind_test': trial.suggest_categorical(
-                'cond_ind_test', PCMCI_COND_IND_TEST_LIST),
-
-            'cond_ind_pval': trial.suggest_float(
-                'cond_ind_pval', 1e-5, 0.1, log=True),
-
-            'optimizer__threshold': trial.suggest_float(
-                'optimizer__threshold', 1e-5, 5, log=True),
-
-            'optimizer__alpha': trial.suggest_float(
-                'optimizer__alpha', 1e-5, 5, log=True),
-
-            'discrete_time': trial.suggest_categorical(
-                'discrete_time', [True, False]),
-
-            'feature_library':
-                trial.suggest_categorical('feature_library', SINDY_LIB_LIST),
-
-            'differentiation_method':
-                trial.suggest_categorical(
-                    "differentiation_method", SINDY_DIFF_LIST)
+            "cond_ind_test": trial.suggest_categorical(
+                "cond_ind_test", PCMCI_COND_IND_TEST_LIST
+            ),
+            "cond_ind_pval": trial.suggest_float(
+                "cond_ind_pval", 1e-5, 0.1, log=True
+            ),
+            "optimizer__threshold": trial.suggest_float(
+                "optimizer__threshold", 1e-5, 5, log=True
+            ),
+            "optimizer__alpha": trial.suggest_float(
+                "optimizer__alpha", 1e-5, 5, log=True
+            ),
+            "discrete_time": trial.suggest_categorical(
+                "discrete_time", [True, False]
+            ),
+            "feature_library": trial.suggest_categorical(
+                "feature_library", SINDY_LIB_LIST
+            ),
+            "differentiation_method": trial.suggest_categorical(
+                "differentiation_method", SINDY_DIFF_LIST
+            ),
         }
-    
 
     @staticmethod
     def get_test_params():
         return {
             "cond_ind_test": ParCorr,
             "cond_ind_pval": 0.01,
-            **SINDy.get_test_params()
+            **SINDy.get_test_params(),
         }
-    
+
 
 class SURD_SINDy(PCMCI_SINDy):
     """Uses SURD to restrict feature selection in SINDy."""
@@ -283,14 +273,16 @@ class SURD_SINDy(PCMCI_SINDy):
         surd_threshold: float = 0.01,
         optimizer: Optional[ps.optimizers.BaseOptimizer] = None,
         feature_library: Optional[
-            ps.feature_library.base.BaseFeatureLibrary] = None,
+            ps.feature_library.base.BaseFeatureLibrary
+        ] = None,
         differentiation_method: Optional[
-            ps.differentiation.BaseDifferentiation] = None,
+            ps.differentiation.BaseDifferentiation
+        ] = None,
         feature_names: Optional[list[str]] = None,
         t_default: int = 1,
         discrete_time: bool = False,
         max_sim_value: int = 10000,
-        **kwargs
+        **kwargs,
     ):
         """Run SURD and restrict SINDy to use only links supported by SURD.
 
@@ -301,20 +293,20 @@ class SURD_SINDy(PCMCI_SINDy):
                 specify candidate right-hand side features.
                 The default option is `PolynomialLibrary`.
             differentiation_method (BaseDifferentiation):
-                Method for differentiating the data. The default option is 
+                Method for differentiating the data. The default option is
                 centered difference.
             feature_names : list of string, length n_input_features, optional
-                Names for the input features (e.g. ``['x', 'y', 'z']``). If 
+                Names for the input features (e.g. ``['x', 'y', 'z']``). If
                 None, will use``['x0', 'x1', ...]``.
             t_default : float, optional (default 1)
                 Default value for the time step.
             discrete_time : boolean, optional (default False)
                 If True, dynamical system is treated as a map. Rather than
-                predictingderivatives, the right hand side functions step the 
-                system forward by one time step. If False, dynamical system is 
-                assumed to be a flow (right-hand side functions predict 
+                predictingderivatives, the right hand side functions step the
+                system forward by one time step. If False, dynamical system is
+                assumed to be a flow (right-hand side functions predict
                 continuous time derivatives).
-            max_sim_value : float, optional (default 10000) Absolute max value 
+            max_sim_value : float, optional (default 10000) Absolute max value
                 for state during simulation. Prevents simulation from diverging.
 
         Note: All kwargs are passed to an internal interfere.SINDy class.
@@ -328,11 +320,12 @@ class SURD_SINDy(PCMCI_SINDy):
             t_default=t_default,
             discrete_time=discrete_time,
             max_sim_value=max_sim_value,
-            **kwargs
-        ) 
+            **kwargs,
+        )
 
     def restrict_features(
-        self, t, endog_states, exog_states, var_names, feature_names):
+        self, t, endog_states, exog_states, var_names, feature_names
+    ):
         """Uses SURD to restrict the set of features used in the SINDy model.
 
         Args:
@@ -345,9 +338,9 @@ class SURD_SINDy(PCMCI_SINDy):
                 variables correspond to endogenous and the remaining correspond
                 to exogenous variables. Can only contain
                 letters, numbers and underscores. E.g. x0, x_1....
-            feature_names (list[str]): List of feature names. E.g. x0^2. A 
-                feature is assumed to contain a substring containing a 
-                variable's name **if and only if** that variable is used to 
+            feature_names (list[str]): List of feature names. E.g. x0^2. A
+                feature is assumed to contain a substring containing a
+                variable's name **if and only if** that variable is used to
                 compute that feature.
 
         Returns:
@@ -389,48 +382,39 @@ class SURD_SINDy(PCMCI_SINDy):
             impactful_vars = set()
 
             # Compute total information
-            redun_total = sum([v for v in Rd_results[i+1].values()])
-            syn_total = sum([v for v in Sy_results[i+1].values()])
+            redun_total = sum([v for v in Rd_results[i + 1].values()])
+            syn_total = sum([v for v in Sy_results[i + 1].values()])
             info_total = redun_total + syn_total
 
             # Find all groups whose specific information is greater than the threshold.
 
-            for info_type in [Rd_results[i+1], Sy_results[i+1]]:
+            for info_type in [Rd_results[i + 1], Sy_results[i + 1]]:
                 for k, v in info_type.items():
                     if v / info_total > self.surd_threshold:
                         impactful_vars.update(k)
 
             for j in impactful_vars:
-                adj[i, j-1] = True
+                adj[i, j - 1] = True
 
         # Transform causal graph from PCMCI to a feature mask.
         feature_mask = variable_adjacency_matrix_to_feature_mask(
             var_names, feature_names, adj
         )
         return feature_mask
-    
 
     @staticmethod
     def _get_optuna_params(trial, **kwargs):
         return {
-            'surd_threshold': trial.suggest_float(
-                'surd_threshold', 0.0, 1.0),
-            **SINDy._get_optuna_params(trial, **kwargs)
+            "surd_threshold": trial.suggest_float("surd_threshold", 0.0, 1.0),
+            **SINDy._get_optuna_params(trial, **kwargs),
         }
-    
 
     @staticmethod
     def get_test_params():
-        return {
-            "surd_threshold": 0.01,
-            **SINDy.get_test_params()
-        }
-    
+        return {"surd_threshold": 0.01, **SINDy.get_test_params()}
 
-def pcmci_graph_to_adjacency_matrix(
-    pcmci_graph: np.ndarray,
-    lag: int = 1
-):
+
+def pcmci_graph_to_adjacency_matrix(pcmci_graph: np.ndarray, lag: int = 1):
     """Transforms a pcmci graph to an adjacency matrix.
 
     A simple transformation that only uses one lag and does not consider
@@ -441,7 +425,7 @@ def pcmci_graph_to_adjacency_matrix(
         lags (int): Number of lags to use.
 
     Returns:
-        adj (np.ndarray): Adjacency matrix of shape (num_vars, num_vars). 
+        adj (np.ndarray): Adjacency matrix of shape (num_vars, num_vars).
             If adj[i, j] == True, then var_j has a causal influence on var_i.
     """
     if lag > pcmci_graph.shape[2] - 1:
@@ -455,12 +439,12 @@ def pcmci_graph_to_adjacency_matrix(
 
     for i in range(m):
         for j in range(n):
-            if g[i, j] == '-->':
+            if g[i, j] == "-->":
                 adj[i, j] = True
 
-            elif g[i, j] == '':
+            elif g[i, j] == "":
                 pass
-            
+
             else:
                 raise ValueError(
                     "Invalid edge type: "
@@ -468,6 +452,7 @@ def pcmci_graph_to_adjacency_matrix(
                 )
 
     return adj
+
 
 def variable_adjacency_matrix_to_feature_mask(
     variable_names: list[str],
@@ -480,9 +465,9 @@ def variable_adjacency_matrix_to_feature_mask(
     it will be left marked True in the feature mask.
 
     Args:
-        variable_names (list[str]): List of variable names. Can only contain 
+        variable_names (list[str]): List of variable names. Can only contain
         letters, numbers and underscores. E.g. x0, x_1....
-        feature_names (list[str]): List of feature names. E.g. x0^2. A feature 
+        feature_names (list[str]): List of feature names. E.g. x0^2. A feature
             is assumed to contain a substring containing a variable's name **if
             and only if** that variable is used to compute that feature.
         adjacency_matrix (np.ndarray): Adjacency matrix of shape
@@ -491,8 +476,8 @@ def variable_adjacency_matrix_to_feature_mask(
             excluded.
 
     Returns:
-        feature_mask (np.ndarray): Feature mask of shape (num_variables, 
-            num_features). If feature_mask[i, j] == True, then feature j is 
+        feature_mask (np.ndarray): Feature mask of shape (num_variables,
+            num_features). If feature_mask[i, j] == True, then feature j is
             allowed in the equation for variable i. Otherwise, it is excluded.
     """
     # Check that each variable name contains only letters, numbers an underscores.
@@ -503,7 +488,6 @@ def variable_adjacency_matrix_to_feature_mask(
                     "Variable names must contain only letters, numbers, and"
                     f" underscores. Incorrect variable name: {var_name}"
                 )
-
 
     num_variables = len(variable_names)
     num_features = len(feature_names)
@@ -540,7 +524,7 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
                 and zeros/False denote exclusion. For example
                 feature_mask[i, j] == 0 means that feature j is not allowed in the
                 equation for variable i.
-            
+
 
         Raises:
             ValueError: If feature mask contains an entry besides zero and one.
@@ -553,10 +537,8 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
         self.feature_mask = feature_mask.astype(bool)
         super().__init__()
 
-
     def mask_features(
-        self, x: Union[np.ndarray, ps.AxesArray],
-        target_idx: int
+        self, x: Union[np.ndarray, ps.AxesArray], target_idx: int
     ):
         """Performs masking of the feature matrix.
 
@@ -574,7 +556,6 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
         mask = self.feature_mask[target_idx, :]
         masked_x = x[:, mask]
         return masked_x
-
 
     def mask_and_opt(
         self,
@@ -630,9 +611,9 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
             masked_x = self.mask_features(x, target_idx)
 
             # Get target i.
-            target_y = y[:, target_idx:target_idx + 1]
+            target_y = y[:, target_idx : target_idx + 1]
 
-            # Check if any features are not masked. (Leaves full_coefs as zeros 
+            # Check if any features are not masked. (Leaves full_coefs as zeros
             # if all features are masked.)
             if np.any(mask):
                 # Solve optimization for target i.
@@ -643,12 +624,11 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
 
         return full_coefs
 
-
     def _reduce(
         self,
         x: Union[np.ndarray, ps.AxesArray],
         y: Union[np.ndarray, ps.AxesArray],
-        **kwargs
+        **kwargs,
     ):
         """Implements abstract function for pysindy.BaseOptimizer._reduce
 
@@ -665,13 +645,12 @@ class FeatureMaskOptimizer(ps.BaseOptimizer):
         coef = self.mask_and_opt(x, y)
         self.coef_ = coef
 
-
-    def get_params(self, deep = True):
+    def get_params(self, deep=True):
         return {
-            **self.optimizer.get_params(deep=deep), 
-            "feature_mask": self.feature_mask
+            **self.optimizer.get_params(deep=deep),
+            "feature_mask": self.feature_mask,
         }
-    
+
     def set_params(self, **params):
         # Set params for the internal optimizer.
         self.feature_mask = params.pop("feature_mask", self.feature_mask)

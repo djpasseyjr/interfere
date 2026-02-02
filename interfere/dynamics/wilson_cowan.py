@@ -10,7 +10,7 @@ class WilsonCowan(StochasticDifferentialEquation):
     """Wilson–Cowan dynamic model.
 
     Description:
-        Wilson–Cowan model. Here, the nodal state xi is the activity of 
+        Wilson–Cowan model. Here, the nodal state xi is the activity of
         neuron i, and the parameters τ and μ are the slope and the threshold
         of the neural activation function. The link weight Aij specifies the
         number and strength of synapses from neuron j to neuron i.
@@ -29,7 +29,7 @@ class WilsonCowan(StochasticDifferentialEquation):
         """Initializes a model.
 
         Description:
-            Wilson–Cowan model. Here, the nodal state xi is the activity of 
+            Wilson–Cowan model. Here, the nodal state xi is the activity of
             neuron i, and the parameters τ and μ are the slope and the threshold
             of the neural activation function. The link weight Aij specifies the
             number and strength of synapses from neuron j to neuron i.
@@ -53,7 +53,7 @@ class WilsonCowan(StochasticDifferentialEquation):
                 dimension of model.
 
         References:
-            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics 
+            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics
             without requiring the knowledge of the interaction graph’, PNAS
         """
         # Make sure A is square.
@@ -67,11 +67,11 @@ class WilsonCowan(StochasticDifferentialEquation):
 
         super().__init__(dim, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
-        return -x + self.adjacency_matrix @ (1 / (1 + np.exp(-self.tau * (x - self.mu))))
-
+        return -x + self.adjacency_matrix @ (
+            1 / (1 + np.exp(-self.tau * (x - self.mu)))
+        )
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float) -> np.ndarray:

@@ -6,14 +6,13 @@ from ..utils import copy_doc
 from .base import StochasticDifferentialEquation
 
 
-class SIS(
-    StochasticDifferentialEquation):
+class SIS(StochasticDifferentialEquation):
     """Susceptible–infected–susceptible model.
 
     Description:
-            Susceptible–infected–susceptible model (SIS). The nodal 
-            state xi equals the infection probability of node i . The parameter 
-            δi > 0 denotes the curing rate, and the link weight Aij is the 
+            Susceptible–infected–susceptible model (SIS). The nodal
+            state xi equals the infection probability of node i . The parameter
+            δi > 0 denotes the curing rate, and the link weight Aij is the
             infection rate from node j to node i.
 
             dxi/dt = -δi xi + ∑ Aij (1 - xi) xj
@@ -29,9 +28,9 @@ class SIS(
         """Initializes an SIS model.
 
         Description:
-            Susceptible–infected–susceptible model (SIS). The nodal 
-            state xi equals the infection probability of node i . The parameter 
-            δi > 0 denotes the curing rate, and the link weight Aij is the 
+            Susceptible–infected–susceptible model (SIS). The nodal
+            state xi equals the infection probability of node i . The parameter
+            δi > 0 denotes the curing rate, and the link weight Aij is the
             infection rate from node j to node i.
 
             dxi/dt = -δi xi + ∑ Aij (1 - xi) xj
@@ -52,7 +51,7 @@ class SIS(
                 dimension of model.
 
         References:
-            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics 
+            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics
             without requiring the knowledge of the interaction graph’, PNAS
         """
         # Check that shapes match.
@@ -73,11 +72,9 @@ class SIS(
         self.adjacency_matrix = adjacency_matrix
         super().__init__(dim, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
         return -self.delta * x + (1 - x) * (self.adjacency_matrix @ x)
-
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float) -> np.ndarray:
