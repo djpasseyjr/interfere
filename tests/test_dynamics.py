@@ -77,6 +77,8 @@ NOISE_DYNAMICS = [
 NOISE_DIM = 3
 NOISE_MODELS = [nd(NOISE_DIM) for nd in NOISE_DYNAMICS]
 
+# Currently holds 21 models. To test a specific model, use `pytest -k
+# "model7"`` where 7 is the index of the model in the MODELS list.
 
 MODELS = [
     generative_cml_SINDy_forecaster(),

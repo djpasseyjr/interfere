@@ -143,39 +143,10 @@ The SINDy method identifies the underlying dynamics of the system using sparse r
 
 ## Dependencies
 
-Core dependencies: `pip install interfere`
+1. Basic: `pip install interfere`
+2. Full forecasting methods: `pip install "interfere[methods]"`
+3. Developer / experimental features: `pip install "interfere[dev]"`
 
-- `matplotlib`
-- `networkx`
-- `numpy`
-- `optuna`
-- `pyclustering`
-- `pysindy`
-- `scikit-learn`
-- `statsmodels`
-- `typing_extensions`
-
-Optional dependencies for additional forecasting methods: `pip install "interfere[methods]"`
-
-- `neuralforecast`
-- `statsforecast`
-- `sktime`
-
-Dependencies for experimental models and forecasters. (Install all with `pip install "interfere[dev]"`)
-
--  `pyclustering @ git+https://github.com/djpasseyjr/pyclustering`
--  `surd @ git+https://github.com/djpasseyjr/surd.git`
-
-## Running Tests
-
-Install the full set of dependencies and run tests like this:
-```bash
-git clone https://github.com/djpasseyjr/interfere.git
-cd interfere
-pip install ".[dev]"
-python -m pytest -v tests
-```
-The full dependencies are pretty big. I recommended to doing the above in a virtual environment.
 ## Example Use
 
 The package can be used to simulate and analyze how systems respond to interventions. For example, it can model the effect of stochasticity on intervention response forecasting:
@@ -188,7 +159,77 @@ For a more detailed explanation of the purpose of the package refer to [paper.pd
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! To contribute code, make your own local fork of the repository.
+
+Then install the full developer deps using `pip install
+".[dev]"`. (The full dependencies are pretty big. Use a
+virtual environment, so you can delete it when you are done.)
+
+After you write code, auto-format it with `black` at the top level of the repo:
+```bash
+$ black interfere
+```
+Then you can run the linter and fix any linter errors (also at the top level):
+```bash
+$ flake8 interfere
+```
+
+### Add Tests
+
+If you are adding a *dynamic model* or *forecasting method*, the test suite has a
+series of prebuilt tests.
+
+#### Dynamic Model Tests
+Add a factory function in `tests/sample_models.py`, then import it and append your model instance to the `MODELS` list in `tests/test_dynamics.py`:
+
+```python
+# In sample_models.py
+def my_model() -> interfere.dynamics.MyDynamics:
+    return interfere.dynamics.MyDynamics(...)
+
+# In test_dynamics.py: add to imports, then
+MODELS = [
+    ...
+    my_model()
+]
+```
+
+Run tests for a specific model by index:
+```bash
+pytest tests -k "model7"
+```
+(The above will only run tests for the 8th model in the `MODELS`  list.)
+
+#### Forecasting Method Tests
+Add your method class to the `METHODS` list in `tests/test_methods.py`:
+
+```python
+# In test_methods.py
+METHODS = [
+    ...
+    interfere.methods.YourMethod,
+]
+```
+
+Run tests for a specific method by name:
+```bash
+pytest tests -k "YourMethod"
+```
+
+### Running Full Tests
+
+The full test suite takes over an hour. When
+contributing, just make sure you add tests for new code. The full suite will
+run as part of the automated checks with your pull request.
+
+If you like, you can install the full set of dependencies and run tests locally like this:
+```bash
+git clone https://github.com/djpasseyjr/interfere.git
+cd interfere
+pip install ".[dev]"
+python -m pytest -v tests
+```
+(The full dependencies are pretty big. Use a virtual environment.)
 
 ## License
 
