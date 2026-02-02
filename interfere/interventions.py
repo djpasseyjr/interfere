@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List, Tuple, Union
+from typing import Callable, Iterable, Tuple, Union
 from typing_extensions import TypeAlias
 
 import numpy as np
@@ -117,8 +117,6 @@ class SignalIntervention(ExogIntervention):
                 `iv_idxs` at each time point.
         """
         if isinstance(iv_idxs, int):
-
-            i = iv_idxs
             s = signals
             iv_idxs = [iv_idxs]
             signals = [s]
@@ -176,10 +174,9 @@ def perfect_intervention(
     """
     # The case where indexs and constants are floats or ints
     if isinstance(idxs, int) and isinstance(constants, (int, float)):
-        i = idxs
         c = float(constants)
         # Make the intervention function.
-        return perfect_intervention([i], [c])
+        return perfect_intervention([idxs], [c])
 
     def intervention(x: np.array, t: float) -> np.array:
         """A perfect intervention on multiple variables.
@@ -228,7 +225,8 @@ def signal_intervention(
         np.allclose(g(x, 1.0), np.array([1.1, 2.0, 1.0]))
         np.allclose(g(x, -2.0), np.array([1.1, 2.0, 4.0]))
     """
-    intervention = lambda x, t: x + np.array(
-        [u(t) - x[i] if i == idx else 0.0 for i in range(len(x))]
-    )
+    def intervention(x, t):
+        return x + np.array(
+            [u(t) - x[i] if i == idx else 0.0 for i in range(len(x))]
+        )
     return intervention

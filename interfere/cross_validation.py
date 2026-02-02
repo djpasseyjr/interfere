@@ -145,7 +145,7 @@ class CrossValObjective:
         self.repl_nan_val = repl_nan_val
 
         # Assign default intervention.
-        if exog_idxs == None:
+        if exog_idxs is None:
             exog_idxs = []
 
         # Create a dummy intervention to handle exogenous.
@@ -282,7 +282,6 @@ class CrossValObjective:
         for train_idx, val_idxs in zip(
             self.train_window_idxs, self.val_chunk_idxs
         ):
-
             # Check if training fold corresponds to a validation index.
             if val_idxs != []:
                 # Prepare train data.
@@ -312,12 +311,13 @@ class CrossValObjective:
                     val_chunk_start, val_chunk_end = val_idx
 
                     # Collect validation prior states.
-                    val_prior_start, val_prior_end = (
-                        self._make_val_prior_state_idxs(
-                            val_chunk_start,
-                            self.num_val_prior_states,
-                            self.val_scheme,
-                        )
+                    (
+                        val_prior_start,
+                        val_prior_end,
+                    ) = self._make_val_prior_state_idxs(
+                        val_chunk_start,
+                        self.num_val_prior_states,
+                        self.val_scheme,
                     )
                     val_prior_t = self.times[val_prior_start:val_prior_end]
                     val_prior_states = self.data[
@@ -344,7 +344,6 @@ class CrossValObjective:
                     )
 
                     try:
-
                         if not is_fit:
                             raise ValueError(
                                 f"Error in model fit: \n\n{fit_error}"
@@ -364,9 +363,9 @@ class CrossValObjective:
                         )
 
                         # Replace nans.
-                        pred_val_states[np.isnan(pred_val_states)] = (
-                            self.repl_nan_val
-                        )
+                        pred_val_states[
+                            np.isnan(pred_val_states)
+                        ] = self.repl_nan_val
 
                         # Compute score.
                         if isinstance(
@@ -398,7 +397,6 @@ class CrossValObjective:
                             cv_results["targets"].append(val_states)
 
                     except Exception as e:
-
                         if self.raise_errors:
                             raise e
 

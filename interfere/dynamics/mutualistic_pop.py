@@ -85,7 +85,9 @@ class MutualisticPopulation(StochasticDifferentialEquation):
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
         growth = x * (self.alpha - self.theta * x)
-        interaction = x * self.adjacency_matrix @ (x**self.h / (1 + x**self.h))
+        interaction = (
+            x * self.adjacency_matrix @ (x**self.h / (1 + x**self.h))
+        )
         return growth + interaction
 
     @copy_doc(StochasticDifferentialEquation.noise)

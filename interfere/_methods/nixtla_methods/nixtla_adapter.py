@@ -159,7 +159,6 @@ class NixtlaAdapter(ForecastMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
-
         if len(prior_t) < self.get_window_size():
             raise ValueError(
                 "Not enough context provided for to make a "
@@ -204,7 +203,6 @@ class NixtlaAdapter(ForecastMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
-
         # Set environment variable to adopt future behavior where predict
         # returns ID as a column. It will be safe to remove this after Nixtla
         # updates neuralforecast and adopts this behavior as the default.
@@ -360,7 +358,6 @@ class NixtlaAdapter(ForecastMethod):
 
         # Run recursive predictions.
         for i in range(1, n_steps + 1):
-
             X_df = to_nixtla_df(
                 futr_times[i],
                 exog_states=futr_exog[i : i + 1, :],
@@ -589,7 +586,6 @@ def to_interfere_arrays(
             corresponds to the times in `t`.
     """
     if unique_ids is None:
-
         unique_ids = nixtla_df.unique_id.unique()
         dflt_unique_ids = [f"x{i}" for i in range(len(unique_ids))]
 

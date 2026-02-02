@@ -17,7 +17,6 @@ from ..utils import copy_doc
 
 
 class PlantedTankNitrogenCycle(StochasticDifferentialEquation):
-
     def __init__(
         self,
         reference_time_v: float = 6 * 7 * 24 * 60 * 60.0,

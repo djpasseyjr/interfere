@@ -27,7 +27,6 @@ MATRIX_ALL_REAL_NEG_EIGS = np.array(
 
 
 class LinearSDE(StochasticDifferentialEquation):
-
     def __init__(
         self,
         A: np.ndarray,
@@ -78,7 +77,6 @@ class LinearSDE(StochasticDifferentialEquation):
 
 
 class DampedOscillator(StochasticDifferentialEquation):
-
     def __init__(
         self,
         m: float,

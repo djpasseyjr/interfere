@@ -20,7 +20,6 @@ from ..utils import copy_doc
 
 
 class ResComp(ForecastMethod):
-
     def __init__(
         self,
         res_sz=100,
@@ -214,19 +213,23 @@ class ResComp(ForecastMethod):
             Sets node states at random. Draws from [-1,1] for tanh and sin activation functions and [0, 1]
             otherwise.
         """
-        u = lambda x: u0
-        d = lambda x: d0
+        def u(x):
+            return u0
+
+        def d(x):
+            return d0
 
         # Solve for fixed point of the reservoir ode for a specific input and
         # control signal. May not converge.
         if self.map_initial == "fixed point":
-            fixed_res_ode = lambda r: self.res_ode(0, r, u, d)
+            def fixed_res_ode(r):
+                return self.res_ode(0, r, u, d)
             r0 = optimize.fsolve(fixed_res_ode, np.ones(self.res_sz))
 
         # Allow reservoir ode to relax to its fixed point. Rarely fails.
         elif self.map_initial == "relax":
-
-            fixed_res_ode = lambda t, r: self.res_ode(0, r, u, d)
+            def fixed_res_ode(t, r):
+                return self.res_ode(0, r, u, d)
             initial = 2 * self.rng.random(self.res_sz) - 1
             tvals = np.linspace(0, 10000, 100)
             R = integrate.odeint(fixed_res_ode, initial, tvals, tfirst=True)

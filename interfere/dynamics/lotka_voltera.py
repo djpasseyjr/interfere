@@ -70,7 +70,6 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
 
         # Check if a stochastic simulation is not being used.
         if not isinstance(self, LotkaVolteraSDE):
-
             # Check if the user still supplied a stochastic argument.
             if (sigma is not None) and (sigma != 0):
                 raise ValueError(
@@ -104,7 +103,6 @@ class LotkaVoltera(OrdinaryDifferentialEquation):
 
 
 class LotkaVolteraSDE(StochasticDifferentialEquation, LotkaVoltera):
-
     def __init__(
         self,
         growth_rates: np.ndarray,

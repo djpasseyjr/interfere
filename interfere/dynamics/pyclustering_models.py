@@ -43,7 +43,6 @@ DEFAULT_LEGION_PARAMETERS = legion_parameters()
 
 
 class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
-
     def __init__(
         self,
         stimulus: np.array,
@@ -122,11 +121,11 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         self.sigma = sigma
         self.type_conn = type_conn
 
-        ## Maximal conductivity for sodium current.
+        # Maximal conductivity for sodium current.
         gNa = 120.0 * (1 + 0.02 * nu)
-        ## Maximal conductivity for potassium current.
+        # Maximal conductivity for potassium current.
         gK = 36.0 * (1 + 0.02 * nu)
-        ## Maximal conductivity for leakage current.
+        # Maximal conductivity for leakage current.
         gL = 0.3 * (1 + 0.02 * nu)
 
         # Make hhn parameter class and set parameters.
@@ -171,7 +170,6 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         **kwargs,
     ) -> np.ndarray:
-
         # Get the Wiener increments if any.
         dW = kwargs.get("dW", None)
 
@@ -310,7 +308,6 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
         # Peripheral neuron derivatives.
         for i in range(self.hhn_model._num_osc):
-
             # Collect peripheral neuron state into a list.
             neuron_state = [
                 self.hhn_model._membrane_potential[i],
@@ -324,7 +321,6 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
         # Central neuron derivatives.
         for i in range(len(self.hhn_model._central_element)):
-
             # Collect central neuron state into a list.
             central_neuron_state = [
                 self.hhn_model._central_element[i].membrane_potential,
@@ -345,7 +341,6 @@ class HodgkinHuxleyPyclustering(StochasticDifferentialEquation):
 
 
 class LEGIONPyclustering(DiscreteTimeDynamics):
-
     def __init__(
         self,
         num_neurons: int,
@@ -399,7 +394,6 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         **kwargs,
     ) -> np.ndarray:
-
         initial_condition = prior_states[-1:, :]
 
         self.legion_model = legion_network(
@@ -423,7 +417,6 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
         time: float = None,
         rng: np.random.RandomState = None,
     ) -> np.ndarray:
-
         # Unpack the state of the excitatory and inhibitory neurons
         x_excite = x[: self.num_excite]
         x_inhib = x[self.num_excite :]
@@ -449,7 +442,6 @@ class LEGIONPyclustering(DiscreteTimeDynamics):
 
 
 class StuartLandauKuramoto(StochasticDifferentialEquation):
-
     def __init__(
         self,
         omega: np.ndarray,

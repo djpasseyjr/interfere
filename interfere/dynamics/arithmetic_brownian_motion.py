@@ -6,7 +6,6 @@ from .base import StochasticDifferentialEquation
 
 
 class ArithmeticBrownianMotion(StochasticDifferentialEquation):
-
     def __init__(
         self,
         mu: np.ndarray,

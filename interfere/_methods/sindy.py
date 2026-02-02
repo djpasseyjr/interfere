@@ -8,9 +8,6 @@ import pysindy as ps
 from ..base import ForecastMethod
 from ..base import DEFAULT_RANGE
 from ..utils import copy_doc
-from ..interventions import ExogIntervention
-
-
 # Lists of hyper parameters for optimization.
 SINDY_LIB_LIST = [ps.PolynomialLibrary, ps.FourierLibrary]
 
@@ -111,10 +108,10 @@ class SINDy(ForecastMethod):
         # uses event functions with assigned attributes as callbacks.
         # The below code tells scipy to stop integrating when
         # too_big(t, y) == True.
-        if self.sindy.discrete_time:
-            too_big = lambda ti, y: np.any(np.abs(y) > self.max_sim_value)
-        else:
-            too_big = lambda ti, y: np.all(np.abs(y) < self.max_sim_value)
+        def too_big(ti, y):
+            if self.sindy.discrete_time:
+                return np.any(np.abs(y) > self.max_sim_value)
+            return np.all(np.abs(y) < self.max_sim_value)
 
         too_big.terminal = True
 
@@ -129,7 +126,7 @@ class SINDy(ForecastMethod):
             sindy_t,
             u=prediction_exog,
             integrator_kws={"events": too_big},
-            stop_condition=lambda x: too_big(0, x),
+            stop_condition=lambda x: too_big(0, x),  # noqa: E731
         )
 
         # Retrive number of successful steps.

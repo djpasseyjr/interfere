@@ -1,6 +1,6 @@
 """Collection of predictive methods from neuralforecast."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import neuralforecast
 from neuralforecast.losses.pytorch import MAE

@@ -7,7 +7,6 @@ from ..utils import copy_doc
 
 
 class Belozyorov3DQuad(StochasticDifferentialEquation):
-
     def __init__(
         self,
         mu: float = 1.81,
@@ -67,7 +66,6 @@ class Belozyorov3DQuad(StochasticDifferentialEquation):
 
 
 class Liping3DQuadFinance(StochasticDifferentialEquation):
-
     def __init__(
         self,
         sigma: float = 0.0,
@@ -120,7 +118,6 @@ class Liping3DQuadFinance(StochasticDifferentialEquation):
 
 
 class Lorenz(StochasticDifferentialEquation):
-
     def __init__(
         self,
         s: float = 10,
@@ -186,7 +183,6 @@ class Lorenz(StochasticDifferentialEquation):
 
 
 class Rossler(StochasticDifferentialEquation):
-
     def __init__(
         self,
         a: float = 0.2,
@@ -250,7 +246,6 @@ class Rossler(StochasticDifferentialEquation):
 
 
 class Thomas(StochasticDifferentialEquation):
-
     def __init__(
         self,
         b: float = 0.208186,
@@ -309,7 +304,6 @@ class Thomas(StochasticDifferentialEquation):
 
 
 class MooreSpiegel(StochasticDifferentialEquation):
-
     def __init__(
         self,
         R: float = 31,

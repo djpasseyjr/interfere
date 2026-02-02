@@ -10,7 +10,6 @@ EPSILON = 1e-10
 
 
 class CounterfactualForecastingMetric(ABC):
-
     def __init__(self, name):
         """Initializes a metric for counterfactual forecasting."""
         self.name = name
@@ -77,7 +76,6 @@ class CounterfactualForecastingMetric(ABC):
 
 
 class DirectionalChangeBinary(CounterfactualForecastingMetric):
-
     def __init__(self):
         super().__init__("BDC")
 
@@ -110,7 +108,6 @@ class DirectionalChangeBinary(CounterfactualForecastingMetric):
 
 
 class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
-
     def __init__(self):
         super().__init__("DC")
 
@@ -194,7 +191,6 @@ class TTestDirectionalChangeAccuracy(CounterfactualForecastingMetric):
 
 
 class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
-
     def __init__(self):
         super().__init__("RMSSE")
 
@@ -214,7 +210,6 @@ class RootMeanStandardizedSquaredError(CounterfactualForecastingMetric):
 
 
 class ValidPredictionTime(CounterfactualForecastingMetric):
-
     def __init__(self):
         """Initializes a vaid prediction time metric. Returns the index where
         the absolute difference between the target and the predicted is greater
@@ -250,7 +245,6 @@ class ValidPredictionTime(CounterfactualForecastingMetric):
 
 
 class RootMeanSquaredScaledError(CounterfactualForecastingMetric):
-
     def __init__(self):
         super().__init__("RMSSE")
 

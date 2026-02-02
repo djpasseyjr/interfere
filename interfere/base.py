@@ -234,7 +234,6 @@ class DynamicModel(ABC):
 
         # If sigma is a 1D array, check dimension and put it on the diagonal.
         elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 1:
-
             if sigma.shape[0] != dim:
                 raise ValueError(
                     f"The stochastic noise parameter for {type(self).__name__} "
@@ -561,7 +560,6 @@ class ForecastMethod(BaseEstimator):
 
             m_exog, exog_dim = exog_states.shape
             if m != m_exog:
-
                 raise ValueError(
                     f"The arguments `t` and `exog_states` for "
                     f"{str(type(self).__name__)}.fit() have incompatible "
@@ -823,7 +821,6 @@ class ForecastMethod(BaseEstimator):
         # If the user did not pass enough prior_t, check for equally spaced time
         # points and infer.
         if num_prior_times < num_prior_endog:
-
             # Check if equally spaced.
             warn(
                 "Inferring additional `prior_t` values. Assuming `prior_t` has"
@@ -831,7 +828,6 @@ class ForecastMethod(BaseEstimator):
             )
             dt = t[1] - t[0]
             if not np.all(np.isclose(np.diff(prior_t), dt)):
-
                 # When prior_endog_states were not augmented with zeros raise a
                 # normal value error.
                 if num_prior_endog == orig_num_prior_endog:

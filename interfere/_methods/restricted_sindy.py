@@ -378,7 +378,6 @@ class SURD_SINDy(PCMCI_SINDy):
         adj = np.zeros((num_vars, num_vars))
 
         for i in range(num_vars):
-
             impactful_vars = set()
 
             # Compute total information
@@ -497,10 +496,8 @@ def variable_adjacency_matrix_to_feature_mask(
     for i in range(num_variables):
         # For each variable...
         for j in range(num_variables):
-
             # If the variable is not allowed to appear in the equation
             if not adjacency_matrix[i, j]:
-
                 # Mark every feature containing that variable as False.
                 for k in range(num_features):
                     if variable_names[j] in feature_names[k]:

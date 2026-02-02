@@ -56,7 +56,6 @@ def mod_interval(x: np.ndarray, a: float, b: float) -> float:
 
 
 class CoupledMapLattice(DiscreteTimeDynamics):
-
     def __init__(
         self,
         adjacency_matrix: np.array,
@@ -177,7 +176,6 @@ class CoupledMapLattice(DiscreteTimeDynamics):
 
 
 class StochasticCoupledMapLattice(CoupledMapLattice):
-
     def __init__(
         self,
         adjacency_matrix: np.array,

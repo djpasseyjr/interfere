@@ -15,7 +15,6 @@ from ..utils import copy_doc
 
 
 class GenerativeForecaster(DynamicModel):
-
     def __init__(
         self,
         fitted_method: ForecastMethod,
@@ -75,7 +74,6 @@ class GenerativeForecaster(DynamicModel):
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         **kwargs,
     ) -> np.ndarray:
-
         num_prior_obs, dim = prior_states.shape
 
         if self.fitted_method.endog_dim_of_fit != dim:
@@ -87,7 +85,6 @@ class GenerativeForecaster(DynamicModel):
             )
 
         for i in range(len(t) - 1):
-
             new_states = self.fitted_method.predict(
                 t[i : (i + 2)],
                 prior_states,

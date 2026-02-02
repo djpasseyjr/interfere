@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import statsforecast.models
 

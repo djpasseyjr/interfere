@@ -51,7 +51,6 @@ def kuramoto_intervention_wrapper(
 
 
 class Kuramoto(StochasticDifferentialEquation):
-
     def __init__(
         self,
         omega: np.ndarray,
@@ -103,7 +102,6 @@ class Kuramoto(StochasticDifferentialEquation):
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
         **kwargs
     ) -> np.ndarray:
-
         initial_condition = prior_states[-1:, :]
 
         # Check initial condition.
@@ -159,7 +157,6 @@ class Kuramoto(StochasticDifferentialEquation):
 
 
 class KuramotoSakaguchi(Kuramoto):
-
     def __init__(
         self,
         omega: np.ndarray,

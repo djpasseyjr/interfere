@@ -20,7 +20,6 @@ from ..utils import copy_doc
 
 
 class UncorrelatedNoise(DynamicModel):
-
     def _simulate(
         self,
         t: np.ndarray,

@@ -6,7 +6,6 @@ from .base import StochasticDifferentialEquation
 
 
 class OrnsteinUhlenbeck(StochasticDifferentialEquation):
-
     def __init__(
         self,
         theta: Optional[np.ndarray] = None,

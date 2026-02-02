@@ -21,12 +21,12 @@ from interfere.dynamics import (
     coupled_map_1dlattice_spatiotemp_chaos,
     coupled_map_1dlattice_spatiotemp_intermit1,
     coupled_map_1dlattice_spatiotemp_intermit2,
-    coupled_map_1dlattice_traveling_wave
+    coupled_map_1dlattice_traveling_wave,
 )
 
 from interfere.dynamics.generative_forecasters import (
     generative_lorenz_VAR_forecaster,
-    generative_cml_SINDy_forecaster
+    generative_cml_SINDy_forecaster,
 )
 
 from sample_models import (
@@ -43,7 +43,7 @@ from sample_models import (
     michaelis_menten_model,
     mutualistic_population_model,
     sis_model,
-    wilson_cowan_model
+    wilson_cowan_model,
 )
 
 SEED = 11
@@ -60,27 +60,23 @@ COUPLED_MAP_LATTICES = [
     coupled_map_1dlattice_spatiotemp_chaos,
     coupled_map_1dlattice_spatiotemp_intermit1,
     coupled_map_1dlattice_spatiotemp_intermit2,
-    coupled_map_1dlattice_traveling_wave
+    coupled_map_1dlattice_traveling_wave,
 ]
 
 CML_TEST_DIM = 4
-CML_MODELS = [
-   cml(CML_TEST_DIM) for cml in COUPLED_MAP_LATTICES
-]
+CML_MODELS = [cml(CML_TEST_DIM) for cml in COUPLED_MAP_LATTICES]
 
 NOISE_DYNAMICS = [
     StandardNormalNoise,
-    StandardCauchyNoise, 
+    StandardCauchyNoise,
     StandardExponentialNoise,
     StandardGammaNoise,
-    StandardTNoise
+    StandardTNoise,
 ]
 
 NOISE_DIM = 3
-NOISE_MODELS = [
-    nd(NOISE_DIM) for nd in NOISE_DYNAMICS
-]
-        
+NOISE_MODELS = [nd(NOISE_DIM) for nd in NOISE_DYNAMICS]
+
 
 MODELS = [
     generative_cml_SINDy_forecaster(),
@@ -96,22 +92,19 @@ MODELS = [
     arithmetic_brownian_motion_model(),
     geometric_brownian_motion_model(),
     varima_model(),
-    
     kuramoto_model(),
     kuramoto_sakaguchi_model(),
     stuart_landau_kuramoto_model(),
     hodgkin_huxley_model(),
-    
     michaelis_menten_model(),
     mutualistic_population_model(),
     sis_model(),
     wilson_cowan_model(),
 ]
 
+
 @pytest.mark.parametrize("model", MODELS + CML_MODELS)
 class TestSimulate:
-
-
     def make_test_data(self, model: DynamicModel):
         """Makes test data that matches the model specs.
 
@@ -137,7 +130,6 @@ class TestSimulate:
 
         return m, n, t, x0, interv, rng
 
-
     def test_output_shape(self, model: DynamicModel):
         """Tests that simulate produces the correct output shape.
 
@@ -151,9 +143,10 @@ class TestSimulate:
         m, n, t, x0, interv, rng = self.make_test_data(model)
         X = model.simulate(t, x0, rng=rng)
 
-        assert X.shape == (m, n), (
-            f"Output is the wrong shape for {type(model)}.")
-
+        assert X.shape == (
+            m,
+            n,
+        ), f"Output is the wrong shape for {type(model)}."
 
     def test_initial_condition(self, model: DynamicModel):
         """Tests that simulate produces the correct initial condition.
@@ -165,18 +158,19 @@ class TestSimulate:
         Notes:
             Args are supplied via the pytest.mark.parametrize decorator.
         """
-        
+
         m, n, t, x0, interv, rng = self.make_test_data(model)
         X = model.simulate(t, x0, rng=rng)
 
         if x0.ndim == 1:
-            assert np.allclose(X[0], x0), (
-                f"Initial condition is incorrect for {type(model)}.")
-            
-        elif x0.ndim == 2:
-            assert np.allclose(X[0, :], x0[-1, :]), (
-                f"Initial condition is incorrect for {type(model)}.")
+            assert np.allclose(
+                X[0], x0
+            ), f"Initial condition is incorrect for {type(model)}."
 
+        elif x0.ndim == 2:
+            assert np.allclose(
+                X[0, :], x0[-1, :]
+            ), f"Initial condition is incorrect for {type(model)}."
 
     def test_noise_preservation(self, model: DynamicModel):
         """Tests that random state works correctly.
@@ -193,23 +187,23 @@ class TestSimulate:
 
         # Add measurement_noise
         old_measurement_noise = model.measurement_noise_std
-        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG * np.ones(n)
 
         rng = np.random.default_rng(SEED)
         X = model.simulate(t, x0, rng=rng)
-        
+
         rng = np.random.default_rng(SEED)
         X_rerun = model.simulate(t, x0, rng=rng)
 
         # Remove measurement noise.
         model.measurement_noise_std = old_measurement_noise
 
-         # Added a tolerance because Stuart Landau model has some round off
-        # error. 
-        assert np.max(X - X_rerun) < 1e-15, (
-            f"Random state does not preserve noise for {type(model)}.")
-        
-    
+        # Added a tolerance because Stuart Landau model has some round off
+        # error.
+        assert (
+            np.max(X - X_rerun) < 1e-15
+        ), f"Random state does not preserve noise for {type(model)}."
+
     def test_not_deterministic(self, model: DynamicModel):
         """Tests that measurement noise is random.
 
@@ -220,26 +214,25 @@ class TestSimulate:
         Notes:
             Args are supplied via the pytest.mark.parametrize decorator.
         """
-        
+
         m, n, t, x0, interv, rng = self.make_test_data(model)
-        
+
         # Add measurement_noise.
         old_measurement_noise = model.measurement_noise_std
-        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG * np.ones(n)
 
         X = model.simulate(t, x0, rng=rng)
-    
+
         # Check that model is not deterministic.
         X_new_realization = model.simulate(t, x0, rng=rng)
 
         # Remove measurment noise.
         model.measurement_noise_std = old_measurement_noise
 
-        assert not np.all(X == X_new_realization), (
-            f"{type(model)} has deterministic measurement noise."
-        )
+        assert not np.all(
+            X == X_new_realization
+        ), f"{type(model)} has deterministic measurement noise."
 
-    
     def test_intervention(self, model: DynamicModel):
         """Tests that interventions function correctly.
 
@@ -250,12 +243,12 @@ class TestSimulate:
         Notes:
             Args are supplied via the pytest.mark.parametrize decorator.
         """
-        
+
         m, n, t, x0, interv, rng = self.make_test_data(model)
 
         # Add measurement_noise.
         old_measurement_noise = model.measurement_noise_std
-        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG * np.ones(n)
 
         # Apply an intervention.
         rng = np.random.default_rng(SEED)
@@ -264,14 +257,15 @@ class TestSimulate:
         # Remove measurement noise.
         model.measurement_noise_std = old_measurement_noise
 
-        assert X_do.shape == (m, n), (
-            f"Incorrect output size after intervention for {type(model)}.")
-        
+        assert X_do.shape == (
+            m,
+            n,
+        ), f"Incorrect output size after intervention for {type(model)}."
+
         _, interv_states = interv.split_exog(X_do)
         assert np.isclose(
-            np.mean(interv_states), interv.constants[0], atol=0.1), (
-            f"Intervention is incorrect for {type(model)}.")
-
+            np.mean(interv_states), interv.constants[0], atol=0.1
+        ), f"Intervention is incorrect for {type(model)}."
 
     def test_intervention_random_state(self, model: DynamicModel):
         """Tests that intervention function works with random noise.
@@ -288,7 +282,7 @@ class TestSimulate:
 
         # Add measurement_noise.
         old_measurement_noise = model.measurement_noise_std
-        model.measurement_noise_std = MEASUREMENT_NOISE_MAG *np.ones(n)
+        model.measurement_noise_std = MEASUREMENT_NOISE_MAG * np.ones(n)
 
         # Apply an intervention
         rng = np.random.default_rng(SEED)
@@ -304,8 +298,7 @@ class TestSimulate:
         assert np.allclose(X_do, X_do_rerun), (
             "Random state does not preserve values after intervention for "
             f" {type(model)}."
-        )       
-
+        )
 
     def test_is_stochastic(self, model: DynamicModel):
         """Tests that model is stochastic.
@@ -334,10 +327,9 @@ class TestSimulate:
         model.sigma = old_sigma
         model.measurement_noise_std = old_measurement_noise
 
-        assert not np.all(X == X_rerun), (
-            f"{type(model)} is not behaving stochastically."
-        )
-
+        assert not np.all(
+            X == X_rerun
+        ), f"{type(model)} is not behaving stochastically."
 
     def test_range_preserves_stochastic(self, model: DynamicModel):
         """Tests that range preserves stochasticity.
@@ -370,11 +362,10 @@ class TestSimulate:
         model.measurement_noise_std = old_measurement_noise
 
         # Added a tolerance because Stuart Landau model has some round off
-        # error. 
-        assert np.max(X - X_rerun) < 1e-15, (
-            f"{type(model)} is not generating reproducible stochasticity."
-        )
-
+        # error.
+        assert (
+            np.max(X - X_rerun) < 1e-15
+        ), f"{type(model)} is not generating reproducible stochasticity."
 
     def test_intervention_is_stochastic(self, model: DynamicModel):
         """Tests that model is stochastic.
@@ -403,11 +394,10 @@ class TestSimulate:
         model.sigma = old_sigma
         model.measurement_noise_std = old_measurement_noise
 
-        assert not np.all(X == X_rerun), (
-            f"{type(model)} is not behaving stochastically with interventions."
-        )
+        assert not np.all(
+            X == X_rerun
+        ), f"{type(model)} is not behaving stochastically with interventions."
 
-    
     def test_stochastic_init(self, model: DynamicModel):
         """Tests that the stochastic matrix initializer works correctly."""
         n = model.dim
@@ -420,13 +410,16 @@ class TestSimulate:
             # Grab arg names.
             kwargs = {
                 kw: getattr(model, kw)
-                for kw in ini.__code__.co_varnames[1:ini.__code__.co_argcount]
+                for kw in ini.__code__.co_varnames[
+                    1 : ini.__code__.co_argcount
+                ]
                 if hasattr(model, kw)
             }
 
             new_model = type(model)(**{**kwargs, "sigma": sigma})
-            assert np.all(new_model.sigma == true_sigma), (
-                f"Stochastic initialization failed for {type(model).__name__}")
+            assert np.all(
+                new_model.sigma == true_sigma
+            ), f"Stochastic initialization failed for {type(model).__name__}"
 
 
 def test_stochastic_array_builder():
@@ -450,17 +443,14 @@ def test_stochastic_array_builder():
     assert sigma.shape == (beloz.dim, beloz.dim)
 
     with pytest.raises(
-        ValueError, match="float or a 1 or 2 dimensional numpy array."):
+        ValueError, match="float or a 1 or 2 dimensional numpy array."
+    ):
         beloz.build_stochastic_noise_matrix(np.random.rand(3, 3, 3), 3)
 
-    with pytest.raises(
-        ValueError, match="Pass a float or `sigma` with shape"
-    ):
+    with pytest.raises(ValueError, match="Pass a float or `sigma` with shape"):
         beloz.build_stochastic_noise_matrix(np.random.rand(4), 3)
 
-    with pytest.raises(
-        ValueError, match="Pass a float or `sigma` with shape"
-    ):
+    with pytest.raises(ValueError, match="Pass a float or `sigma` with shape"):
         beloz.build_stochastic_noise_matrix(np.random.rand(2, 2), 3)
 
 
@@ -486,13 +476,13 @@ def test_lotka_voltera():
     # Create ground truth systems with the interventions built in
     def perf_int_true_deriv(x, t):
         x[interv_idx] = interv_const
-        dx = r * x * ( 1 - (x + A @ x) / k)
+        dx = r * x * (1 - (x + A @ x) / k)
         dx[interv_idx] = 0.0
         return dx
 
     def sin_int_true_deriv(x, t):
         x[interv_idx] = np.sin(t)
-        dx = r * x *( 1 - (x + A @ x) / k)
+        dx = r * x * (1 - (x + A @ x) / k)
         dx[interv_idx] = np.cos(t)
         return dx
 
@@ -510,7 +500,7 @@ def test_lotka_voltera():
     x0[interv_idx] = np.sin(t[0])
     true_sin_X = integrate.odeint(sin_int_true_deriv, x0, t)
     interfere_sin_X = model.simulate(t, x0, intervention=sin_interv)
-    assert np.allclose(true_sin_X, interfere_sin_X)    
+    assert np.allclose(true_sin_X, interfere_sin_X)
 
 
 def test_ornstein_uhlenbeck_and_sde_integrator():
@@ -522,7 +512,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
     n = 3
     theta = rng.random((n, n)) - 0.5
     mu = np.ones(n)
-    sigma = rng.random((n, n))- 0.5
+    sigma = rng.random((n, n)) - 0.5
 
     model = interfere.dynamics.OrnsteinUhlenbeck(theta, mu, sigma)
 
@@ -534,7 +524,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
     dW = np.random.normal(0, np.sqrt(dt), (len(tspan) - 1, n))
 
     # Check that the model.simulate API Euler Maruyama integrator is correct
-    Xtrue = sdeint.itoEuler(model.drift, model.noise, x0, tspan, dW = dW)
+    Xtrue = sdeint.itoEuler(model.drift, model.noise, x0, tspan, dW=dW)
     Xsim = model.simulate(tspan, x0, dW=dW)
     assert np.mean((Xtrue - Xsim) ** 2) < 0.01
 
@@ -573,16 +563,12 @@ def test_ornstein_uhlenbeck_and_sde_integrator():
         intervention(x0, 0),
         tspan,
         generator=rng,
-        dW=dW
+        dW=dW,
     )
 
     rng = np.random.default_rng(seed)
     X_perf_inter_sim = model.simulate(
-        tspan,
-        x0,
-        intervention=intervention,
-        rng=rng,
-        dW=dW
+        tspan, x0, intervention=intervention, rng=rng, dW=dW
     )
 
     # Check that the intervened variable is constant
@@ -601,7 +587,7 @@ def test_ornstein_uhlenbeck_and_sde_integrator_sri2():
     n = 3
     theta = rng.random((n, n)) - 0.5
     mu = np.ones(n)
-    sigma = rng.random((n, n))- 0.5
+    sigma = rng.random((n, n)) - 0.5
 
     model = interfere.dynamics.OrnsteinUhlenbeck(theta, mu, sigma)
 
@@ -653,17 +639,12 @@ def test_ornstein_uhlenbeck_and_sde_integrator_sri2():
         tspan,
         generator=rng,
         dW=dW,
-        I=I
+        I=I,
     )
 
     rng = np.random.default_rng(seed)
     X_perf_inter_sim = model._simulate_sri2(
-        tspan,
-        x0_2D,
-        intervention=intervention,
-        rng=rng,
-        dW=dW,
-        I=I
+        tspan, x0_2D, intervention=intervention, rng=rng, dW=dW, I=I
     )
 
     # Check that the intervened variable is constant
@@ -695,7 +676,7 @@ def test_geometric_brownian_motion():
     """Tests that simulated expectation matches analytic expectation for
     geometric brownian motion.
     """
-    
+
     n = 1000
     m = 1000
     mu = np.ones(n) * -1
@@ -713,7 +694,7 @@ def test_geometric_brownian_motion():
     assert X.shape == (m, n)
 
     # Test that expectation matches the analytic expectation
-    diff = np.mean(X, axis=1)  - (np.exp(mu[0] * time_points) * x0[0])
+    diff = np.mean(X, axis=1) - (np.exp(mu[0] * time_points) * x0[0])
     assert np.all(np.abs(diff) < 0.25)
 
     f = interfere.perfect_intervention(0, 10)
@@ -757,19 +738,17 @@ def test_varma():
 
     # Initialize a VARMA model with no moving average component
     model = interfere.dynamics.VARMADynamics(
-        phi_matrices=coefs,
-        theta_matrices=[np.zeros((3,3))],
-        sigma=sigma
+        phi_matrices=coefs, theta_matrices=[np.zeros((3, 3))], sigma=sigma
     )
 
     t = np.arange(steps - lags + 1)
 
-    varma_sim = np.stack([
-        model.simulate(t, initial_vals)
-        for i in range(nsims)
-    ], axis=0)
+    varma_sim = np.stack(
+        [model.simulate(t, initial_vals) for i in range(nsims)], axis=0
+    )
     # Average over the 10000 simulations to compute the expected trajectory.
     # Make sure it is equal for both models.
     assert np.all(
-        np.abs(np.mean(true_var_sim[:, lags - 1:, :] - varma_sim, axis=0)) < 0.2
-    ), ("Average of interfere VARMA model runs does not match statsmodels sim.")
+        np.abs(np.mean(true_var_sim[:, lags - 1 :, :] - varma_sim, axis=0))
+        < 0.2
+    ), "Average of interfere VARMA model runs does not match statsmodels sim."

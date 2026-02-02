@@ -9,7 +9,6 @@ from ..base import DynamicModel, DEFAULT_RANGE
 
 
 class VARMADynamics(DynamicModel):
-
     def __init__(
         self,
         phi_matrices: List[np.ndarray],
@@ -143,7 +142,6 @@ class VARMADynamics(DynamicModel):
 
         # Simulate
         for i in range(n - 1):
-
             # Compute autogregressive component
             x_AR = np.sum(
                 [

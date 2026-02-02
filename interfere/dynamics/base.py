@@ -1,15 +1,12 @@
 from abc import abstractmethod
-import logging
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 from scipy import integrate
 from sdeint.wiener import Ikpw
-import sdeint
-
 
 from ..base import DynamicModel, DEFAULT_RANGE
-from ..interventions import IdentityIntervention, ExogIntervention
+from ..interventions import ExogIntervention
 from ..utils import copy_doc
 
 SDE_INTEGRATORS = ["EulerMaruyama", "SRI2"]
@@ -33,7 +30,8 @@ class OrdinaryDifferentialEquation(DynamicModel):
             return integrate.odeint(self.dXdt, initial_condition, t)
 
         # Define the derivative of the intervened system.
-        intervention_dXdt = lambda x, ti: self.dXdt(intervention(x, ti), ti)
+        def intervention_dXdt(x, ti):
+            return self.dXdt(intervention(x, ti), ti)
 
         # Integrate.
         X = integrate.odeint(intervention_dXdt, initial_condition, t)
@@ -379,7 +377,7 @@ class StochasticDifferentialEquation(DynamicModel):
 
         # Pre‐generate repeated integrals.
         if I is None:
-            _, I = Ikpw(dW, h, generator=rng)
+            _, I = Ikpw(dW, h, generator=rng)  # noqa: E741
 
         # Define f and G wrappers.
         def f(y, tau):
@@ -413,7 +411,7 @@ class StochasticDifferentialEquation(DynamicModel):
             H20 = Yn + fnh
             H20b = np.reshape(H20, (d, 1))
             H2 = H20b + sum1
-            H30 = Yn
+            H30 = Yn  # noqa: F841 (SRI2 stage, kept for algorithm clarity)
             H3 = H20b - sum1
 
             # f at H20 and H20 at next time
