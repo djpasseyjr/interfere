@@ -9,6 +9,7 @@ authors = [
   {name = "DJ Passey", email = "djpasseyjr@gmail.com"}
 ]
 dependencies = [
+    "setuptools",
     "networkx",
     "numpy<2",
     "optuna",
