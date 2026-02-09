@@ -174,6 +174,15 @@ Then you can run the linter and fix any linter errors (also at the top level):
 $ flake8 interfere
 ```
 
+### Build docs
+
+Docs use [MkDocs](https://www.mkdocs.org/) (`mkdocs.yml`). From the repo root:
+
+```bash
+$ mkdocs serve   # preview at http://127.0.0.1:8000
+$ mkdocs build   # output in site/
+```
+
 ### Add Tests
 
 If you are adding a *dynamic model* or *forecasting method*, the test suite has a

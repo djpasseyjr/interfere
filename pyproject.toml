@@ -41,6 +41,7 @@ dev = [
     "pytest",
     "pylint",
     "black",
+    "mkdocs",
 ]
 
 [tool.setuptools.packages]

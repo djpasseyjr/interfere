@@ -1,6 +1,7 @@
 # VS Code
 *.code-workspace
 .vscode
+.cursor/
 
 # iOS
 .DS_Store
