@@ -8,3 +8,4 @@ nav:
   - Prediction: prediction.md
   - Optimization: optimization.md
   - Custom forecast methods: custom_forecast_methods.md
+  - Benchmark: benchmark.md
