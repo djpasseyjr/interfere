@@ -107,7 +107,9 @@ class SignalIntervention(ExogIntervention):
         """Creates an intervention that applies passed one arg functions.
 
         A perfect intervention replaces variables with constant values.
-        This function generates intervention functions that replace
+        This class generates intervention functions that replace the value of
+        variables at ``iv_idxs`` with the output of the given signal functions
+        at each time point.
 
         Args:
             iv_idxs (int or collection of ints): The indexes where the intervention

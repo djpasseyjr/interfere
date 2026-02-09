@@ -13,6 +13,18 @@ Subclasses implement the protected `_simulate()` method to define the specific p
 
 With these foundational services—validation, time inference, noise injection, and intervention hooks—Interfere enables seamless simulation of everything from classic ODEs to complex SDEs and discrete-time maps.
 
+**Noise.** Many `DynamicModel` subclasses accept optional constructor arguments
+for noise. **`measurement_noise_std`** (array or `None`): per-dimension standard
+deviation of Gaussian noise added to the observed trajectory after each step;
+use `None` for no measurement noise. **`sigma`**: coefficient for *process*
+(stochastic) noise in the dynamics. Concrete models differ in default values;
+see each class's docstring.
+
+While `interfere` supports other stochastic processes, the `sigma` parameter
+usually controls the magnitude of *additive* Wiener processes. That is, if the
+deterministic dynamics are controlled by $\frac{dx}{dt} = f(x)$, then the
+stochastic dynamics with $\sigma = \sigma_0$ would be $dX = f(X)dt + \sigma_0 dW$.
+
 In `interfere/dynamics/base.py`, three specialized simulation bases implement `_simulate()`:
 
 - **OrdinaryDifferentialEquation**: Integrates ODEs by defining a `dXdt(x, t)` derivative function and calling `scipy.integrate.odeint`, applies interventions at each step, and adds measurement noise.
@@ -78,18 +90,18 @@ Returns:
 | `LotkaVoltera`                              | OrdinaryDifferentialEquation       | Predator–prey ODE model                              |
 | `LotkaVolteraSDE`                           | StochasticDifferentialEquation     | Stochastic predator–prey model                       |
 | `MichaelisMenten`                           | StochasticDifferentialEquation     | Enzyme kinetics reaction network                     |
-| `MutualisticPopulation`                     | OrdinaryDifferentialEquation       | Interacting mutualistic species model                |
+| `MutualisticPopulation`                     | StochasticDifferentialEquation     | Interacting mutualistic species model                |
 | `SIS`                                       | StochasticDifferentialEquation     | Susceptible–Infected–Susceptible epidemiological model |
 | `OrnsteinUhlenbeck`                         | StochasticDifferentialEquation     | Mean-reverting Ornstein–Uhlenbeck process            |
 | `VARMADynamics`                             | DynamicModel                       | Vector autoregressive moving-average dynamics        |
-| `WilsonCowan`                               | OrdinaryDifferentialEquation       | Wilson–Cowan neural population model                 |
+| `WilsonCowan`                               | StochasticDifferentialEquation     | Wilson–Cowan neural population model                 |
 | `Belozyorov3DQuad`                          | StochasticDifferentialEquation     | 3D quadratic chaotic system                          |
 | `Liping3DQuadFinance`                       | StochasticDifferentialEquation     | 3D quadratic system for financial modeling           |
 | `Lorenz`                                    | StochasticDifferentialEquation     | Lorenz chaotic attractor                             |
 | `Rossler`                                   | StochasticDifferentialEquation     | Rössler attractor                                     |
 | `Thomas`                                    | StochasticDifferentialEquation     | Thomas chaotic attractor                              |
 | `MooreSpiegel`                              | StochasticDifferentialEquation     | Moore–Spiegel chaotic oscillator                      |
-| `PlantedTankNitrogenCycle`                  | OrdinaryDifferentialEquation       | Aquatic nitrogen cycle model                         |
+| `PlantedTankNitrogenCycle`                  | StochasticDifferentialEquation     | Aquatic nitrogen cycle model                         |
 | `GenerativeForecaster`                      | DynamicModel                       | Generates trajectories using fitted forecasters      |
 | `generative_lorenz_VAR_forecaster`          | GenerativeForecaster (factory)     | Factory: VAR-based Lorenz forecaster                 |
 | `generative_cml_SINDy_forecaster`           | GenerativeForecaster (factory)     | Factory: SINDy-based CML forecaster                  |

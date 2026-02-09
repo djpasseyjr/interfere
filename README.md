@@ -1,6 +1,6 @@
 # 🌀 Interfere
 
-[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Version](https://img.shields.io/pypi/v/interfere)](https://pypi.org/project/interfere/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Documentation](https://img.shields.io/badge/docs-gh--pages-blue)](https://djpasseyjr.github.io/interfere/)
 
 A Python package for modeling and predicting the response of complex dynamic systems to interventions.
 
@@ -22,6 +22,10 @@ in blue and their response to a particular intervention in red. This data is
 available for download as the [Interfere Benchmark
 1.1.1](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing). It can be used to benchmark a forecasting method's ability to predict the
 response of a dynamic system to interventions.
+
+## Documentation
+
+Full documentation is built with MkDocs and published at **[https://djpasseyjr.github.io/interfere/](https://djpasseyjr.github.io/interfere/)**.
 
 ## Installation
 
@@ -239,6 +243,17 @@ pip install ".[dev]"
 python -m pytest -v tests
 ```
 (The full dependencies are pretty big. Use a virtual environment.)
+
+### Building the docs
+
+Install dev dependencies (which include `mkdocs`), then build and serve the site locally:
+
+```bash
+pip install ".[dev]"
+mkdocs serve
+```
+
+Open http://127.0.0.1:8000 to view the docs. To build static files only: `mkdocs build`.
 
 ## License
 
