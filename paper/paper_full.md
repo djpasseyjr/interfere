@@ -107,7 +107,7 @@ sim_states = dynamics.simulate(t_train, initial_cond)
 ```
 
 ![**Simulation of System:** The natural, uninterupted evolution of the quaratic Belozyorov system [@belozyorov_exponential_2015] with the addition of a small
-amount of stochastic noise simulated using the Interfere package. \label{fig:orig_traj}](../images/original_trajectory.png)
+amount of stochastic noise simulated using the Interfere package (only two of three dimensions shown). \label{fig:orig_traj}](../images/original_trajectory.png)
 
 ## 2. Intervention
 
