@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import statsforecast.models
 
@@ -7,8 +7,7 @@ from .nixtla_adapter import NixtlaAdapter
 from ...utils import copy_doc
 
 
-
-class ARIMA(NixtlaAdapter): 
+class ARIMA(NixtlaAdapter):
 
     @copy_doc(statsforecast.models.ARIMA)
     def __init__(
@@ -24,10 +23,12 @@ class ARIMA(NixtlaAdapter):
         method: str = "CSS-ML",
         fixed: Optional[dict] = None,
         alias: str = "ARIMA",
-        prediction_intervals: Optional[statsforecast.utils.ConformalIntervals] = None,
-        p = None,
-        d = None,
-        q = None,
+        prediction_intervals: Optional[
+            statsforecast.utils.ConformalIntervals
+        ] = None,
+        p=None,
+        d=None,
+        q=None,
     ):
         self.method_params = locals()
         self.method_params.pop("self")
@@ -62,18 +63,15 @@ class ARIMA(NixtlaAdapter):
         prediction."""
 
         return max(self.method_params["order"][0], 2)
-        
 
     def get_horizon(self):
         """Returns the minimum timesteps the method will predict."""
         # Model predicts minimum of one timestep.
         return 1
-    
 
     def get_test_params() -> Dict[str, Any]:
         """Returns default parameters conducive to fast test cases"""
         return {}
-    
 
     @staticmethod
     @copy_doc(ForecastMethod._get_optuna_params)
@@ -81,14 +79,17 @@ class ARIMA(NixtlaAdapter):
         """Returns a parameter grid for testing grid search"""
         return {
             "order": (
-                trial.suggest_int("p",1, max_lags),
-                trial.suggest_int("d", 1, max_lags), # Seasonal differencing.
-                trial.suggest_int("q",1, 15)
+                trial.suggest_int("p", 1, max_lags),
+                trial.suggest_int("d", 1, max_lags),  # Seasonal differencing.
+                trial.suggest_int("q", 1, 15),
             ),
             "include_mean": trial.suggest_categorical(
-                "include_mean", [True, False]),
+                "include_mean", [True, False]
+            ),
             "include_drift": trial.suggest_categorical(
-                "include_drift", [True, False]),
+                "include_drift", [True, False]
+            ),
             "include_constant": trial.suggest_categorical(
-                "include_constant", [True, False]),
+                "include_constant", [True, False]
+            ),
         }

@@ -3,16 +3,18 @@ import numpy as np
 import pandas as pd
 
 try:
-    from sktime.forecasting.ltsf import LTSFLinearForecaster as sktime_LTSFLinearForecaster
-    
+    from sktime.forecasting.ltsf import (
+        LTSFLinearForecaster as sktime_LTSFLinearForecaster,
+    )
+
 except ImportError as e:
     raise ImportError(
         "ImportError occured in sktime import."
         "\n\n This likely occurred because `interfere` does not list `sktime` as a direct dependency. To use the "
         "LTSF, try first install `sktime` via pip "
         "install sktime."
-        f"\n\nOriginating error text: {e}"   
-)
+        f"\n\nOriginating error text: {e}"
+    )
 
 from ..base import ForecastMethod, DEFAULT_RANGE
 from ..utils import copy_doc
@@ -20,7 +22,6 @@ from ..utils import copy_doc
 
 class LTSF(ForecastMethod):
     """Uses a transformer for inference."""
-
 
     def __init__(
         self,
@@ -36,7 +37,7 @@ class LTSF(ForecastMethod):
         optimizer_kwargs: Optional[Any] = None,
         lr: float = 0.001,
         custom_dataset_train: Optional[Any] = None,
-        custom_dataset_pred: Optional[Any] = None
+        custom_dataset_pred: Optional[Any] = None,
     ):
         """LTSF-Linear Forecaster.
 
@@ -82,34 +83,30 @@ class LTSF(ForecastMethod):
         """
 
         self.method_params = locals()
-        self.method_params.pop("self") 
+        self.method_params.pop("self")
 
-        # Make forecasting horizon for fit and predict.  
+        # Make forecasting horizon for fit and predict.
         self.fh = [i for i in range(1, pred_len + 1)]
-
 
     @copy_doc(ForecastMethod._fit)
     def _fit(
         self,
         t: np.ndarray,
         endog_states: np.ndarray,
-        exog_states: np.ndarray = None
+        exog_states: np.ndarray = None,
     ):
-  
-        self.model = sktime_LTSFLinearForecaster(
-            **self.method_params
-        )
+
+        self.model = sktime_LTSFLinearForecaster(**self.method_params)
 
         m = len(t)
         y = to_sktime_time_series(np.arange(m), endog_states)
-        
+
         if exog_states is not None:
             X = to_sktime_time_series(np.arange(m), exog_states)
         else:
             X = None
         # This uses the sktime_LTSFLinearForecaster fit function.
         self.model.fit(y, X=X, fh=self.fh)
-
 
     @copy_doc(ForecastMethod._predict)
     def _predict(
@@ -121,15 +118,13 @@ class LTSF(ForecastMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
-        
+
         m = len(prior_t)
         prior_y = to_sktime_time_series(np.arange(m), prior_endog_states)
-        
+
         X = None
         if prediction_exog is not None:
             X = to_sktime_time_series(t, prediction_exog)
-
-
 
         # Save original stored endogeneous.
         _y_orig = self.model._y
@@ -147,54 +142,51 @@ class LTSF(ForecastMethod):
 
         # Extract values.
         pred_endo = pd.concat(futr_endo).values
-        # Add initial state to correspond with t.     
+        # Add initial state to correspond with t.
         pred_endo = np.vstack([prior_endog_states[-1, :], pred_endo])
 
         return pred_endo
 
-
     @copy_doc(ForecastMethod.get_window_size)
     def get_window_size(self):
         return max(2, self.method_params["seq_len"])
-    
 
     @copy_doc(ForecastMethod.set_params)
     def set_params(self, **params):
         self.method_params = {**self.method_params, **params}
         self.model = sktime_LTSFLinearForecaster(**self.method_params)
 
-
     @copy_doc(ForecastMethod.get_params)
     def get_params(self, deep: bool = True) -> dict:
         return self.method_params
-    
 
     @copy_doc(ForecastMethod.get_test_params)
     def get_test_params() -> dict[str, Any]:
         return {
-            'seq_len': 2,
-            'pred_len': 1,
-            'lr': 0.005,
-            'optimizer': 'Adam',
-            'batch_size': 1,
-            'num_epochs': 10,
-            'individual': False
+            "seq_len": 2,
+            "pred_len": 1,
+            "lr": 0.005,
+            "optimizer": "Adam",
+            "batch_size": 1,
+            "num_epochs": 10,
+            "individual": False,
         }
-    
 
     @staticmethod
     @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(
-        trial, max_lags=25, max_horizon=50, **kwargs) -> dict[str, object]:
+        trial, max_lags=25, max_horizon=50, **kwargs
+    ) -> dict[str, object]:
 
         return {
             "seq_len": trial.suggest_int("seq_len", 1, max_lags),
             "lr": trial.suggest_float("lr", 1e-5, 1e-1, log=True),
             "pred_len": trial.suggest_int("pred_len", 1, max_horizon),
             "num_epochs": trial.suggest_categorical(
-                "num_epochs", [50, 100, 300, 500, 1000])
+                "num_epochs", [50, 100, 300, 500, 1000]
+            ),
         }
-    
+
 
 def to_sktime_time_series(time_points: np.ndarray, X: np.ndarray):
     """Converts time series from interfere format to sktime format.
@@ -212,6 +204,7 @@ def to_sktime_time_series(time_points: np.ndarray, X: np.ndarray):
             Columns are variables and rows are observations.
     """
     index = pd.to_datetime(
-        pd.to_numeric(time_points), unit='s', errors='coerce')
+        pd.to_numeric(time_points), unit="s", errors="coerce"
+    )
     sktime_X = pd.DataFrame(X, index=index)
     return sktime_X

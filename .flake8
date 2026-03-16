@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 79
+# E203: Black uses space before ':' in slices (e.g. x[a : b]).
+# E501: Long lines (docstrings, type hints) deferred; wrap in follow-up.
+extend-ignore = E203, E501
+# Re-exports in __init__.py are intentional; suppress "imported but unused"
+per-file-ignores =
+    __init__.py:F401
+    */__init__.py:F401
+    */*/__init__.py:F401
+    */*/*/__init__.py:F401

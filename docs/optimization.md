@@ -14,7 +14,7 @@ The `CrossValObjective` class implements an Optuna-compatible objective function
 - **train_window_percent** *(float)*: Fraction of `data` used for training in each fold (0 < p < 1).
 - **num_folds** *(int)*: Total number of folds (including the initial training window).
 - **exog_idxs** *(Optional[list[int]])*: Indices of columns in `data` treated as exogenous variables during fitting and validation.
-- **val_scheme** *(str)*: Validation strategy: `"forecast"` (score the chunk immediately after training), `"last"` (score a fixed hold-out chunk at end), or `"all"` (score all hold-out chunks).
+- **val_scheme** *(str)*: Validation strategy: `"forecast"` (score the fold immediately after training), `"last"` (score a fixed hold-out fold at end), or `"all"` (score all hold-out folds).
 - **num_val_prior_states** *(int)*: Number of prior observations used as context for each validation prediction.
 - **metric** *(Callable[[np.ndarray, np.ndarray], float])*: Callable metric function accepting `actual` and `predicted` arrays and returning a scalar error (e.g., `interfere.metrics.rmse`).
 - **metric_direction** *(str)*: `"minimize"` or `"maximize"`, passed to Optuna's study.
@@ -46,9 +46,9 @@ error = interfere.metrics.rmse(actual, predicted)
 
 ### Cross-Validation Workflow
 
-1. **Partition Data**: Split `data` into a sliding training window (size = `train_window_percent` × T) and subsequent validation chunks.
-2. **Slide Window**: For each of the `num_folds`, advance the training window by one validation chunk and retrain the forecasting method from scratch.
-3. **Score Predictions**: Depending on `val_scheme`, compute the error metric on hold-out observations immediately after training (`"forecast"`), at the end (`"last"`), or on all chunks (`"all"`).
+1. **Partition Data**: Split `data` into a sliding training window (size = `train_window_percent` × T) and subsequent validation folds.
+2. **Slide Window**: For each of the `num_folds`, advance the training window by one validation fold and retrain the forecasting method from scratch.
+3. **Score Predictions**: Depending on `val_scheme`, compute the error metric on hold-out observations immediately after training (`"forecast"`), at the end (`"last"`), or on all folds (`"all"`).
 4. **Aggregate Result**: Return the aggregated metric across folds to Optuna to guide hyperparameter search.
 
 ## Supported Forecasting Methods

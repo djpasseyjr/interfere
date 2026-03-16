@@ -33,7 +33,7 @@ class MutualisticPopulation(StochasticDifferentialEquation):
 
             dxi/dt = xi (alpha_i - theta_i xi) + ∑ Aij xi xj^h / (1 + xj^h)
 
-            Here alpha and theta are growth parameters and A is an adjacency 
+            Here alpha and theta are growth parameters and A is an adjacency
             matrix describing the interactions between species.
 
         Args:
@@ -54,7 +54,7 @@ class MutualisticPopulation(StochasticDifferentialEquation):
                 dimension of model.
 
         References:
-            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics 
+            Prasse, B. and Van Mieghem, P. (2022) ‘Predicting network dynamics
             without requiring the knowledge of the interaction graph’, PNAS
         """
         # Check array shapes.
@@ -82,13 +82,13 @@ class MutualisticPopulation(StochasticDifferentialEquation):
 
         super().__init__(dim, measurement_noise_std, sigma)
 
-
     @copy_doc(StochasticDifferentialEquation.drift)
     def drift(self, x: np.ndarray, t: float) -> np.ndarray:
         growth = x * (self.alpha - self.theta * x)
-        interaction = x * self.adjacency_matrix @ (x**self.h / (1 + x**self.h))
+        interaction = (
+            x * self.adjacency_matrix @ (x**self.h / (1 + x**self.h))
+        )
         return growth + interaction
-
 
     @copy_doc(StochasticDifferentialEquation.noise)
     def noise(self, x: np.ndarray, t: float) -> np.ndarray:

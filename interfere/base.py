@@ -2,35 +2,36 @@
 
 Classes:
     DynamicModel: This is the base class for all models in the interfere.
-        dynamics submodule. Inheriting classes must implement a _simulate() 
-        method and an __init__() method. See interfere.dynamics.base for 
+        dynamics submodule. Inheriting classes must implement a _simulate()
+        method and an __init__() method. See interfere.dynamics.base for
         several examples.
-    ExogIntervention: The base class for exogenous interventions. Inheriting 
+    ExogIntervention: The base class for exogenous interventions. Inheriting
         classes should implement a __call__() method. See interfere.
-        interventions for examples. 
-    ForecastMethod: Implements the base class for the forecasting method. 
-        Subclasses must implement _fit(), _predict(), _get_test_params(), _get_optuna_params(). See interfere._methods for examples. 
+        interventions for examples.
+    ForecastMethod: Implements the base class for the forecasting method.
+        Subclasses must implement _fit(), _predict(), _get_test_params(), _get_optuna_params(). See interfere._methods for examples.
 
 Notes:
-    Arg Handling: Most of the error handling is done in the base classes in 
+    Arg Handling: Most of the error handling is done in the base classes in
         order to avoid doing heavy error handling in every custom subclass.
         Additionally, the interfer package is structured to do optional argument
-        handling in the base classes to guarantee that a minimum of the 
-        variables passed to abstract methods are empty. This is done so that 
-        inhereted subclasses can assume that most of the arguments to _simulate 
-        or _predict() etc. are non null. This is not always possible (i.e. for 
+        handling in the base classes to guarantee that a minimum of the
+        variables passed to abstract methods are empty. This is done so that
+        inhereted subclasses can assume that most of the arguments to _simulate
+        or _predict() etc. are non null. This is not always possible (i.e. for
         exog time series) but an effort was made to comply with this heuristic.
-    Non-Exogenous Interventions: Interventions that interact with the 
-        endogenous state of the dynamic system are possible, and relevant. (As 
-        an example consider an intervention that acts differently depending on 
-        the state of the system.) This kind of intervention is compatible with 
-        parts of the interfere API, but challenging to integrate with most 
-        forecasting methods because they are built around the idea of exogenous 
-        input. The interfere.dynamics.generative_forecasters module is an 
-        interesting look at a possible way to wrap forecasters in a recursive 
-        prediction structure that would enable non-exogenous interventions. 
+    Non-Exogenous Interventions: Interventions that interact with the
+        endogenous state of the dynamic system are possible, and relevant. (As
+        an example consider an intervention that acts differently depending on
+        the state of the system.) This kind of intervention is compatible with
+        parts of the interfere API, but challenging to integrate with most
+        forecasting methods because they are built around the idea of exogenous
+        input. The interfere.dynamics.generative_forecasters module is an
+        interesting look at a possible way to wrap forecasters in a recursive
+        prediction structure that would enable non-exogenous interventions.
         Something to think about for a future date.
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Callable, List, Optional, Union
 from warnings import warn
@@ -47,17 +48,16 @@ DEFAULT_RANGE = np.random.default_rng()
 
 class DynamicModel(ABC):
     """Abstract base class for dynamic models.
-    
-    Any dynamic model that implements an appropriate `simulate` method
-    can be used for dynamic counterfactual analysis. 
-    """
 
+    Any dynamic model that implements an appropriate `simulate` method
+    can be used for dynamic counterfactual analysis.
+    """
 
     def __init__(
         self,
-        dim: int, 
+        dim: int,
         measurement_noise_std: Optional[np.ndarray] = None,
-        sigma: Optional[Union[float, np.ndarray]] = None
+        sigma: Optional[Union[float, np.ndarray]] = None,
     ):
         """Initializes a DynamicModel instance.
 
@@ -79,20 +79,21 @@ class DynamicModel(ABC):
         self.measurement_noise_std = measurement_noise_std
         self.sigma = self.build_stochastic_noise_matrix(sigma, dim)
 
-
     def simulate(
         self,
         t: np.ndarray,
         prior_states: np.ndarray,
         prior_t: Optional[np.ndarray] = None,
-        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        intervention: Optional[
+            Callable[[np.ndarray, float], np.ndarray]
+        ] = None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray:
         """Runs a simulation of the dynamic model.
 
         Args:
-            t (ndarray): A (n,) array of the time points where the   
+            t (ndarray): A (n,) array of the time points where the
                 dynamic model will be simulated. The first entry of `t` must
                 equal the last entry of `prior_t`. If `prior_t` is None, then
                 the values of `prior_t` will be assumed to be evenly spaced time
@@ -110,11 +111,11 @@ class DynamicModel(ABC):
                 `prior_t` will throw an error.
             intervention (callable): A function that accepts (1) a vector of the
                 current state of the dynamic model and (2) the current time. It should return a modified state. The function will be used in the
-                following way. If the dynamic model without the intervention can be described 
+                following way. If the dynamic model without the intervention can be described
                 as
-                
+
                 x(t+dt) = F(x(t))
-                
+
                 where dt is the timestep size, x(t) is the trajectory, and F is
                 the function that uses the current state to compute the state at
                 the next timestep. Then the intervention function will be used
@@ -123,39 +124,43 @@ class DynamicModel(ABC):
                     z(t+dt) = F(g(z(t), t), t)
                     x_do(t) = g(z(t), t)
 
-                where x_do is the trajectory of the intervened system and g is 
+                where x_do is the trajectory of the intervened system and g is
                 the intervention function.
-            rng (RandomState): A numpy random state for reproducibility. (Uses 
+            rng (RandomState): A numpy random state for reproducibility. (Uses
                 numpy's mtrand random number generator by default.)
 
         Returns:
-            X (ndarray): An (n, m) array containing a realization of the   
+            X (ndarray): An (n, m) array containing a realization of the
                 trajectory of the m dimensional system corresponding to the n
-                times in `t`. The first row of X contains the last row of 
+                times in `t`. The first row of X contains the last row of
                 `prior_states`.
         """
         # Must provide at least one unseen simulation time.
         if len(t) < 2:
-            raise ValueError(f"len(t) = {len(t)} but at least two time points must be provided to simulate.")
-        
+            raise ValueError(
+                f"len(t) = {len(t)} but at least two time points must be provided to simulate."
+            )
+
         # Reshape prior_states to ensure they are 2D
         prior_states = np.reshape(prior_states, (-1, prior_states.shape[-1]))
-        prior_obs, _ = prior_states.shape     
+        prior_obs, _ = prior_states.shape
 
         if prior_t is not None:
-            p_prior_t, = prior_t.shape
+            (p_prior_t,) = prior_t.shape
 
             if p_prior_t != prior_obs:
-                raise ValueError(f"The length of `prior_t` ({p_prior_t}) must "
+                raise ValueError(
+                    f"The length of `prior_t` ({p_prior_t}) must "
                     f"be equal to the number of rows ({prior_obs}) in prior_states. "
                 )
-            
+
             if not np.isclose(prior_t[-1], t[0]):
-                raise ValueError(f"The last prior time, `prior_t[-1] "
+                raise ValueError(
+                    f"The last prior time, `prior_t[-1] "
                     f"= {prior_t[-1]}` must equal the first simulation time "
                     f"`t[0] = {t[0]}`."
                 )
-            
+
         else:
             # No prior times provided. We infer prior times.
             dt = t[1] - t[0]
@@ -171,11 +176,8 @@ class DynamicModel(ABC):
             prior_t = np.arange(-prior_obs + 1, 1) * dt + start_time
 
         return self._simulate(
-            t, prior_states, prior_t, intervention, rng, **kwargs)
-                
-
-            
-    
+            t, prior_states, prior_t, intervention, rng, **kwargs
+        )
 
     def add_measurement_noise(
         self,
@@ -191,12 +193,12 @@ class DynamicModel(ABC):
         For all i and j.
 
         Args:
-            X (ndarray): An (m, n) matrix that is interpreted to be a  
+            X (ndarray): An (m, n) matrix that is interpreted to be a
                 realization of an n dimensional stochastic multivariate timeseries.
             measurement_noise_std (ndarray): An (n,) array that contains the
                 standard deviations of the gaussian noise that will be added to
                 each of the columns.
-            rng: A numpy random state for reproducibility. (Uses numpy's mtrand 
+            rng: A numpy random state for reproducibility. (Uses numpy's mtrand
                 random number generator by default.)
 
         Returns:
@@ -205,14 +207,11 @@ class DynamicModel(ABC):
         """
         if self.measurement_noise_std is None:
             return X
-        
+
         return X + rng.standard_normal(X.shape) * self.measurement_noise_std
-    
 
     def build_stochastic_noise_matrix(
-        self,
-        sigma: Union[float, np.ndarray],
-        dim: int
+        self, sigma: Union[float, np.ndarray], dim: int
     ) -> np.ndarray:
         """Helper function that creates a fixed noise rescaling matrix.
 
@@ -232,28 +231,29 @@ class DynamicModel(ABC):
         # If sigma is a float, make a diagnonal matrix.
         if isinstance(sigma, (float, int)):
             return np.eye(dim) * sigma
-        
+
         # If sigma is a 1D array, check dimension and put it on the diagonal.
         elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 1:
-
             if sigma.shape[0] != dim:
                 raise ValueError(
                     f"The stochastic noise parameter for {type(self).__name__} "
                     f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
                     f"Pass a float or `sigma` with shape ({dim},) or "
-                    "({dim}, {dim}).")
-            
+                    "({dim}, {dim})."
+                )
+
             return np.diag(sigma)
-        
+
         elif isinstance(sigma, np.ndarray) and len(sigma.shape) == 2:
             if sigma.shape != (dim, dim):
                 raise ValueError(
                     f"The stochastic noise parameter for {type(self).__name__} "
                     f"was the incorrect size: `sigma.shape = {sigma.shape}`. "
                     f"Pass a float or `sigma` with shape ({dim},) or "
-                    "({dim}, {dim}).")
+                    "({dim}, {dim})."
+                )
             return sigma
-        
+
         if sigma is None:
             return np.zeros((dim, dim))
         else:
@@ -261,7 +261,6 @@ class DynamicModel(ABC):
                 f"The stochastic noise parameter for {type(self).__name__}"
                 " must be a float or a 1 or 2 dimensional numpy array."
             )
-    
 
     @abstractmethod
     @copy_doc(simulate)
@@ -270,24 +269,26 @@ class DynamicModel(ABC):
         t: np.ndarray,
         prior_states: np.ndarray,
         prior_t: Optional[np.ndarray] = None,
-        intervention: Optional[Callable[[np.ndarray, float], np.ndarray]]= None,
+        intervention: Optional[
+            Callable[[np.ndarray, float], np.ndarray]
+        ] = None,
         rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray:
         raise NotImplementedError
 
 
 class Intervention(ABC):
     """Abstract intervention class"""
-    
+
     @abstractmethod
     def __call__():
         raise NotImplementedError
-    
+
 
 class ExogIntervention(Intervention):
     """A class describing an exogeneous intervention on a system.
-    
+
     In an exogeneous intervention, some of the signals are treated as
     though they were under exogenous control.
 
@@ -296,9 +297,10 @@ class ExogIntervention(Intervention):
     the intervened signal from the non intervened signal. (i.e. replacing
     values with the exogenous values.)
     """
+
     def __init__(self, iv_idxs: List[int]):
         self.iv_idxs = iv_idxs
-    
+
     def split_exog(self, X: np.ndarray):
         """Splits exogeneous columns from endogenous.
 
@@ -310,16 +312,18 @@ class ExogIntervention(Intervention):
             raise ValueError(
                 f"Array must be two dimensional.\n\tX.shape = {X.shape}"
             )
-        
+
         _, n = X.shape
         X_idxs = np.arange(n + 1)
 
         if not set(self.iv_idxs).issubset(X_idxs):
-            raise ValueError((
-                "Some intervention indexes are too big for input array:"
-                f"\n\t Intervention indexes = {self.iv_idxs}"
-                f"\n\t Input array shape = {X.shape}"
-            ))
+            raise ValueError(
+                (
+                    "Some intervention indexes are too big for input array:"
+                    f"\n\t Intervention indexes = {self.iv_idxs}"
+                    f"\n\t Input array shape = {X.shape}"
+                )
+            )
 
         if self.iv_idxs:
             exog_X = X[..., self.iv_idxs]
@@ -331,25 +335,24 @@ class ExogIntervention(Intervention):
 
             if exog_X.shape[1] == 0:
                 exog_X = None
-                
+
             return endo_X, exog_X
-        
+
         else:
             return X, None
-    
 
     def combine_exog(self, endo_X: np.ndarray, exog_X: np.ndarray):
         """Recombines endogenous and endogenous signals.
-        
+
         Args:
-            endo_X (ndarray): A 2D array of endogenous signals with shape 
+            endo_X (ndarray): A 2D array of endogenous signals with shape
                 (m, n_endo). Rows are observations and columns are variables.
-            exog_X (ndarray): A 2D array of exogenous signals with shape 
+            exog_X (ndarray): A 2D array of exogenous signals with shape
                 (m, n_exog). Rows are observations and columns are variables.
         """
         if (endo_X is None) and (exog_X is None):
             raise ValueError("Both endo_X and exog_X are None.")
-    
+
         if exog_X is None:
             if self.iv_idxs:
                 raise ValueError(
@@ -357,13 +360,13 @@ class ExogIntervention(Intervention):
                     "exogenous states."
                 )
             return endo_X
-        
+
         elif not self.iv_idxs:
-                raise ValueError(
-                    "Exogenous states provided but intervention does not expect"
-                    " exogenous states"
-                )
-        
+            raise ValueError(
+                "Exogenous states provided but intervention does not expect"
+                " exogenous states"
+            )
+
         if endo_X is None:
             max_idx = max(self.iv_idxs)
             all_idx = np.arange(max_idx + 1)
@@ -374,7 +377,7 @@ class ExogIntervention(Intervention):
                     "endogenous states."
                 )
             return exog_X
-        
+
         m_endo, n_endo = endo_X.shape
         m_exog, n_exog = exog_X.shape
 
@@ -383,19 +386,19 @@ class ExogIntervention(Intervention):
                 "Endogenous and exogenous arrays must have the same number of "
                 f"rows. \nNum endog rows = {m_endo} Num exog rows = {m_endo}"
             )
-        
+
         if n_exog != len(self.iv_idxs):
             raise ValueError(
                 "Wrong number of exogenous signals passed to intervention. "
-                f"Expected {len(self.iv_idxs)} received {m_exog}.")
-        
+                f"Expected {len(self.iv_idxs)} received {m_exog}."
+            )
+
         n = n_endo + n_exog
         X = np.zeros((m_endo, n))
         X[:, self.iv_idxs] = exog_X
         endo_idxs = [i for i in range(n) if i not in self.iv_idxs]
         X[:, endo_idxs] = endo_X
         return X
-    
 
     def eval_at_times(self, t: np.ndarray):
         """Produces exogeneous signals only at the time values in t.
@@ -404,10 +407,10 @@ class ExogIntervention(Intervention):
             t (np.ndarray): A 1D array of time points
 
         Returns:
-            exog_X_do (np.ndarray): An (m, ) or (m, p) array where `m = len(t)` 
+            exog_X_do (np.ndarray): An (m, ) or (m, p) array where `m = len(t)`
                 and `p = len(self.intervened_idx)`. Contains the values of the
                 exogenous signal at the time points in `t`. The order of the
-                columns corresponds to the order of indexes in 
+                columns corresponds to the order of indexes in
                 `self.intervened_idx`.
         """
         if len(self.iv_idxs) == 0:
@@ -422,9 +425,7 @@ class ExogIntervention(Intervention):
         # the dimension of the system.
 
         # Apply intervention to all dummy states.
-        X_do = np.vstack([
-            self.__call__(dummy_x, ti) for ti in t
-        ])
+        X_do = np.vstack([self.__call__(dummy_x, ti) for ti in t])
 
         # Use split_exog to return only exogenous states.
         _, exog_X_do = self.split_exog(X_do)
@@ -438,7 +439,7 @@ class ExogIntervention(Intervention):
                 the current state of a dynamic model.
             t: (ndarray): In the context of this package, t represents
                 the current time in a dynamic model.
-        
+
         Returns:
             x_do (ndarray): In the context of this package, x_do represents
                 the state of the dynamic model after the intervention is applied.
@@ -452,14 +453,13 @@ class ForecastMethod(BaseEstimator):
     # Class attribute to determine if the method was fit to data.
     is_fit = False
 
-
     def simulate(
         self,
         t: np.ndarray,
         prior_states: np.ndarray,
         prior_t: Optional[np.ndarray] = None,
-        intervention:  Optional[ExogIntervention] = None,
-        rng: np.random.mtrand.RandomState = DEFAULT_RANGE
+        intervention: Optional[ExogIntervention] = None,
+        rng: np.random.mtrand.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
         """Simulates a the intervention response with a fitted method.
 
@@ -483,8 +483,9 @@ class ForecastMethod(BaseEstimator):
                 contained in `intervention.iv_idxs`.
         """
         if intervention is not None:
-            (prior_endog_states, 
-             prior_exog_states) = intervention.split_exog(prior_states)
+            (prior_endog_states, prior_exog_states) = intervention.split_exog(
+                prior_states
+            )
             prediction_exog = intervention.eval_at_times(t)
 
         else:
@@ -498,7 +499,7 @@ class ForecastMethod(BaseEstimator):
             prior_exog_states=prior_exog_states,
             prior_t=prior_t,
             prediction_exog=prediction_exog,
-            rng=rng
+            rng=rng,
         )
 
         simulated_states = endo_pred
@@ -506,10 +507,10 @@ class ForecastMethod(BaseEstimator):
         # Optionally intervention to combine exogeneous and endogenous.
         if intervention is not None:
             simulated_states = intervention.combine_exog(
-                endo_pred, prediction_exog)
-    
-        return simulated_states
+                endo_pred, prediction_exog
+            )
 
+        return simulated_states
 
     def fit(
         self,
@@ -518,7 +519,7 @@ class ForecastMethod(BaseEstimator):
         exog_states: np.ndarray = None,
     ):
         """Fits the method using the passed data.
-        
+
         Args:
             t: An (m,) array of time points.
             endog_states: An (m, n) array of endogenous signals. Rows are observations and columns are variables. Each
@@ -529,15 +530,16 @@ class ForecastMethod(BaseEstimator):
         """
         if len(t.shape) != 1:
             raise ValueError(
-                f"The `t` arg to {str(type(self).__name__)}.fit() is not 1D.")
-        
+                f"The `t` arg to {str(type(self).__name__)}.fit() is not 1D."
+            )
+
         if len(endog_states.shape) != 2:
             raise ValueError(
                 f"The `endog_states` arg to {str(type(self).__name__)}.fit() is"
                 " not 2D"
             )
-        
-        m, = t.shape
+
+        (m,) = t.shape
         m_endog, endog_dim = endog_states.shape
         exog_dim = None
 
@@ -548,17 +550,16 @@ class ForecastMethod(BaseEstimator):
                 f"\tt.shape = {t.shape}\n"
                 f"\tendog_states.shape = {endog_states.shape}"
             )
-        
+
         if exog_states is not None:
             if len(exog_states.shape) != 2:
                 raise ValueError(
                     f"The `exog_states` arg to {str(type(self).__name__)}.fit() is"
                     " not 2D"
                 )
-        
+
             m_exog, exog_dim = exog_states.shape
             if m != m_exog:
-
                 raise ValueError(
                     f"The arguments `t` and `exog_states` for "
                     f"{str(type(self).__name__)}.fit() have incompatible "
@@ -567,21 +568,25 @@ class ForecastMethod(BaseEstimator):
                     f"exog_states.shape = {exog_states.shape}"
                 )
 
-        
         # Make sure no Pandas DataFrames are passed in.
-        if any([
-            isinstance(x, pd.DataFrame) 
-            for x in [endog_states, t, exog_states]
-        ]):
-            raise ValueError("Interfere inference methods do not accept " "DataFrames. Use DataFrame.values and DataFrame.index")
-        
+        if any(
+            [
+                isinstance(x, pd.DataFrame)
+                for x in [endog_states, t, exog_states]
+            ]
+        ):
+            raise ValueError(
+                "Interfere inference methods do not accept "
+                "DataFrames. Use DataFrame.values and DataFrame.index"
+            )
+
         # Make sure time points are monotonic.
         if np.any(np.diff(t) <= 0):
             raise ValueError(
                 f"Time points passed to {str(type(self).__name__)}.fit must be "
                 "strictly increasing."
             )
-        
+
         self.timestep_of_fit = None
         self.endog_dim_of_fit = endog_dim
         self.exog_dim_of_fit = exog_dim
@@ -594,7 +599,6 @@ class ForecastMethod(BaseEstimator):
         self._fit(t, endog_states, exog_states)
         self.is_fit = True
         return self
-    
 
     def predict(
         self,
@@ -608,93 +612,102 @@ class ForecastMethod(BaseEstimator):
     ) -> np.ndarray:
         """Runs a simulation of the dynamics of a fitted forcasting method.
 
-       Note: Must call `self.fit(...)` before calling `self.predict`.
+        Note: Must call `self.fit(...)` before calling `self.predict`.
 
-        Args:
-            t (ndarray): An array of the time points with shape (m,) for the
-                method to simulate.
-            prior_endog_states (ndarray): Aa array of historic observations of
-                the n ENDOGENOUS signals with shape  (p, n). Rows represent 
-                observations and columns represent variables This is used as the
-                initial condition data or lagged initial conditions. It is NOT
-                used to fit the method. If `prior_t` is not provided and
-                `t` contains equally spaced points, the `prior_endog_states` are
-                assumed to  have occured at equally spaced points prior to `t`.
-                Additionally, the last row of `prior_endog_states` must
-                be an observation that  occured at the time `t[0]`. When
-                `prior_t` is provided it is assumed that the rows of
-                `prior_endog_states` were observed at the times contained in
-                `prior_t`.
-            prior_exog_states: An optional array of historic observations of the
-                k EXOGENOUS signals with shape (p, k). Rows contain observations
-                and columns contain variables. This is used for the
-                initial condition data and lag information. It is NOT used to
-                fit the method. If `prior_t` is not provided and
-                `t` contains equally spaced points, the `prior_exog_states` are
-                assumed to  have occured at equally spaced points prior to `t`.
-                Additionally, the last row of `prior_enxog_states` must
-                be an observation that  occured at the time `t[0]`. When `prior_t` is provided it is assumed
-                that the rows of `prior_endog_states` were observed at the times
-                contained in `prior_t`.
-            prior_t (ndarray): An optional array with shape (p,) of times
-                corresponding to the rows of `prior_endog_states` and `prior_exog_states`. If `prior_t` is not provided and `t`
-                contains equally spaced points, then `prior_t` is assumed
-                to contain occured at equally spaced points prior to `t`
-            prediction_exog: An optional (m, k) array of exogenous signals
-                corresponding to the times in `t`. Rows are observations and
-                columns are variables.
-            prediction_max: A threshold for predicted endogeneous values
-                to prevent overflow in predictions. All predictions larger in
-                magnitude will be set equal to `prediction_max`.
-            rng: An optional numpy random state for reproducibility. (Uses 
-                numpy's mtrand random number generator by default.)
+         Args:
+             t (ndarray): An array of the time points with shape (m,) for the
+                 method to simulate.
+             prior_endog_states (ndarray): Aa array of historic observations of
+                 the n ENDOGENOUS signals with shape  (p, n). Rows represent
+                 observations and columns represent variables This is used as the
+                 initial condition data or lagged initial conditions. It is NOT
+                 used to fit the method. If `prior_t` is not provided and
+                 `t` contains equally spaced points, the `prior_endog_states` are
+                 assumed to  have occured at equally spaced points prior to `t`.
+                 Additionally, the last row of `prior_endog_states` must
+                 be an observation that  occured at the time `t[0]`. When
+                 `prior_t` is provided it is assumed that the rows of
+                 `prior_endog_states` were observed at the times contained in
+                 `prior_t`.
+             prior_exog_states: An optional array of historic observations of the
+                 k EXOGENOUS signals with shape (p, k). Rows contain observations
+                 and columns contain variables. This is used for the
+                 initial condition data and lag information. It is NOT used to
+                 fit the method. If `prior_t` is not provided and
+                 `t` contains equally spaced points, the `prior_exog_states` are
+                 assumed to  have occured at equally spaced points prior to `t`.
+                 Additionally, the last row of `prior_enxog_states` must
+                 be an observation that  occured at the time `t[0]`. When `prior_t` is provided it is assumed
+                 that the rows of `prior_endog_states` were observed at the times
+                 contained in `prior_t`.
+             prior_t (ndarray): An optional array with shape (p,) of times
+                 corresponding to the rows of `prior_endog_states` and `prior_exog_states`. If `prior_t` is not provided and `t`
+                 contains equally spaced points, then `prior_t` is assumed
+                 to contain occured at equally spaced points prior to `t`
+             prediction_exog: An optional (m, k) array of exogenous signals
+                 corresponding to the times in `t`. Rows are observations and
+                 columns are variables.
+             prediction_max: A threshold for predicted endogeneous values
+                 to prevent overflow in predictions. All predictions larger in
+                 magnitude will be set equal to `prediction_max`.
+             rng: An optional numpy random state for reproducibility. (Uses
+                 numpy's mtrand random number generator by default.)
 
-        Returns:
-            X_sim: A (m, n) array of containing a multivariate time series. The
-            rows are observations correstponding to entries in `time_points` and
-            the columns correspod to the endogenous variables in the forecasting
-            method. 
+         Returns:
+             X_sim: A (m, n) array of containing a multivariate time series. The
+             rows are observations correstponding to entries in `time_points` and
+             the columns correspod to the endogenous variables in the forecasting
+             method.
         """
         if not self.is_fit:
             raise ValueError("Call self.fit(...) before self.predict(...).")
-        
+
         if len(t.shape) != 1:
             raise ValueError(
-                f"The `t` arg to {str(type(self).__name__)}.predict is not 1D.")
-                
-        if any([
-            isinstance(x, pd.DataFrame) 
-            for x in [t, prior_endog_states, prior_exog_states, prior_t, prediction_exog]
-        ]):
+                f"The `t` arg to {str(type(self).__name__)}.predict is not 1D."
+            )
+
+        if any(
+            [
+                isinstance(x, pd.DataFrame)
+                for x in [
+                    t,
+                    prior_endog_states,
+                    prior_exog_states,
+                    prior_t,
+                    prediction_exog,
+                ]
+            ]
+        ):
             raise ValueError(
                 "Interfere inference methods do not accept "
                 "DataFrames. Use DataFrame.values and DataFrame.index"
             )
-        
+
         # Make sure time points are monotonic.
         if np.any(np.diff(t) <= 0):
             raise ValueError(
                 f"Time points passed to the {str(type(self).__name__)}.predict "
                 "`t` argument must be strictly increasing."
             )
-        
+
         if np.any(prior_endog_states > prediction_max):
             raise ValueError(
                 f"Historic endogenous contains values "
                 "({np.max(prior_endog_states)}"
-                " that are larger than" 
+                " that are larger than"
                 f" `prediction_max = {prediction_max}`, the "
                 "prediction threshold."
                 "Increase `prediction_max` in order to simulate these values."
             )
-        
+
         # Reshape prior_endog_states if it was 1D.
         if len(prior_endog_states.shape) == 1:
             prior_endog_states = np.reshape(prior_endog_states, (1, -1))
 
         # Gather array shapes
         orig_num_prior_endog, k = prior_endog_states.shape
-        (m,) = t.shape 
+        (m,) = t.shape
 
         if len(t) < 2:
             raise ValueError(
@@ -704,55 +717,71 @@ class ForecastMethod(BaseEstimator):
                 "of `prior_endog_states`, the `t` argument must have at least "
                 "two time values."
             )
-        
+
         if self.exog_dim_of_fit is not None and prediction_exog is None:
             raise ValueError(
                 f"{type(self).__name__} was fit to exogenous data but no "
-                "exogenous signals were provided to predict().")
+                "exogenous signals were provided to predict()."
+            )
 
         # Check shape of exogenous signals.
         if prediction_exog is not None:
             m_exog, k_exog = prediction_exog.shape
             if m_exog != m:
-                raise ValueError(f"Number of exogenous observations ({m_exog})"
-                f" does not match the number of t ({m}).")
+                raise ValueError(
+                    f"Number of exogenous observations ({m_exog})"
+                    f" does not match the number of t ({m})."
+                )
 
         # Compare window size of forecaster with amount of historic data.
         window_size = self.get_window_size()
 
         if window_size > orig_num_prior_endog:
-            warn(str(type(self).__name__) + f" has window size {window_size} but only recieved {orig_num_prior_endog}"
-                 " endog observations. Augmenting historic edogenous "
-                 "observations with zeros."
+            warn(
+                str(type(self).__name__)
+                + f" has window size {window_size} but only recieved {orig_num_prior_endog}"
+                " endog observations. Augmenting historic edogenous "
+                "observations with zeros."
             )
 
-            prior_endog_states = np.vstack([
-                np.zeros((window_size - orig_num_prior_endog, k)),
-                prior_endog_states
-            ])
-            
+            prior_endog_states = np.vstack(
+                [
+                    np.zeros((window_size - orig_num_prior_endog, k)),
+                    prior_endog_states,
+                ]
+            )
+
         # Check shape of historic exogenous signals.
         if prior_exog_states is not None:
             p_hexog, k_hexog = prior_exog_states.shape
 
             if p_hexog != orig_num_prior_endog:
-                raise ValueError("Arguments `prior_endog_states` and "
-                "`prior_exog_states` must have the same number of rows.")
-            
+                raise ValueError(
+                    "Arguments `prior_endog_states` and "
+                    "`prior_exog_states` must have the same number of rows."
+                )
+
             if prediction_exog is not None:
                 if k_hexog != k_exog:
-                    raise ValueError("The `prior_exog_states` and `exog` arguments"
-                    " must have the same number of columns.")
-                
-            if window_size > p_hexog:
-                warn(str(type(self).__name__) + f" has window size {window_size} but only recieved"
-                     f" {p_hexog} exog observations. Augmenting historic "
-                     "exogenous observations with zeros.")
+                    raise ValueError(
+                        "The `prior_exog_states` and `exog` arguments"
+                        " must have the same number of columns."
+                    )
 
-                prior_exog_states = np.vstack([
-                    np.zeros((window_size - p_hexog, k_hexog)),
-                    prior_exog_states
-                ])
+            if window_size > p_hexog:
+                warn(
+                    str(type(self).__name__)
+                    + f" has window size {window_size} but only recieved"
+                    f" {p_hexog} exog observations. Augmenting historic "
+                    "exogenous observations with zeros."
+                )
+
+                prior_exog_states = np.vstack(
+                    [
+                        np.zeros((window_size - p_hexog, k_hexog)),
+                        prior_exog_states,
+                    ]
+                )
 
         # Create prior_t assuming equal time step size.
         num_prior_endog, _ = prior_endog_states.shape
@@ -762,10 +791,12 @@ class ForecastMethod(BaseEstimator):
 
             # Check for equally spaced forecast time points.
             if not np.all(np.isclose(np.diff(t), dt)):
-                raise ValueError("The `prior_t` argument not provided"
-                " AND `t` is not equally spaced. Cannot infer "
-                " `prior_t`. Either pass it explicitly or provide "
-                " equally spaced time `t`.")
+                raise ValueError(
+                    "The `prior_t` argument not provided"
+                    " AND `t` is not equally spaced. Cannot infer "
+                    " `prior_t`. Either pass it explicitly or provide "
+                    " equally spaced time `t`."
+                )
             prior_t = np.arange(-num_prior_endog + 1, 1) * dt + t[0]
 
         if not np.isclose(prior_t[-1], t[0]):
@@ -775,20 +806,21 @@ class ForecastMethod(BaseEstimator):
                 f"time t[0]={t[0]}."
             )
 
-        num_prior_times, = prior_t.shape
+        (num_prior_times,) = prior_t.shape
 
         # If the user provided prior_t and it is greater or equal to
         # num_prior_endog, then we trim it to size.
         if num_prior_times > num_prior_endog:
-            warn(f"{str(type(self).__name__)}.predict was passed too many "
-                 f"({num_prior_times}) prior time points. Using only the last "
-                 f"{num_prior_endog} time points.")
+            warn(
+                f"{str(type(self).__name__)}.predict was passed too many "
+                f"({num_prior_times}) prior time points. Using only the last "
+                f"{num_prior_endog} time points."
+            )
             prior_t = prior_t[-num_prior_endog:]
 
         # If the user did not pass enough prior_t, check for equally spaced time
         # points and infer.
         if num_prior_times < num_prior_endog:
-
             # Check if equally spaced.
             warn(
                 "Inferring additional `prior_t` values. Assuming `prior_t` has"
@@ -796,16 +828,15 @@ class ForecastMethod(BaseEstimator):
             )
             dt = t[1] - t[0]
             if not np.all(np.isclose(np.diff(prior_t), dt)):
-
                 # When prior_endog_states were not augmented with zeros raise a
-                # normal value error. 
+                # normal value error.
                 if num_prior_endog == orig_num_prior_endog:
                     raise ValueError(
                         f"{str(type(self).__name__)}.predict was passed {orig_num_prior_endog} "
                         "prior_endog_states but there are only "
                         f"{num_prior_times} entries in `prior_t`."
                     )
-                
+
                 # When prior_endog_states were augmented with zeros, give
                 # instructions on how to augment.
                 if num_prior_endog > orig_num_prior_endog:
@@ -817,15 +848,17 @@ class ForecastMethod(BaseEstimator):
                         f"({num_prior_endog}) previous time values or use "
                         "equally spaced `prior_t`."
                     )
-            extra_prior_t = np.arange(
-                num_prior_times - num_prior_endog, 0) * dt + prior_t[0]
+            extra_prior_t = (
+                np.arange(num_prior_times - num_prior_endog, 0) * dt
+                + prior_t[0]
+            )
             prior_t = np.hstack([extra_prior_t, prior_t])
 
         if np.any(np.diff(prior_t) <= 0):
             raise ValueError(
                 f"Prior time points passed to {str(type(self).__name__)}."
                 "predict must be strictly increasing."
-            )        
+            )
 
         endog_pred = self._predict(
             t=t,
@@ -833,19 +866,18 @@ class ForecastMethod(BaseEstimator):
             prior_exog_states=prior_exog_states,
             prior_t=prior_t,
             prediction_exog=prediction_exog,
-            rng=rng
+            rng=rng,
         )
 
         # Clip predictions at the max prediction.
         endog_pred[np.abs(endog_pred) > prediction_max] = prediction_max
 
         return endog_pred
-    
 
     def get_window_size(self) -> int:
         """Returns number of previous observations model requires in order to
         make a prediction.
-        
+
         For example, an autoregressive model with four lags needs the four
         previous timesteps in order to make a prediction, but an ODE only needs
         the current observed state.
@@ -858,7 +890,7 @@ class ForecastMethod(BaseEstimator):
 
         Because at least two are needed, the default behavior is to require two
         previous observations.
-        
+
         If your model needs more previous observations, overwrite this function.
         The optimizer calls this function after initialization, so the number of
         previous observations needed can depend on interal attributes:
@@ -868,7 +900,6 @@ class ForecastMethod(BaseEstimator):
         """
         return 2
 
-
     @abstractmethod
     def _fit(
         self,
@@ -877,18 +908,17 @@ class ForecastMethod(BaseEstimator):
         exog_states: np.ndarray = None,
     ):
         """Fits the method using the passed data.
-        
+
         Args:
             t (ndarray): An array of time points with shape (m,).
             endog_states (ndarray): An array of endogenous signals with shape
                 (m, n). Rows are  observations and columns are variables. Each
                 row corresponds to the times in `t`.
-            exog_states (ndarray): An array of exogenous signals with shape  
+            exog_states (ndarray): An array of exogenous signals with shape
                 (m, k). Rows are observations and columns are variables. Each
                 row corresponds to the times in `t`.
         """
         raise NotImplementedError()
-    
 
     @abstractmethod
     def _predict(
@@ -902,77 +932,78 @@ class ForecastMethod(BaseEstimator):
     ) -> np.ndarray:
         """Runs a simulation of the dynamics of a fitted forcasting method.
 
-       Note: Must call `self.fit(...)` before calling `self.predict`.
+        Note: Must call `self.fit(...)` before calling `self.predict`.
 
-        Args:
-            t (ndarray): An array of the time points with shape (m,) for the
-                method to simulate.
-            prior_endog_states (ndarray): Aa array of historic observations of
-                the n endogeneous signals with shape (p, n). Rows represent 
-                observations and columns represent variables This is used as the
-                initial condition data or time lag information. It is not
-                used to fit the method. IMPORTANT: It is assumed that the last
-                row in this array was observed at time `t[0]`.
-            prior_exog_states: An optional array of historic observations of the
-                k exogenous signals with shape (p, k). Rows contain observations
-                and columns contain variables. This is used for the
-                initial condition data and lag information. It is NOT used to
-                fit the method. IMPORTANT: It is assumed that the last
-                row in this array was observed at time `t[0]`.
-            prior_t (ndarray): An optional array with shape (p,) of times
-                corresponding to the rows of `prior_endog_states` and `prior_exog_states`. If `prior_t` is not provided and `t`
-                contains equally spaced points, then `prior_t` is assumed
-                to contain occured at equally spaced points prior to `t`
-            prediction_exog: An optional (m, k) array of exogenous signals
-                corresponding to the times in `t`. Rows are observations and
-                columns are variables.
-            prediction_max: A threshold for predicted endogeneous values
-                to prevent overflow in predictions. All predictions larger in
-                magnitude will be set equal to `prediction_max`.
-            rng: An optional numpy random state for reproducibility. (Uses 
-                numpy's mtrand random number generator by default.)
+         Args:
+             t (ndarray): An array of the time points with shape (m,) for the
+                 method to simulate.
+             prior_endog_states (ndarray): Aa array of historic observations of
+                 the n endogeneous signals with shape (p, n). Rows represent
+                 observations and columns represent variables This is used as the
+                 initial condition data or time lag information. It is not
+                 used to fit the method. IMPORTANT: It is assumed that the last
+                 row in this array was observed at time `t[0]`.
+             prior_exog_states: An optional array of historic observations of the
+                 k exogenous signals with shape (p, k). Rows contain observations
+                 and columns contain variables. This is used for the
+                 initial condition data and lag information. It is NOT used to
+                 fit the method. IMPORTANT: It is assumed that the last
+                 row in this array was observed at time `t[0]`.
+             prior_t (ndarray): An optional array with shape (p,) of times
+                 corresponding to the rows of `prior_endog_states` and `prior_exog_states`. If `prior_t` is not provided and `t`
+                 contains equally spaced points, then `prior_t` is assumed
+                 to contain occured at equally spaced points prior to `t`
+             prediction_exog: An optional (m, k) array of exogenous signals
+                 corresponding to the times in `t`. Rows are observations and
+                 columns are variables.
+             prediction_max: A threshold for predicted endogeneous values
+                 to prevent overflow in predictions. All predictions larger in
+                 magnitude will be set equal to `prediction_max`.
+             rng: An optional numpy random state for reproducibility. (Uses
+                 numpy's mtrand random number generator by default.)
 
-        Returns:
-            X_sim: A (m, n) array of containing a multivariate time series. The
-            rows are observations correstponding to entries in `time_points` and
-            the columns correspod to the endogenous variables in the forecasting
-            method.
-            
-        Notes:
-            When `prior_t` is provided it is assumed that the rows of
-            `prior_endog_states` and `prior_exog_states` were observed at the
-            times contained in `prior_t`.If `prior_t` is not provided and `t`
-            contains equally spaced points, then `prior_endog_states` and
-            `prior_exog_states` are assumed to have occured at equally spaced
-            times before `t[0]`. Additionally, the last rows of
-            `prior_endog_states` and `prior_exog_states` must be an observation
-            that  occured at the time `t[0]`.
+         Returns:
+             X_sim: A (m, n) array of containing a multivariate time series. The
+             rows are observations correstponding to entries in `time_points` and
+             the columns correspod to the endogenous variables in the forecasting
+             method.
+
+         Notes:
+             When `prior_t` is provided it is assumed that the rows of
+             `prior_endog_states` and `prior_exog_states` were observed at the
+             times contained in `prior_t`.If `prior_t` is not provided and `t`
+             contains equally spaced points, then `prior_endog_states` and
+             `prior_exog_states` are assumed to have occured at equally spaced
+             times before `t[0]`. Additionally, the last rows of
+             `prior_endog_states` and `prior_exog_states` must be an observation
+             that  occured at the time `t[0]`.
         """
         raise NotImplementedError()
-    
+
     @staticmethod
     @abstractmethod
     def get_test_params() -> Dict[str, Any]:
-        """Returns initialization parameters for testing. 
-        
+        """Returns initialization parameters for testing.
+
         Should be condusive to fast test cases."""
         raise NotImplementedError
-    
-    
+
     @staticmethod
     @abstractmethod
-    def _get_optuna_params(trial, max_lags=None, max_horizon=None, **kwargs) -> Dict[str, Any]:
+    def _get_optuna_params(
+        trial, max_lags=None, max_horizon=None, **kwargs
+    ) -> Dict[str, Any]:
         """Define hyperparameter search space for this forecasting method using Optuna.
-        
+
         This method is used by the hyperparameter optimization framework to determine
-        which parameters to tune for the forecasting method. It should return a dictionary 
+        which parameters to tune for the forecasting method. It should return a dictionary
         mapping parameter names to Optuna parameter suggestions.
-        
+
         Args:
             trial: An Optuna trial object that provides methods for hyperparameter suggestions
                 such as suggest_float, suggest_int, suggest_categorical.
-            max_lags: Maximum number of lag periods (previous observations) that can be 
-                    considered. This is typically determined by the cross-validation 
+            max_lags: Maximum number of lag periods (previous observations) that can be
+                    considered. This is typically determined by the cross-validation
                     framework based on the available data. For autoregressive methods,
                     this constrains how many past observations can be used.
             max_horizon: Maximum prediction horizon (future steps) that can be forecasted.
@@ -981,12 +1012,12 @@ class ForecastMethod(BaseEstimator):
             **kwargs: Additional keyword arguments that may be passed by the hyperparameter
                     optimization framework. Subclasses can accept additional parameters
                     specific to their implementation needs.
-        
+
         Returns:
             Dict[str, Any]: A dictionary mapping parameter names to their values,
                             which will be passed to the forecasting method's __init__
                             method during hyperparameter optimization.
-        
+
         Example:
             ```python
             @staticmethod

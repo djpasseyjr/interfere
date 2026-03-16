@@ -9,10 +9,11 @@ authors = [
   {name = "DJ Passey", email = "djpasseyjr@gmail.com"}
 ]
 dependencies = [
+    "setuptools",
     "networkx",
     "numpy<2",
     "optuna",
-    "pysindy",
+    "pysindy <2.1.0",
     "scikit-learn",
     "sdeint",
     "statsmodels",
@@ -34,15 +35,25 @@ dev = [
     "pytest",
     "sktime",
     "tigramite",
+    "surd @ git+https://github.com/djpasseyjr/surd.git",
+    "pyclustering @ git+https://github.com/djpasseyjr/pyclustering",
+    "pydantic",
     "pytest-cov",
     "pytest",
     "pylint",
     "black",
-    "pydantic"
+    "mkdocs",
 ]
 
 [tool.setuptools.packages]
 find = {}
 
+[tool.black]
+line-length = 79
+
 [project.urls]
 Repository = "https://github.com/djpasseyjr/interfere"
+
+[build-system]
+requires = ["setuptools>=62", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"

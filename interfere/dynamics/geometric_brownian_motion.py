@@ -6,12 +6,11 @@ from .base import StochasticDifferentialEquation
 
 
 class GeometricBrownianMotion(StochasticDifferentialEquation):
-
     def __init__(
         self,
         mu: np.ndarray,
         sigma: np.ndarray,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes decoupled n-dimensional geometric brownian motion.
 
@@ -28,7 +27,7 @@ class GeometricBrownianMotion(StochasticDifferentialEquation):
                 model. For example, ifd4 the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time.  
+                will be added to x1 and x2 respectively at each point in time.
         """
         # Set dimension
         super().__init__(len(mu), measurement_noise_std, sigma)
@@ -41,12 +40,12 @@ class GeometricBrownianMotion(StochasticDifferentialEquation):
                 f"\n\tmu = {mu.shape}"
                 f"\n\tsigma = {sigma.shape}"
             )
-        
+
         # Assign class attributes
         self.mu = mu
 
     def drift(self, x: np.ndarray, t: float):
         return self.mu * x
-    
+
     def noise(self, x: np.ndarray, t: float):
         return self.sigma * x

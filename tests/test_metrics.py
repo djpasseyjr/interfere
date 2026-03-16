@@ -5,7 +5,7 @@ from interfere.metrics import (
     RootMeanStandardizedSquaredError,
     TTestDirectionalChangeAccuracy,
     ValidPredictionTime,
-    RootMeanSquaredScaledErrorOverAvgMethod
+    RootMeanSquaredScaledErrorOverAvgMethod,
 )
 import numpy as np
 
@@ -37,7 +37,6 @@ def test_directional():
 
 
 def test_ttest_directional():
-
     ttest_dir_acc = TTestDirectionalChangeAccuracy()
     rng = np.random.default_rng(11)
     dim = 5
@@ -108,9 +107,14 @@ def test_rmsse_over_avg():
 
     rmsse_over_avg = RootMeanSquaredScaledErrorOverAvgMethod()
     x_false_err = rmsse_over_avg(X_train, X_true, X_false, intervention_idxs)
-    x_true_err = rmsse_over_avg(X_train, X_true, X_pred_good, intervention_idxs)
+    x_true_err = rmsse_over_avg(
+        X_train, X_true, X_pred_good, intervention_idxs
+    )
     assert x_false_err > x_true_err
 
-    X_mean_pred = np.vstack([
-        np.mean(X_train, axis=0) for i in range(X_true.shape[0])])
-    assert 1.0 == rmsse_over_avg(X_train, X_true, X_mean_pred, intervention_idxs)
+    X_mean_pred = np.vstack(
+        [np.mean(X_train, axis=0) for i in range(X_true.shape[0])]
+    )
+    assert 1.0 == rmsse_over_avg(
+        X_train, X_true, X_mean_pred, intervention_idxs
+    )

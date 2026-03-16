@@ -6,12 +6,11 @@ from .base import StochasticDifferentialEquation
 
 
 class ArithmeticBrownianMotion(StochasticDifferentialEquation):
-
     def __init__(
         self,
         mu: np.ndarray,
         sigma: np.ndarray,
-        measurement_noise_std: Optional[np.ndarray] = None
+        measurement_noise_std: Optional[np.ndarray] = None,
     ):
         """Initializes n-dimensional arithmetic brownian motion process.
 
@@ -26,7 +25,7 @@ class ArithmeticBrownianMotion(StochasticDifferentialEquation):
                 model. For example, ifd4 the dynamic model had two variables x1
                 and x2 and `measurement_noise_std = [1, 10]`, then
                 independent gaussian noise with standard deviation 1 and 10
-                will be added to x1 and x2 respectively at each point in time.  
+                will be added to x1 and x2 respectively at each point in time.
         """
         # Set dimension and stochasticity
         super().__init__(len(mu), measurement_noise_std, sigma)
@@ -45,6 +44,6 @@ class ArithmeticBrownianMotion(StochasticDifferentialEquation):
 
     def drift(self, x: np.ndarray, t: float):
         return self.mu
-    
+
     def noise(self, x: np.ndarray, t: float):
         return np.diag(self.sigma)

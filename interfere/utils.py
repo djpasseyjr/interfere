@@ -4,13 +4,13 @@ from typing import Any, Callable, TypeVar
 from typing_extensions import ParamSpec, TypeAlias
 
 
-T = TypeVar('T')
-P = ParamSpec('P')
+T = TypeVar("T")
+P = ParamSpec("P")
 WrappedFuncDeco: TypeAlias = Callable[[Callable[P, T]], Callable[P, T]]
 
 
 def copy_doc(copy_func: Callable[..., Any]) -> WrappedFuncDeco[P, T]:
-    """Copies the doc string of the given function to another. 
+    """Copies the doc string of the given function to another.
     This function is intended to be used as a decorator.
 
     .. code-block:: python3

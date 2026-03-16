@@ -9,10 +9,9 @@ from optuna.trial import Trial
 
 class CrossValObjective:
     """Cross validation objective for forecasting/intervention prediction.
-    
+
     Compatible with optuna.
     """
-
 
     def __init__(
         self,
@@ -26,11 +25,10 @@ class CrossValObjective:
         num_val_prior_states: int = 10,
         metric: Union[
             interfere.metrics.CounterfactualForecastingMetric,
-            Callable[[np.ndarray, np.ndarray], float]
-         ] = rmse,
+            Callable[[np.ndarray, np.ndarray], float],
+        ] = rmse,
         metric_direction: str = "minimize",
-        hyperparam_func: Optional[
-            Callable[[Trial], Dict[str, Any]]] = None,
+        hyperparam_func: Optional[Callable[[Trial], Dict[str, Any]]] = None,
         store_preds: bool = True,
         raise_errors: bool = False,
         repl_nan_val: float = 1e10,
@@ -38,7 +36,7 @@ class CrossValObjective:
         """Initializes a cross validation scheme for forecasting or intervention prediction.
 
         This creates an objective function that is compatible with optuna:
-        
+
         ```
         cvo = CrossValObjective(*args, **kwargs)
         study = optuna.create_study(direction="minimize")
@@ -140,34 +138,33 @@ class CrossValObjective:
         self.metric_direction = metric_direction
         # Assign default hyper param func.
         if hyperparam_func is None:
-            hyperparam_func = method_type._get_optuna_params 
+            hyperparam_func = method_type._get_optuna_params
         self.hyperparam_func = hyperparam_func
         self.store_preds = store_preds
         self.raise_errors = raise_errors
         self.repl_nan_val = repl_nan_val
 
         # Assign default intervention.
-        if exog_idxs == None:
+        if exog_idxs is None:
             exog_idxs = []
 
         # Create a dummy intervention to handle exogenous.
         self.intervention = interfere.PerfectIntervention(
-                exog_idxs, [np.nan for _ in exog_idxs])
+            exog_idxs, [np.nan for _ in exog_idxs]
+        )
 
         self.trial_results = {}
 
         if self.num_folds <= 1:
-            raise ValueError(
-                "The number of folds must be greater than 1.\n\n"
-            )
+            raise ValueError("The number of folds must be greater than 1.\n\n")
 
         self.num_obs = data.shape[0]
         self.num_val_chunks = num_folds - 1
         self.num_train_obs = int(train_window_percent * self.num_obs)
 
-
         self.num_val_chunk_obs = int(
-            (self.num_obs - self.num_train_obs) / self.num_val_chunks)
+            (self.num_obs - self.num_train_obs) / self.num_val_chunks
+        )
 
         cv_descr = (
             f"Control V.S. Response Cross Validation Objective"
@@ -204,7 +201,8 @@ class CrossValObjective:
             )
 
         if (val_scheme == "forecast") and (
-            self.num_train_obs < self.num_val_prior_states):
+            self.num_train_obs < self.num_val_prior_states
+        ):
             raise ValueError(
                 "The number of training observations must be greater than "
                 "or equal the number of validation prior states when "
@@ -212,7 +210,8 @@ class CrossValObjective:
             )
 
         if (val_scheme in ["last", "all"]) and (
-            self.num_val_chunk_obs - self.num_val_prior_states < 2):
+            self.num_val_chunk_obs - self.num_val_prior_states < 2
+        ):
             raise ValueError(
                 "The number of observations in each validation chunk must be "
                 "greater than the number of validation prior states when "
@@ -223,7 +222,7 @@ class CrossValObjective:
         self.train_window_idxs = self._make_train_window_idxs(
             num_train_obs=self.num_train_obs,
             num_val_chunk_obs=self.num_val_chunk_obs,
-            num_val_chunks=self.num_val_chunks
+            num_val_chunks=self.num_val_chunks,
         )
 
         # Make validation chunk indexes.
@@ -231,9 +230,8 @@ class CrossValObjective:
             num_train_obs=self.num_train_obs,
             num_val_chunk_obs=self.num_val_chunk_obs,
             num_val_chunks=self.num_val_chunks,
-            val_scheme=self.val_scheme
+            val_scheme=self.val_scheme,
         )
-
 
     def __call__(self, trial: Trial) -> float:
         """Run control v.s. response cross validation.
@@ -249,11 +247,12 @@ class CrossValObjective:
         method = self.method_type(
             **self.hyperparam_func(
                 trial,
-                # Some methods throw errors when the dataset is too small to 
+                # Some methods throw errors when the dataset is too small to
                 # accomodate the input size/lags and the forecast horizon.
                 max_lags=self.num_val_prior_states,
-                max_horizon=self.num_train_obs - self.num_val_prior_states
-            ))
+                max_horizon=self.num_train_obs - self.num_val_prior_states,
+            )
+        )
 
         if method.get_window_size() > self.num_val_prior_states:
             raise ValueError(
@@ -278,10 +277,11 @@ class CrossValObjective:
             cv_results["data"] = self.data
             cv_results["times"] = self.times
             cv_results["intervention"] = self.intervention
-            cv_results["val_scheme"] =  self.val_scheme
+            cv_results["val_scheme"] = self.val_scheme
 
-        for train_idx, val_idxs in zip(self.train_window_idxs, self.val_chunk_idxs):
-
+        for train_idx, val_idxs in zip(
+            self.train_window_idxs, self.val_chunk_idxs
+        ):
             # Check if training fold corresponds to a validation index.
             if val_idxs != []:
                 # Prepare train data.
@@ -290,7 +290,8 @@ class CrossValObjective:
                 train_states = self.data[window_start:window_end, :]
 
                 train_endog, train_exog = self.intervention.split_exog(
-                    train_states)
+                    train_states
+                )
 
                 # Try except block for method fitting.
                 try:
@@ -300,11 +301,9 @@ class CrossValObjective:
 
                 except Exception as e:
                     if self.raise_errors:
-                            raise e
+                        raise e
                     is_fit = False
                     fit_error = str(e) + f"\n\n{traceback.format_exc()}"
-                    
-
 
             # Compute validation scores.
             for val_idx in val_idxs:
@@ -312,36 +311,43 @@ class CrossValObjective:
                     val_chunk_start, val_chunk_end = val_idx
 
                     # Collect validation prior states.
-                    val_prior_start, val_prior_end = self._make_val_prior_state_idxs(
-                        val_chunk_start, self.num_val_prior_states, self.val_scheme
+                    (
+                        val_prior_start,
+                        val_prior_end,
+                    ) = self._make_val_prior_state_idxs(
+                        val_chunk_start,
+                        self.num_val_prior_states,
+                        self.val_scheme,
                     )
                     val_prior_t = self.times[val_prior_start:val_prior_end]
                     val_prior_states = self.data[
-                        val_prior_start:val_prior_end, :]
-
+                        val_prior_start:val_prior_end, :
+                    ]
 
                     val_prior_en, val_prior_ex = self.intervention.split_exog(
-                        val_prior_states)
+                        val_prior_states
+                    )
 
                     # Collect validation states.
                     val_start, val_end = self._make_val_idxs(
                         val_chunk_start,
                         val_chunk_end,
                         self.num_val_prior_states,
-                        self.val_scheme
+                        self.val_scheme,
                     )
 
                     val_t = self.times[val_start:val_end]
                     val_states = self.data[val_start:val_end, :]
 
                     true_val_en, val_ex = self.intervention.split_exog(
-                        val_states)
+                        val_states
+                    )
 
                     try:
-
                         if not is_fit:
                             raise ValueError(
-                                f"Error in model fit: \n\n{fit_error}")
+                                f"Error in model fit: \n\n{fit_error}"
+                            )
 
                         # Make prediction.
                         pred_val_endog = method.predict(
@@ -349,33 +355,37 @@ class CrossValObjective:
                             prior_endog_states=val_prior_en,
                             prior_exog_states=val_prior_ex,
                             prior_t=val_prior_t,
-                            prediction_exog=val_ex
+                            prediction_exog=val_ex,
                         )
 
                         pred_val_states = self.intervention.combine_exog(
-                            pred_val_endog, val_ex)
+                            pred_val_endog, val_ex
+                        )
 
                         # Replace nans.
-                        pred_val_states[np.isnan(pred_val_states)] = self.repl_nan_val
+                        pred_val_states[
+                            np.isnan(pred_val_states)
+                        ] = self.repl_nan_val
 
                         # Compute score.
-                        if isinstance(self.metric, interfere.metrics.CounterfactualForecastingMetric):
+                        if isinstance(
+                            self.metric,
+                            interfere.metrics.CounterfactualForecastingMetric,
+                        ):
                             val_score = self.metric(
                                 train_states,
                                 val_states,
                                 pred_val_states,
-                                self.intervention.iv_idxs
+                                self.intervention.iv_idxs,
                             )
                         else:
                             # Remove exogenous variables from error/accuracy
                             # calculation.
                             val_endog, val_exog = self.intervention.split_exog(
-                                val_states)
-
-                            val_score = self.metric(
-                                val_endog,
-                                pred_val_endog
+                                val_states
                             )
+
+                            val_score = self.metric(val_endog, pred_val_endog)
 
                         # Store results.
                         cv_results["scores"].append(val_score)
@@ -386,9 +396,7 @@ class CrossValObjective:
                             cv_results["preds"].append(pred_val_states)
                             cv_results["targets"].append(val_states)
 
-
                     except Exception as e:
-
                         if self.raise_errors:
                             raise e
 
@@ -403,9 +411,10 @@ class CrossValObjective:
                             cv_results["preds"].append(None)
                             cv_results["targets"].append(val_states)
 
-
                     cv_results["train_idxs"].append(train_idx)
-                    cv_results["val_prior_idxs"].append((val_prior_start, val_prior_end))
+                    cv_results["val_prior_idxs"].append(
+                        (val_prior_start, val_prior_end)
+                    )
                     cv_results["val_idxs"].append((val_start, val_end))
 
         # Save results
@@ -415,10 +424,7 @@ class CrossValObjective:
         return np.mean(cv_results["scores"])
 
     def _make_train_window_idxs(
-        self,
-        num_train_obs: int,
-        num_val_chunk_obs: int,
-        num_val_chunks: int
+        self, num_train_obs: int, num_val_chunk_obs: int, num_val_chunks: int
     ) -> List[Tuple[int, int]]:
         """Creates a list of indexes for each successive training window.
 
@@ -436,7 +442,6 @@ class CrossValObjective:
         ]
 
         return train_window_idxs
-
 
     def _make_val_chunk_idxs(
         self,
@@ -512,10 +517,12 @@ class CrossValObjective:
         """
         if val_scheme == "forecast":
             val_chunk_idxs = [
-                [(
-                    num_train_obs + i * num_val_chunk_obs,
-                    num_train_obs + (i + 1) * num_val_chunk_obs
-                )]
+                [
+                    (
+                        num_train_obs + i * num_val_chunk_obs,
+                        num_train_obs + (i + 1) * num_val_chunk_obs,
+                    )
+                ]
                 for i in range(num_val_chunks)
             ]
 
@@ -531,10 +538,13 @@ class CrossValObjective:
                 )
 
             val_chunk_idxs = [
-                [(
-                    num_train_obs + (num_val_chunks - 1) * num_val_chunk_obs,
-                    num_train_obs + num_val_chunks * num_val_chunk_obs
-                )]
+                [
+                    (
+                        num_train_obs
+                        + (num_val_chunks - 1) * num_val_chunk_obs,
+                        num_train_obs + num_val_chunks * num_val_chunk_obs,
+                    )
+                ]
                 for i in range(num_val_chunks - 1)
             ]
             # Add empty lists for times when there is no validation set that
@@ -547,9 +557,13 @@ class CrossValObjective:
                     # Collect all chunks that occur before training set.
                     (j * num_val_chunk_obs, (j + 1) * num_val_chunk_obs)
                     for j in range(train_set_idx)
-                ] + [
+                ]
+                + [
                     # Collect all chunks that occur after training set.
-                    (num_train_obs + i * num_val_chunk_obs, num_train_obs + (i + 1) * num_val_chunk_obs)
+                    (
+                        num_train_obs + i * num_val_chunk_obs,
+                        num_train_obs + (i + 1) * num_val_chunk_obs,
+                    )
                     for i in range(train_set_idx, num_val_chunks)
                 ]
                 for train_set_idx in range(num_val_chunks + 1)
@@ -559,7 +573,6 @@ class CrossValObjective:
             raise ValueError(f"Unknown validation scheme: {val_scheme}")
 
         return val_chunk_idxs
-
 
     def _make_val_prior_state_idxs(
         self,
@@ -600,7 +613,6 @@ class CrossValObjective:
         # Add one so that the last prior state is the same as the first
         # prediction state as required by interfere.
         return val_prior_state_start + 1, val_prior_state_end + 1
-
 
     def _make_val_idxs(
         self,

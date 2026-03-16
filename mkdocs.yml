@@ -5,5 +5,7 @@ nav:
   - Home: index.md
   - Simulation: simulation.md
   - Intervention: intervention.md
-  - Optimization: optimization.md
   - Prediction: prediction.md
+  - Optimization: optimization.md
+  - Custom forecast methods: custom_forecast_methods.md
+  - Benchmark: benchmark.md

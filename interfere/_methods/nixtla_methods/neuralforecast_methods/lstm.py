@@ -1,5 +1,6 @@
 """Collection of predictive methods from neuralforecast."""
-from typing import Any, Dict, List, Optional
+
+from typing import Any, Dict, Optional
 
 import neuralforecast
 from neuralforecast.losses.pytorch import MAE
@@ -12,7 +13,6 @@ from ....utils import copy_doc
 
 
 class LSTM(NixtlaAdapter):
-
 
     @copy_doc(neuralforecast.models.LSTM)
     def __init__(
@@ -65,33 +65,30 @@ class LSTM(NixtlaAdapter):
         self,
         t: np.ndarray,
         endog_states: np.ndarray,
-        exog_states: Optional[np.ndarray] = None
+        exog_states: Optional[np.ndarray] = None,
     ):
-        
+
         if exog_states is not None:
             _, k = exog_states.shape
         else:
             k = 0
-    
+
         # Assign names to internal exogeneous variables.
         self.set_params(futr_exog_list=default_exog_names(k))
 
         super()._fit(t, endog_states, exog_states)
 
-
     def get_window_size(self):
         return self.method_params["context_size"]
-    
 
     def get_horizon(self):
         return self.model.h
 
-
     def get_test_params() -> Dict[str, Any]:
         return dict(
-            h=1, 
+            h=1,
             loss=MAE(),
-            scaler_type='robust',
+            scaler_type="robust",
             encoder_n_layers=2,
             encoder_hidden_size=64,
             context_size=4,
@@ -99,30 +96,24 @@ class LSTM(NixtlaAdapter):
             decoder_layers=2,
             max_steps=50,
         )
-    
 
     @staticmethod
     @copy_doc(ForecastMethod._get_optuna_params)
     def _get_optuna_params(trial, max_lags=50, **kwargs):
         return {
             "h": trial.suggest_int("h", 1, 16),
-
             "encoder_hidden_size": trial.suggest_categorical(
-                "encoder_hidden_size", [50, 100, 200, 300]),
-
+                "encoder_hidden_size", [50, 100, 200, 300]
+            ),
             "encoder_n_layers": trial.suggest_int("encoder_n_layers", 1, 4),
-
             "context_size": trial.suggest_int("context_size", 1, max_lags),
-
             "decoder_hidden_size": trial.suggest_categorical(
-                "decoder_hidden_size", [64, 128, 256, 512]),
-
+                "decoder_hidden_size", [64, 128, 256, 512]
+            ),
             "learning_rate": trial.suggest_float(
-                "learning_rate", 1e-4, 1e-1, log=True),
-
+                "learning_rate", 1e-4, 1e-1, log=True
+            ),
             "max_steps": trial.suggest_categorical("max_steps", [500, 1000]),
-
             "batch_size": trial.suggest_categorical("batch_size", [16, 32]),
-
             "random_seed": trial.suggest_int("random_seed", 1, 20),
         }

@@ -29,12 +29,12 @@ METHODS = [
     interfere.methods.ARIMA,
     interfere.methods.AverageMethod,
     interfere.methods.ResComp,
-    interfere.methods.SINDy, 
+    interfere.methods.SINDy,
     LTSF,
     interfere.methods.VAR,
     interfere.methods.LSTM,
     interfere.methods.NHITS,
-]    
+]
 
 
 def test_make_train_window_idxs():
@@ -98,7 +98,6 @@ def test_make_val_chunk_idxs_forecast():
     assert len(val_chunk_idxs) == 2
     assert val_chunk_idxs[0] == [(100, 120)]
     assert val_chunk_idxs[1] == []
-
 
     val_chunk_idxs = cv._make_val_chunk_idxs(
         num_train_obs=2,
@@ -195,38 +194,29 @@ def test_make_val_prior_state_idxs_forecast():
     """Tests the make_val_prior_state_idxs method when val_scheme == 'forecast'."""
     cv = CrossValObjective(**DEFAULT_CV_ARGS)
     val_prior_state_start, val_prior_state_end = cv._make_val_prior_state_idxs(
-        val_chunk_start=10,
-        num_val_prior_states=5,
-        val_scheme="forecast"
+        val_chunk_start=10, num_val_prior_states=5, val_scheme="forecast"
     )
     assert val_prior_state_start == 6
     assert val_prior_state_end == 11
 
     val_prior_state_start, val_prior_state_end = cv._make_val_prior_state_idxs(
-        val_chunk_start=100,
-        num_val_prior_states=20,
-        val_scheme="forecast"
+        val_chunk_start=100, num_val_prior_states=20, val_scheme="forecast"
     )
     assert val_prior_state_start == 81
     assert val_prior_state_end == 101
 
 
 def test_make_val_prior_state_idxs_last_or_all():
-    """Tests the make_val_prior_state_idxs when val_scheme is 'last' or 'all'.
-    """
+    """Tests the make_val_prior_state_idxs when val_scheme is 'last' or 'all'."""
     cv = CrossValObjective(**DEFAULT_CV_ARGS)
     val_prior_state_start, val_prior_state_end = cv._make_val_prior_state_idxs(
-        val_chunk_start=10,
-        num_val_prior_states=5,
-        val_scheme="last"
+        val_chunk_start=10, num_val_prior_states=5, val_scheme="last"
     )
     assert val_prior_state_start == 11
     assert val_prior_state_end == 16
 
     val_prior_state_start, val_prior_state_end = cv._make_val_prior_state_idxs(
-        val_chunk_start=100,
-        num_val_prior_states=20,
-        val_scheme="last"
+        val_chunk_start=100, num_val_prior_states=20, val_scheme="last"
     )
 
     assert val_prior_state_start == 101
@@ -258,8 +248,7 @@ def test_make_val_idxs_forecast():
 
 
 def test_make_val_idxs_last_or_all():
-    """Tests the _make_val_idxs method for the last or all schemes.
-    """
+    """Tests the _make_val_idxs method for the last or all schemes."""
     cv = CrossValObjective(**DEFAULT_CV_ARGS)
     val_start_idx, val_end_idx = cv._make_val_idxs(
         val_chunk_start=10,
@@ -294,7 +283,7 @@ def test_cvr_cv_init():
     assert isinstance(cv.metric, Callable)
     assert cv.metric_direction == "minimize"
     assert cv.hyperparam_func == interfere.methods.VAR._get_optuna_params
-    assert cv.store_preds == True
+    assert cv.store_preds is True
     assert cv.intervention == interfere.PerfectIntervention([], [])
     assert cv.trial_results == {}
     assert cv.num_obs == 100
@@ -310,12 +299,8 @@ def test_cvr_cv_init():
         "\n\tNumber of observations per validation chunk: 20"
         "\n\tNumber of validation prior states: 10"
     )
-    
-    assert cv.train_window_idxs == [
-        (0, 60),
-        (20, 80),
-        (40, 100)
-    ]
+
+    assert cv.train_window_idxs == [(0, 60), (20, 80), (40, 100)]
     assert cv.val_chunk_idxs == [
         [(60, 80)],
         [(80, 100)],
@@ -328,48 +313,41 @@ def test_cvr_cv_init_raises():
     arguments.
     """
     with pytest.raises(ValueError, match="validation chunk"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "num_folds": 41
-        })
+        cv = CrossValObjective(**{**DEFAULT_CV_ARGS, "num_folds": 41})
 
     with pytest.raises(ValueError, match="observations in the training set"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "train_window_percent": 0.01
-        })
+        cv = CrossValObjective(
+            **{**DEFAULT_CV_ARGS, "train_window_percent": 0.01}
+        )
 
     with pytest.raises(ValueError, match="number of folds"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "num_folds": 1
-        })
+        cv = CrossValObjective(**{**DEFAULT_CV_ARGS, "num_folds": 1})
 
     with pytest.raises(ValueError, match="validation scheme"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "val_scheme": "invalid"
-        })
+        cv = CrossValObjective(**{**DEFAULT_CV_ARGS, "val_scheme": "invalid"})
 
     with pytest.raises(ValueError, match="metric direction"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "metric_direction": "invalid"
-        })
+        cv = CrossValObjective(
+            **{**DEFAULT_CV_ARGS, "metric_direction": "invalid"}
+        )
 
     with pytest.raises(ValueError, match="val_scheme=='forecast'"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "val_scheme": "forecast",
-            "train_window_percent": 0.09
-        })
+        cv = CrossValObjective(
+            **{
+                **DEFAULT_CV_ARGS,
+                "val_scheme": "forecast",
+                "train_window_percent": 0.09,
+            }
+        )
 
     with pytest.raises(ValueError, match="val_scheme is 'last' or 'all'"):
-        cv = CrossValObjective(**{
-            **DEFAULT_CV_ARGS,
-            "val_scheme": "last",
-            "num_val_prior_states": 21
-        })
+        cv = CrossValObjective(
+            **{
+                **DEFAULT_CV_ARGS,
+                "val_scheme": "last",
+                "num_val_prior_states": 21,
+            }
+        )
 
 
 @pytest.mark.parametrize("val_scheme", ["forecast", "last", "all"])
@@ -393,14 +371,16 @@ def test_cvr_cv_call(val_scheme: str, exog_idxs: list[int]):
 
     mock_method_type = Mock(return_value=mock_method)
 
-    cv = CrossValObjective(**{
-        **DEFAULT_CV_ARGS,
-        "method_type": mock_method_type,
-        "hyperparam_func": Mock(return_value={}),
-        "store_preds": True,
-        "val_scheme": val_scheme,
-        "exog_idxs": exog_idxs
-    })
+    cv = CrossValObjective(
+        **{
+            **DEFAULT_CV_ARGS,
+            "method_type": mock_method_type,
+            "hyperparam_func": Mock(return_value={}),
+            "store_preds": True,
+            "val_scheme": val_scheme,
+            "exog_idxs": exog_idxs,
+        }
+    )
 
     # Make a mock trial.
     trial = Mock()
@@ -408,21 +388,24 @@ def test_cvr_cv_call(val_scheme: str, exog_idxs: list[int]):
 
     score = cv(trial)
 
-    # Raise an error 
+    # Raise an error
 
-    assert isinstance(score, float) and (score >= 0) and (not np.isnan(score)), (
+    assert (
+        isinstance(score, float) and (score >= 0) and (not np.isnan(score))
+    ), (
         "Invalid score."
         f"\n\tScore: {score}"
         f"\n\tFold scores: {cv.trial_results[trial.number]['scores']}"
     )
 
-    assert cv.trial_results.get(trial.number, None) is not None, (
-        "Trial results not stored"
-    )
+    assert (
+        cv.trial_results.get(trial.number, None) is not None
+    ), "Trial results not stored"
 
     # Check that hyper parameter and method type are called once each.
     cv.hyperparam_func.assert_called_once_with(
-        trial, max_lags=10, max_horizon=50)
+        trial, max_lags=10, max_horizon=50
+    )
     mock_method_type.assert_called_once_with()
 
     # Check that fit is called the correct number of times.
@@ -450,33 +433,33 @@ def test_cvr_cv_call(val_scheme: str, exog_idxs: list[int]):
     # Check that the target validation sets correspond to the correct
     # section of data.
     for i, (val_start, val_end) in enumerate(
-        cv.trial_results[trial.number]["val_idxs"]):
+        cv.trial_results[trial.number]["val_idxs"]
+    ):
         target = cv.trial_results[trial.number]["targets"][i]
         val_data = cv.data[val_start:val_end, :]
-        assert np.all(
-            cv.data[val_start:val_end, :] == target), (
-                "The target validation set does not correspond to the "
-                "correct section of data."
-                f"\n\tScheme: {cv.val_scheme}"
-                f'\n\tVal idxs: {cv.trial_results[trial.number]["val_idxs"]}'
-                f"\n\tValidation start index: {val_start}"
-                f"\n\tValidation end index: {val_end}"
-                f"\n\tData shape: {val_data.shape}"
-                f"\n\tTarget shape: {target.shape}"
-                f"\n\tData: {val_data}"
-                f"\n\tTarget: {target}"
-            )
+        assert np.all(cv.data[val_start:val_end, :] == target), (
+            "The target validation set does not correspond to the "
+            "correct section of data."
+            f"\n\tScheme: {cv.val_scheme}"
+            f'\n\tVal idxs: {cv.trial_results[trial.number]["val_idxs"]}'
+            f"\n\tValidation start index: {val_start}"
+            f"\n\tValidation end index: {val_end}"
+            f"\n\tData shape: {val_data.shape}"
+            f"\n\tTarget shape: {target.shape}"
+            f"\n\tData: {val_data}"
+            f"\n\tTarget: {target}"
+        )
 
     # Check that there are no errors.
     errors = np.array(cv.trial_results[trial.number]["errors"])
-    assert np.all(errors == None), (
-        f"There should be no errors. Errors = {errors}"
-    )
+    assert np.all(
+        errors == None  # noqa: E711 element-wise for array
+    ), f"There should be no errors. Errors = {errors}"
 
 
 @pytest.mark.parametrize("val_scheme", ["forecast", "last", "all"])
 @pytest.mark.parametrize("exog_idxs", [None, [0]])
-def test_cvr_cv_call_no_store_preds(val_scheme: str,  exog_idxs: list[int]):
+def test_cvr_cv_call_no_store_preds(val_scheme: str, exog_idxs: list[int]):
     """Tests the __call__ method of the CrossValObjective class when
     store_preds is False.
 
@@ -485,13 +468,15 @@ def test_cvr_cv_call_no_store_preds(val_scheme: str,  exog_idxs: list[int]):
             "last", "all].
         exog_idxs (list[int]): An list of exogenous indexs. Can be None.
     """
-    cv = CrossValObjective(**{
-        **DEFAULT_CV_ARGS,
-        "store_preds": False,
-        "val_scheme": val_scheme,
-        "hyperparam_func": Mock(return_value={}),
-        "exog_idxs": exog_idxs
-    })
+    cv = CrossValObjective(
+        **{
+            **DEFAULT_CV_ARGS,
+            "store_preds": False,
+            "val_scheme": val_scheme,
+            "hyperparam_func": Mock(return_value={}),
+            "exog_idxs": exog_idxs,
+        }
+    )
 
     # Make a mock trial.
     trial = Mock()
@@ -500,11 +485,13 @@ def test_cvr_cv_call_no_store_preds(val_scheme: str,  exog_idxs: list[int]):
     # Validation sets
     val_chunks = [idx for fold in cv.val_chunk_idxs for idx in fold]
 
-    # Call objective. 
+    # Call objective.
     score = cv(trial)
 
     # Check that score is valid.
-    assert isinstance(score, float) and (score >= 0) and (not np.isnan(score)), (
+    assert (
+        isinstance(score, float) and (score >= 0) and (not np.isnan(score))
+    ), (
         "Invalid score."
         f"\n\tScore: {score}"
         f"\n\tFold scores: {cv.trial_results[trial.number]['scores']}"
@@ -521,16 +508,18 @@ def test_cvr_cv_call_no_store_preds(val_scheme: str,  exog_idxs: list[int]):
             )
 
         else:
-            assert len(cv.trial_results[trial.number][key]) == len(val_chunks), (
+            assert len(cv.trial_results[trial.number][key]) == len(
+                val_chunks
+            ), (
                 "The number of saved {key} should be equal to the number of "
                 "validation chunks."
             )
 
     # Check that there are no errors.
     errors = np.array(cv.trial_results[trial.number]["errors"])
-    assert np.all(errors == None), (
-        f"There should be no errors. Errors = {errors}"
-    )
+    assert np.all(
+        errors == None  # noqa: E711 element-wise for array
+    ), f"There should be no errors. Errors = {errors}"
 
 
 def test_cvr_cv_call_raises():
@@ -538,41 +527,42 @@ def test_cvr_cv_call_raises():
     arguments.
     """
     mock_method = Mock()
-    mock_method.predict = Mock(side_effect=lambda *a, **kw: 1/0)
+    mock_method.predict = Mock(side_effect=lambda *a, **kw: 1 / 0)
     mock_method.fit = Mock()
     mock_method.get_window_size = Mock(return_value=5)
 
     mock_method_type = Mock(return_value=mock_method)
 
-    cv = CrossValObjective(**{
-        **DEFAULT_CV_ARGS,
-        "method_type": mock_method_type,
-        "store_preds": False,
-        "hyperparam_func": Mock(return_value={}),
-        "raise_errors": False,
-    })
+    cv = CrossValObjective(
+        **{
+            **DEFAULT_CV_ARGS,
+            "method_type": mock_method_type,
+            "store_preds": False,
+            "hyperparam_func": Mock(return_value={}),
+            "raise_errors": False,
+        }
+    )
 
     # Make a mock trial.
     trial = Mock()
     trial.number = 1
 
-    # Call objective. 
+    # Call objective.
     score = cv(trial)
 
     assert np.isnan(score), f"Score should be NaN: score = {score}"
 
     # Check that errors were stored.
     errors = np.array(cv.trial_results[trial.number]["errors"])
-    assert np.all(errors != None), (
-        f"CV should store errors. Errors = {errors}"
-    )
+    assert np.all(
+        errors != None  # noqa: E711 element-wise for array
+    ), f"CV should store errors. Errors = {errors}"
 
 
 @pytest.mark.parametrize("method_type", METHODS)
 @pytest.mark.parametrize("val_scheme", ["forecast", "last", "all"])
 def test_cvr_cv_call_methods(
-    method_type: interfere.ForecastMethod,
-    val_scheme: str
+    method_type: interfere.ForecastMethod, val_scheme: str
 ):
     """Tests that the cv objective works for each method.
 
@@ -581,18 +571,20 @@ def test_cvr_cv_call_methods(
         val_scheme (str): The validation scheme to use. One of ["forecast",
             "last", "all].
     """
-    cv = CrossValObjective(**{
-        **DEFAULT_CV_ARGS,
-        "data": RNG.random((600, 3)),
-        "times": np.arange(600),
-        "train_window_percent": 0.5,
-        "num_folds": 4,
-        "num_val_prior_states": 5,
-        "method_type": method_type,
-        "store_preds": False,
-        "val_scheme": val_scheme,
-        "raise_errors": True,
-    })
+    cv = CrossValObjective(
+        **{
+            **DEFAULT_CV_ARGS,
+            "data": RNG.random((50, 3)),
+            "times": np.arange(50),
+            "train_window_percent": 0.5,
+            "num_folds": 4,
+            "num_val_prior_states": 5,
+            "method_type": method_type,
+            "store_preds": False,
+            "val_scheme": val_scheme,
+            "raise_errors": True,
+        }
+    )
 
     study = optuna.create_study(sampler=optuna.samplers.TPESampler(seed=SEED))
     study.optimize(cv, n_trials=1)

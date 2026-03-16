@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 from statsmodels.tsa.api import VAR as smVAR
@@ -8,8 +8,7 @@ from ..utils import copy_doc
 
 
 class VAR(ForecastMethod):
-    """Wrapper of statsmodels vector autoregression model.
-    """
+    """Wrapper of statsmodels vector autoregression model."""
 
     def __init__(
         self,
@@ -21,11 +20,10 @@ class VAR(ForecastMethod):
         dates: Optional[Any] = None,
         freq: Optional[Any] = None,
         ic: Optional[Any] = None,
-        random_state: np.random.RandomState = DEFAULT_RANGE
+        random_state: np.random.RandomState = DEFAULT_RANGE,
     ):
         self.method_params = locals()
         self.method_params.pop("self")
-
 
     @copy_doc(ForecastMethod._fit)
     def _fit(
@@ -38,13 +36,15 @@ class VAR(ForecastMethod):
             endog=endog_states,
             exog=exog_states,
             freq=self.method_params["freq"],
-            missing=self.method_params["missing"]
+            missing=self.method_params["missing"],
         )
 
         # Make sure that the model doesn't try to estimate too many lags.
         trend = self.method_params["trend"]
         ntrend = len(trend) if trend.startswith("c") else 0
-        max_estimable_lags = (self.var.n_totobs - self.var.neqs - ntrend) // (1 + self.var.neqs)
+        max_estimable_lags = (self.var.n_totobs - self.var.neqs - ntrend) // (
+            1 + self.var.neqs
+        )
         maxlags = min(self.method_params["maxlags"], max_estimable_lags)
         if maxlags < 0:
             raise ValueError(
@@ -54,14 +54,13 @@ class VAR(ForecastMethod):
                 f"\n\t AR equations: {self.var.neqs}"
                 f"\n\t Observations: {self.var.n_totobs}"
             )
-        
+
         self.results = self.var.fit(
             maxlags=maxlags,
             method=self.method_params["method"],
             ic=self.method_params["ic"],
-            trend=self.method_params["trend"]
+            trend=self.method_params["trend"],
         )
-    
 
     @copy_doc(ForecastMethod._predict)
     def _predict(
@@ -73,7 +72,7 @@ class VAR(ForecastMethod):
         prediction_exog: Optional[np.ndarray] = None,
         rng: np.random.RandomState = DEFAULT_RANGE,
     ) -> np.ndarray:
-        
+
         # We need to predict everything except the first time point (because it
         # corresponds to the initial condition).
         steps = len(t) - 1
@@ -90,18 +89,14 @@ class VAR(ForecastMethod):
 
         else:
             endog_pred = self.results.forecast(
-                y=y,
-                steps=steps,
-                exog_future=exog_future
+                y=y, steps=steps, exog_future=exog_future
             )
 
         return np.vstack([prior_endog_states[-1, :], endog_pred])
-    
 
     @copy_doc(ForecastMethod.get_window_size)
     def get_window_size(self):
         return max(2, self.method_params["maxlags"])
-    
 
     @copy_doc(ForecastMethod.set_params)
     def set_params(self, **params):
@@ -110,11 +105,9 @@ class VAR(ForecastMethod):
     @copy_doc(ForecastMethod.get_params)
     def get_params(self, deep: bool = True) -> Dict:
         return self.method_params
-    
 
     def get_test_params() -> Dict[str, Any]:
         return {}
-    
 
     @staticmethod
     @copy_doc(ForecastMethod._get_optuna_params)

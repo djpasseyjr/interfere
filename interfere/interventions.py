@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, List, Tuple, Union
+from typing import Callable, Iterable, Tuple, Union
 from typing_extensions import TypeAlias
 
 import numpy as np
@@ -8,29 +8,28 @@ from .base import ExogIntervention
 ScalarFunction: TypeAlias = Callable[[float], float]
 
 
-
 class IdentityIntervention(ExogIntervention):
     """The trivial intervention. An intervention that does nothing."""
 
     def __init__(self) -> None:
         super().__init__([])
-    
+
     def eval_at_times(self, t: np.ndarray):
         return None
 
     def __call__(self, x: np.array, t: float):
         return x
-    
+
     def __eq__(self, other):
         return isinstance(other, IdentityIntervention)
-    
+
 
 class PerfectIntervention(ExogIntervention):
 
     def __init__(
         self,
         iv_idxs: Union[int, Iterable[int]],
-        constants: Union[float, Iterable[float]]
+        constants: Union[float, Iterable[float]],
     ):
         """Creates a perfect intervention function.
 
@@ -53,13 +52,14 @@ class PerfectIntervention(ExogIntervention):
         # The case where indexs and constants are floats or ints
         if isinstance(iv_idxs, (int, float)):
             iv_idxs = [int(iv_idxs)]
-            
+
         if isinstance(constants, (int, float)):
             constants = [float(constants)]
 
         if len(constants) != len(iv_idxs):
             raise ValueError(
-                "Intervened indexes must be same length as provided constants")
+                "Intervened indexes must be same length as provided constants"
+            )
 
         self.iv_idxs = iv_idxs
         self.constants = constants
@@ -72,7 +72,7 @@ class PerfectIntervention(ExogIntervention):
                 the current state of a dynamic model.
             t: (ndarray): In the context of this package, t represents
                 the current time in a dynamic model.
-        
+
         Returns:
             x_do (ndarray): In the context of this package, x_do represents
                 the state of the dynamic model after the intervention is applied.
@@ -81,7 +81,7 @@ class PerfectIntervention(ExogIntervention):
         for i, c in zip(self.iv_idxs, self.constants):
             x_do[..., i] = c
         return x_do
-    
+
     def __eq__(self, other):
         """Determine if two perfect interventions are equal."""
         if not isinstance(other, PerfectIntervention):
@@ -90,8 +90,8 @@ class PerfectIntervention(ExogIntervention):
         equal = equal and np.all(self.iv_idxs == other.iv_idxs)
         equal = equal and np.all(self.constants == other.constants)
         return equal
-        
-    
+
+
 class SignalIntervention(ExogIntervention):
 
     def __init__(
@@ -101,35 +101,35 @@ class SignalIntervention(ExogIntervention):
             ScalarFunction,
             Iterable[ScalarFunction],
             Tuple[np.ndarray, np.ndarray],
-            Iterable[Tuple[np.ndarray, np.ndarray]]
-        ]
+            Iterable[Tuple[np.ndarray, np.ndarray]],
+        ],
     ):
         """Creates an intervention that applies passed one arg functions.
 
-            A perfect intervention replaces variables with constant values.
-            This function generates intervention functions that replace
+        A perfect intervention replaces variables with constant values.
+        This class generates intervention functions that replace the value of
+        variables at ``iv_idxs`` with the output of the given signal functions
+        at each time point.
 
-            Args:
-                iv_idxs (int or collection of ints): The indexes where the intervention
-                    will be applied.
-                signals (Scalar function or collection of scalar functions): 
-                    The functions that will replace the value of variables at
-                    `iv_idxs` at each time point.
+        Args:
+            iv_idxs (int or collection of ints): The indexes where the intervention
+                will be applied.
+            signals (Scalar function or collection of scalar functions):
+                The functions that will replace the value of variables at
+                `iv_idxs` at each time point.
         """
         if isinstance(iv_idxs, int):
-
-            i = iv_idxs
             s = signals
             iv_idxs = [iv_idxs]
             signals = [s]
 
         if len(signals) != len(iv_idxs):
             raise ValueError(
-                "Number of intervened indexes must equal number of signals.")
+                "Number of intervened indexes must equal number of signals."
+            )
 
         self.iv_idxs = iv_idxs
         self.signals = signals
-
 
     def __call__(self, x: np.ndarray, t: float):
         """A signal intervention on multiple variables.
@@ -139,7 +139,7 @@ class SignalIntervention(ExogIntervention):
                 the current state of a dynamic model.
             t: (ndarray): In the context of this package, t represents
                 the current time in a dynamic model.
-        
+
         Returns:
             x_do (ndarray): In the context of this package, x_do represents
                 the state of the dynamic model after the intervention is applied.
@@ -151,8 +151,7 @@ class SignalIntervention(ExogIntervention):
 
 
 def perfect_intervention(
-    idxs: Union[int, Iterable[int]],
-    constants: Union[float, Iterable[float]]
+    idxs: Union[int, Iterable[int]], constants: Union[float, Iterable[float]]
 ) -> Callable[[np.ndarray, float], np.ndarray]:
     """Creates a perfect intervention function.
 
@@ -177,11 +176,9 @@ def perfect_intervention(
     """
     # The case where indexs and constants are floats or ints
     if isinstance(idxs, int) and isinstance(constants, (int, float)):
-        i = idxs
         c = float(constants)
         # Make the intervention function.
-        return perfect_intervention([i], [c])
-
+        return perfect_intervention([idxs], [c])
 
     def intervention(x: np.array, t: float) -> np.array:
         """A perfect intervention on multiple variables.
@@ -191,7 +188,7 @@ def perfect_intervention(
                 the current state of a dynamic model.
             t: (ndarray): In the context of this package, t represents
                 the current time in a dynamic model.
-        
+
         Returns:
             x_do (ndarray): In the context of this package, x_do represents
                 the state of the dynamic model after the intervention is applied.
@@ -200,13 +197,13 @@ def perfect_intervention(
         for i, c in zip(idxs, constants):
             x_do[i] = c
         return x_do
-    
+
     return intervention
-        
+
+
 def signal_intervention(
-        idx: int,
-        u: Callable[[float], float]
-    ) -> Callable[[np.ndarray, float], np.ndarray]:
+    idx: int, u: Callable[[float], float]
+) -> Callable[[np.ndarray, float], np.ndarray]:
     """Creates an intervention function that replaces the variable a signal.
 
     Args:
@@ -219,7 +216,7 @@ def signal_intervention(
             a new numpy array.
 
     Examples:
-        
+
         x = np.array([1.1, 2, -1.2])
 
         g = interfere.signal_intervention(1, np.sin)
@@ -230,10 +227,8 @@ def signal_intervention(
         np.allclose(g(x, 1.0), np.array([1.1, 2.0, 1.0]))
         np.allclose(g(x, -2.0), np.array([1.1, 2.0, 4.0]))
     """
-    intervention = lambda x, t: x + np.array(
-        [
-            u(t) - x[i] if i == idx else 0.0 
-            for i in range(len(x))
-        ]
-    )
+    def intervention(x, t):
+        return x + np.array(
+            [u(t) - x[i] if i == idx else 0.0 for i in range(len(x))]
+        )
     return intervention
