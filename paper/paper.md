@@ -64,39 +64,66 @@ These sixty scenarios comprise the downloadable [Interfere Benchmark 1.1.1](http
 **System Trajectory After Intervention (Center):** Exogenous control of $x(t)$ by $\text{do}(x(t)=\sin(t))$ for $t>10$ affects $y(t)$. 
 The intervention (black) and response (blue) indicate clear departure from natural behavior (green and gray). 
 **Intervention Response Prediction (Right):**
-Equation discovery by SINDy [@brunton_discovering_2016] is fit to data prior to the intervention to predict intervention response (red).](../images/interfere_usage_combined.png)
+Equation discovery by SINDy [@brunton_discovering_2016] is fit to data prior to
+the intervention to predict intervention response (red).
+\label{fig:interv_example}](../images/interfere_usage_combined.png)
 
 Multiple frameworks have emerged for identifying causal relationships from data [@imbens_causal_2015; @pearl_causality_2009; @wieczorek_information_2019].
 Many frameworks assume a static, linear relationship.
 Because a linear approximation can be insufficient for anticipating the response of complex dynamic systems at medium and long times, 
 non-linear, dynamic techniques have been developed for causal discovery and forecasting [e.g. @runge_discovering_2022]. Nevertheless, there are relatively few intervention oriented techniques to fit dynamic nonlinear models to data. 
 
-Interfere's benchmarking approach is enabled by a unified toolkit for simulating intervention response, standardized method evaluation, and systematic cross-validation across diverse dynamic systems. 
+Interfere's benchmarking approach is enabled by a unified toolkit for simulating
+intervention response, standardized method evaluation, and systematic
+cross-validation across diverse dynamic systems (see Figure
+\ref{fig:interv_example} for an example scenario). 
 By lowering barriers to method evaluation, Interfere facilitates  development of prediction methods that translate from theory to real-world application.
 
 # Primary Contributions
 
 Interfere provides (1) dynamically diverse counterfactuals, (2) cross-disciplinary forecast methods, and (3) comprehensive and extensible benchmarking.
 
-![Can stochasticity help reveal associations between variables? In this example, Interfere compares intervention response prediction for deterministic and stochastic versions of the same system.
+![Can stochasticity help reveal associations between variables? This example
+captures the kind of hypothesis that can be tested using Interfere's ability to compare intervention response prediction for deterministic
+and stochastic versions of the same system.
  \label{fig:det_vs_stoch}](../images/det_v_stoch.png)
 
 ## 1. Dynamically Diverse Counterfactuals at Scale
 
-Whereas many predictive methods are typically benchmarked on $<10$ systems [@challu_nhits_2023; @brunton_discovering_2016; @vlachas_backpropagation_2020; @pathak_model-free_2018; @prasse_predicting_2022], Interfere's "dynamics" submodule contains $>50$ models, including linear, nonlinear, chaotic, continuous-time, discrete-time, stochastic, and deterministic models, from disciplines including finance, ecology, biology, neuroscience and public health. Most importantly, Interfere is built for studying interventions: the inherited "BaseDynamics" type allows exogenous control of any observed state, added measurement noise, and, for most models, stochasticity parameterized by a scalar or covariance matrix. Interfere thus offers a user-friendly framework to produce complex dynamic intervention response and forecasting scenarios at scale.
+Whereas many predictive methods are typically benchmarked on $<10$ systems
+[@challu_nhits_2023; @brunton_discovering_2016; @vlachas_backpropagation_2020;
+@pathak_model-free_2018; @prasse_predicting_2022], Interfere's "dynamics"
+submodule contains $>50$ models, including linear, nonlinear, chaotic,
+continuous-time, discrete-time, stochastic, and deterministic models, from
+disciplines including finance, ecology, biology, neuroscience and public health.
+Each model was calibrated and validated by hand to build the benchmark set. (See
+the [simulation docs](https://djpasseyjr.github.io/interfere/simulation/), or [full
+paper](paper_full.pdf) for tables of models.) Most importantly, Interfere is built for studying
+interventions: the
+inherited
+"BaseDynamics" type allows exogenous control of any observed state, added
+measurement noise, and, for most models, stochasticity parameterized by a scalar
+or covariance matrix. Interfere thus offers a user-friendly framework to produce
+complex dynamic intervention response and forecasting scenarios at scale.
 
 ## 2. Cross-Disciplinary Forecast Methods
 
-Interfere integrates dynamic forecasting methodologies from deep learning (LSTM, NHITS), applied mathematics (SINDy, Reservoir Computers) and social science (VAR). The "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models, and apply interventions to model states. 
+Interfere integrates dynamic forecasting methodologies from deep learning (LSTM,
+NHITS), applied mathematics (SINDy, Reservoir Computers) and social science
+(VAR). The "ForecastingMethod" class supports fitting and predicting with
+multivariate dynamic time series, and simulating interventions on system states. 
 
 ## 3. Comprehensive and Extensible Benchmarking
 
 The [Interfere Benchmark](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) is a comprehensive and extensible set containing $60$ intervention response scenarios for testing, each simulated with different levels of stochastic noise. Each scenario is housed in a JSON file, with metadata annotation, documentation, versioning and commit hashes marking the Interfere commit used to generate data.  
-Scenarios were reviewed by hand with exogenous input such that none of the key variables settle to steady state. Interventions were chosen so target variable response significantly departs from prior behavior. We aim for this benchmark to facilitate future progress towards predicting how complex systems respond to never before seen situations.
+Scenarios were reviewed by hand with exogenous input such that none of the key
+variables settle to steady state. Interventions were chosen so target variable
+response significantly departs from prior behavior. Details on the systematic
+benchmark construction can be found in the [`interfere_experiments`](https://github.com/djpasseyjr/interfere_experiments) repository. We aim for this benchmark
+to facilitate future progress towards predicting how complex systems respond to
+never before seen situations.
 
 # Related Software and Mathematical Foundations
-
-## Predictive Methods
 
 Interfere draws from the Nixtla open source ecosystem for time series forecasting, including cross validation and hyperparameter optimization. We implemented intervention support for LSTM and NHITS from the NeuralForecast package, and for ARIMA from the StatsForecast package [@olivares2022library_neuralforecast; @garza2022statsforecast]. Interfere includes predictive methods from the PySINDy [@kaptanoglu2022] and StatsModels [@seabold2010statsmodels] packages. We also include ResComp, a reservoir computing method for forecasts [@harding_global_2024]. Hyperparameter optimization is designed around the Optuna framework [@akiba2019optuna].
 
