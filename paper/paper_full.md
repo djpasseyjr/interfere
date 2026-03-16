@@ -107,7 +107,7 @@ sim_states = dynamics.simulate(t_train, initial_cond)
 ```
 
 ![**Simulation of System:** The natural, uninterupted evolution of the quaratic Belozyorov system [@belozyorov_exponential_2015] with the addition of a small
-amount of stochastic noise simulated using the Interfere package. \label{fig:orig_traj}](../images/original_trajectory.png)
+amount of stochastic noise simulated using the Interfere package (only two of three dimensions shown). \label{fig:orig_traj}](../images/original_trajectory.png)
 
 ## 2. Intervention
 
@@ -141,9 +141,11 @@ the natural evolution behavior of the system. \label{fig:interv_effect}](../imag
 Interfere offers tools to optimize forecasting methods for time series
 prediction. By using Interfere's cross validation objective function along with a
 hyperparameter optimizer such as Optuna [@akiba2019optuna], it is possible to compare
-hyperparameter settings on multiple folds of time series data. To simplify this
-process, every Interfere forecasting method comes with sensible preset
-hyperparameter ranges for the optimizer to explore. Using the cross validation objective function for hyperparameter optimization is demonstrated in the following code block.
+hyperparameter settings on multiple folds of time series data, the data can be purely observational 
+(as in the benchmark) or contain interventions and responses. 
+Every Interfere forecasting method comes with sensible preset
+hyperparameter ranges for the optimizer to explore. Hyperparameter optimization of cross validated error
+is demonstrated in the following code block.
 
 ```python
 

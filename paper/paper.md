@@ -90,21 +90,21 @@ and stochastic versions of the same system.
 
 ## 1. Dynamically Diverse Counterfactuals at Scale
 
-Whereas many predictive methods are typically benchmarked on $<10$ systems
+Historically predictive methods were benchmarked on $<10$ systems
 [@challu_nhits_2023; @brunton_discovering_2016; @vlachas_backpropagation_2020;
-@pathak_model-free_2018; @prasse_predicting_2022], Interfere's "dynamics"
-submodule contains $>50$ models, including linear, nonlinear, chaotic,
-continuous-time, discrete-time, stochastic, and deterministic models, from
-disciplines including finance, ecology, biology, neuroscience and public health.
-Each model was calibrated and validated by hand to build the benchmark set. (See
+@pathak_model-free_2018; @prasse_predicting_2022]. Alongside other modern
+modeling approaches [@kaptanoglu_benchmarking_2023; @gilpin_model_2023],
+Interfere's "dynamics" submodule contains $>50$ models, including linear,
+nonlinear, chaotic, continuous-time, discrete-time, stochastic, and
+deterministic models from disciplines including finance, ecology, biology,
+neuroscience and public health.  (See
 the [simulation docs](https://djpasseyjr.github.io/interfere/simulation/), or [full
-paper](paper_full.pdf) for tables of models.) Most importantly, Interfere is built for studying
-interventions: the
-inherited
-"BaseDynamics" type allows exogenous control of any observed state, added
-measurement noise, and, for most models, stochasticity parameterized by a scalar
-or covariance matrix. Interfere thus offers a user-friendly framework to produce
-complex dynamic intervention response and forecasting scenarios at scale.
+paper](paper_full.pdf) for tables of models.) Most importantly, Interfere is built for
+studying interventions: the inherited "BaseDynamics" type allows exogenous
+control of any observed state, added measurement noise, and, for most models,
+stochasticity parameterized by a scalar or covariance matrix. Interfere thus
+offers a user-friendly framework to produce complex dynamic intervention
+response and forecasting scenarios at scale.
 
 ## 2. Cross-Disciplinary Forecast Methods
 
@@ -115,13 +115,8 @@ multivariate dynamic time series, and simulating interventions on system states.
 
 ## 3. Comprehensive and Extensible Benchmarking
 
-The [Interfere Benchmark](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) is a comprehensive and extensible set containing $60$ intervention response scenarios for testing, each simulated with different levels of stochastic noise. Each scenario is housed in a JSON file, with metadata annotation, documentation, versioning and commit hashes marking the Interfere commit used to generate data.  
-Scenarios were reviewed by hand with exogenous input such that none of the key
-variables settle to steady state. Interventions were chosen so target variable
-response significantly departs from prior behavior. Details on the systematic
-benchmark construction can be found in the [`interfere_experiments`](https://github.com/djpasseyjr/interfere_experiments) repository. We aim for this benchmark
-to facilitate future progress towards predicting how complex systems respond to
-never before seen situations.
+The [Interfere Benchmark](https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing) is a comprehensive and extensible set containing $60$ intervention response scenarios for testing, each simulated with different levels of stochastic noise. Scenarios are housed in JSON files, with metadata annotation, documentation, versioning and commit hashes marking the Interfere commit used to generate data.  
+Scenarios were reviewed by hand. Interventions were chosen so target variable response significantly departs from prior behavior and exogenous input was applied such that none of the key variables settle to steady state. Details on the systematic benchmark construction can be found in the [`interfere_experiments`](https://github.com/djpasseyjr/interfere_experiments) repository. We aim for this benchmark to facilitate future progress towards predicting how complex systems respond to never before seen situations.
 
 # Related Software and Mathematical Foundations
 
