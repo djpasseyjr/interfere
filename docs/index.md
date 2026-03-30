@@ -270,7 +270,7 @@ python -m pytest -v tests
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/djpasseyjr/interfere/blob/main/LICENSE) file for details.
 
 ## Citation
 
