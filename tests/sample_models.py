@@ -14,17 +14,17 @@ SEED = 10
 RNG = np.random.default_rng(SEED)
 
 
-def lotka_voltera_model() -> interfere.dynamics.LotkaVolteraSDE:
+def lotka_volterra_model() -> interfere.dynamics.LotkaVolterraSDE:
     """Creates a lotka-voltera model.
 
     Returns:
-        An instance of interfere.dynamics.LotkaVolteraSDE.
+        An instance of interfere.dynamics.LotkaVolterraSDE.
     """
     n = 10
     r = RNG.random(n)
     k = np.ones(n)
     A = RNG.random((n, n)) - 0.5
-    model = interfere.dynamics.LotkaVolteraSDE(r, k, A, sigma=1.0)
+    model = interfere.dynamics.LotkaVolterraSDE(r, k, A, sigma=1.0)
     return model
 
 
