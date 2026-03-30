@@ -134,7 +134,7 @@ Y_endog, Y_exog = intervention.split_exog(sim_states)
 # Fit SINDy to the pre-intervention data.
 method.fit(t_train, Y_endog, Y_exog)
 
-# Use the inherited interfere.ForecastingMethod.simulate() method
+# Use the inherited interfere.ForecastMethod.simulate() method
 # To simulate intervention response using SINDy
 pred_traj = method.simulate(
     test_t, prior_states=sim_states, intervention=intervention
