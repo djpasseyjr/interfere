@@ -35,8 +35,6 @@ dev = [
     "pytest",
     "sktime",
     "tigramite",
-    "surd @ git+https://github.com/djpasseyjr/surd.git",
-    "pyclustering @ git+https://github.com/djpasseyjr/pyclustering",
     "pydantic",
     "pytest-cov",
     "pytest",

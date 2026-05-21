@@ -229,6 +229,31 @@ Run tests for a specific method by name:
 pytest tests -k "YourMethod"
 ```
 
+### Optional dependencies (GitHub forks)
+
+Some features need maintainer forks that are not on PyPI (they cannot be declared in
+PyPI package metadata). Install them for local development and before running the
+full test suite.
+
+**SURD (`surd`) — `SURD_SINDy`**
+
+- Module: `interfere/_methods/restricted_sindy.py` (exported via `interfere.methods`)
+- Uses `surd.surd_parallel` to restrict SINDy terms by information decomposition
+- Also needs Tigramite: `pip install interfere[methods]`
+
+```bash
+pip install git+https://github.com/djpasseyjr/surd.git
+```
+
+**`pyclustering` fork — oscillatory neural dynamics**
+
+- Module: `interfere/dynamics/pyclustering_models.py` (not imported by default)
+- Models: `HodgkinHuxleyPyclustering`, `LEGIONPyclustering`, `StuartLandauKuramoto`
+
+```bash
+pip install pyclustering@git+https://github.com/djpasseyjr/pyclustering
+```
+
 ### Running Full Tests
 
 The full test suite takes over an hour. When
@@ -239,6 +264,8 @@ If you like, you can install the full set of dependencies and run tests locally 
 ```bash
 git clone https://github.com/djpasseyjr/interfere.git
 cd interfere
+pip install pyclustering@git+https://github.com/djpasseyjr/pyclustering
+pip install git+https://github.com/djpasseyjr/surd.git
 pip install ".[dev]"
 python -m pytest -v tests
 ```
