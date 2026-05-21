@@ -110,7 +110,7 @@ response and forecasting scenarios at scale.
 
 Interfere integrates dynamic forecasting methodologies from deep learning (LSTM,
 NHITS), applied mathematics (SINDy, Reservoir Computers) and social science
-(VAR). The "ForecastingMethod" class supports fitting and predicting with
+(VAR). The "ForecastMethod" class supports fitting and predicting with
 multivariate dynamic time series, and simulating interventions on system states. 
 
 ## 3. Comprehensive and Extensible Benchmarking

@@ -34,7 +34,7 @@ class PerfectIntervention(ExogIntervention):
         """Creates a perfect intervention function.
 
         A perfect intervention replaces variables with constant values.
-        This function generates intervention functions that replace
+        This function generates intervention functions that replace the time series of variables at ``iv_idxs`` with the provided constants.
 
         Args:
             iv_idxs (int or collection of ints): The indexes where the intervention
@@ -156,7 +156,7 @@ def perfect_intervention(
     """Creates a perfect intervention function.
 
     A perfect intervention replaces variables with constant values.
-    This function generates intervention functions that replace
+    This function generates intervention functions that replace the time series of variables at ``iv_idxs`` with the provided constants.
 
     Args:
         idxs (int or collection of ints): The indexes where the intervention

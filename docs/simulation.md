@@ -87,8 +87,8 @@ Returns:
 | `coupled_map_1dlattice_traveling_wave`      | StochasticCoupledMapLattice (factory) | Factory: traveling-wave CML                  |
 | `Kuramoto`                                  | StochasticDifferentialEquation     | Coupled oscillator network                           |
 | `KuramotoSakaguchi`                         | StochasticDifferentialEquation     | Kuramoto variant with phase frustration               |
-| `LotkaVoltera`                              | OrdinaryDifferentialEquation       | Predator–prey ODE model                              |
-| `LotkaVolteraSDE`                           | StochasticDifferentialEquation     | Stochastic predator–prey model                       |
+| `LotkaVolterra`                              | OrdinaryDifferentialEquation       | Predator–prey ODE model                              |
+| `LotkaVolterraSDE`                           | StochasticDifferentialEquation     | Stochastic predator–prey model                       |
 | `MichaelisMenten`                           | StochasticDifferentialEquation     | Enzyme kinetics reaction network                     |
 | `MutualisticPopulation`                     | StochasticDifferentialEquation     | Interacting mutualistic species model                |
 | `SIS`                                       | StochasticDifferentialEquation     | Susceptible–Infected–Susceptible epidemiological model |

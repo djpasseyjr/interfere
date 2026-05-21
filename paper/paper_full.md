@@ -192,7 +192,7 @@ Y_endog, Y_exog = intervention.split_exog(sim_states)
 # Fit SINDy to the pre-intervention data.
 method.fit(t_train, Y_endog, Y_exog)
 
-# Use the inherited interfere.ForecastingMethod.simulate() method
+# Use the inherited interfere.ForecastMethod.simulate() method
 # To simulate intervention response using SINDy
 pred_traj = method.simulate(
     test_t, prior_states=sim_states, intervention=intervention
@@ -225,7 +225,7 @@ Most importantly, Interfere is built around interventions: the ability to take e
 
 ## 2. Cross Disciplinary Forecast Methods
 
-A second contribution of Interfere is the integration of dynamic *forecasting* methodologies from deep learning (LSTM, NHITS), applied mathematics (SINDy, Reservoir Computers) and social science (VAR). The Interfere "ForecastingMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and apply interventions to the states of the models during prediction. This cross disciplinary mix of techniques has the potential to produce new insights into the problem of intervention response prediction among others. For example, experiments using this package have revealed that cross validation error does not correlate with well with prediction error when LSTM and NHITS attempt to predict intervention response.
+A second contribution of Interfere is the integration of dynamic *forecasting* methodologies from deep learning (LSTM, NHITS), applied mathematics (SINDy, Reservoir Computers) and social science (VAR). The Interfere "ForecastMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and apply interventions to the states of the models during prediction. This cross disciplinary mix of techniques has the potential to produce new insights into the problem of intervention response prediction among others. For example, experiments using this package have revealed that cross validation error does not correlate with well with prediction error when LSTM and NHITS attempt to predict intervention response.
 
 ## 3. Comprehensive and Extensible Benchmarking
 
@@ -251,7 +251,7 @@ The table below list the dynamic models that are currently implemented in the In
 | Coupled Logistic Map           | Discrete-time logistic map with spatial coupling [@lloyd_coupled_1995]                                  | Nonlinear, Chaotic             |
 | Stochastic Coupled Map Lattice | Coupled map lattice with stochastic noise [@kaneko_coupled_1991]                                        | Nonlinear, Stochastic, Chaotic |
 | Michaelis Menten               | Model for enzyme kinetics and biochemical reaction networks [@srinivasan_guide_2022]                    | Nonlinear, Stochastic          |
-| Lotka Voltera SDE              | Stochastic Lotka-Volterra predator-prey model [@hening_stochastic_2018]                                 | Nonlinear, Stochastic          |
+| Lotka Volterra SDE             | Stochastic Lotka-Volterra predator-prey model [@hening_stochastic_2018]                                 | Nonlinear, Stochastic          |
 | Kuramoto                       | Coupled oscillator model to study synchronization [@rodrigues_kuramoto_2016]                            | Nonlinear, Stochastic          |
 | Kuramoto Sakaguchi             | Kuramoto model variant with phase frustration [@sakaguchi_soluble_1986]                                 | Nonlinear, Stochastic          |
 | Hodgkin Huxley Pyclustering    | Neuron action-potential dynamics based on Hodgkin-Huxley equations [@hodgkin_quantitative_1952]         | Nonlinear                      |

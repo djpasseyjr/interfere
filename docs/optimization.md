@@ -86,7 +86,7 @@ cv = interfere.CrossValObjective(
     exog_idxs=[],
     val_scheme="forecast",
     num_val_prior_states=5,
-    metric=interfere.metrics.RootMeanSquaredError(),
+    metric=interfere.metrics.rmse,
     metric_direction="minimize",
 )
 

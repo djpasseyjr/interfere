@@ -30,7 +30,7 @@ from interfere.dynamics.generative_forecasters import (
 )
 
 from sample_models import (
-    lotka_voltera_model,
+    lotka_volterra_model,
     ornstein_uhlenbeck_model,
     coupled_logistic_model,
     arithmetic_brownian_motion_model,
@@ -88,7 +88,7 @@ MODELS = [
     interfere.dynamics.Rossler(),
     interfere.dynamics.Lorenz(),
     interfere.dynamics.MooreSpiegel(T=40),
-    lotka_voltera_model(),
+    lotka_volterra_model(),
     ornstein_uhlenbeck_model(),
     coupled_logistic_model(),
     arithmetic_brownian_motion_model(),
@@ -456,11 +456,11 @@ def test_stochastic_array_builder():
         beloz.build_stochastic_noise_matrix(np.random.rand(2, 2), 3)
 
 
-def test_lotka_voltera():
-    """Tests that interfere.dynamics.LotkaVoltera simulation corresponds to a
+def test_lotka_volterra():
+    """Tests that interfere.dynamics.LotkaVolterra simulation corresponds to a
     ground truth ODE with interventions built in.
     """
-    # Initialize interfere.LotkaVoltera model.
+    # Initialize interfere.LotkaVolterra model.
     rng = np.random.default_rng(SEED)
     n = 10
     r = rng.random(n)
@@ -469,7 +469,7 @@ def test_lotka_voltera():
 
     interv_idx = n - 1
     interv_const = 1.0
-    model = interfere.dynamics.LotkaVoltera(r, k, A)
+    model = interfere.dynamics.LotkaVolterra(r, k, A)
 
     # Make two kinds of interventions
     perf_interv = interfere.perfect_intervention(interv_idx, interv_const)
