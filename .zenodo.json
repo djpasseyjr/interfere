@@ -1,0 +1,36 @@
+{
+    "title": "Interfere: Intervention response simulation and prediction for complex dynamic systems",
+    "description": "Open-source Python package for intervention response prediction in complex dynamical systems. See README and JOSS paper for full description.",
+    "license": "mit",
+    "upload_type": "software",
+    "publication_date": "2026-05-21",
+    "creators": [
+      {
+        "name": "Passey, D. J.",
+        "orcid": "0000-0002-9310-3361",
+        "affiliation": "University of North Carolina at Chapel Hill"
+      },
+      {
+        "name": "Schwarze, Alice C.",
+        "orcid": "0000-0002-9146-8068",
+        "affiliation": "Dartmouth College"
+      },
+      {
+        "name": "Boyd, Zachary M.",
+        "orcid": "0000-0002-6549-7295",
+        "affiliation": "Brigham Young University"
+      },
+      {
+        "name": "Mucha, Peter J.",
+        "orcid": "0000-0002-0648-7230",
+        "affiliation": "Dartmouth College"
+      }
+    ],
+    "keywords": [
+      "intervention response prediction",
+      "complex systems",
+      "dynamical systems",
+      "forecasting",
+      "Python"
+    ]
+  }

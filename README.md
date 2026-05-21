@@ -259,19 +259,6 @@ Open http://127.0.0.1:8000 to view the docs. To build static files only: `mkdocs
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Citation
-
-If you use this software in your research, please cite:
-
-```bibtex
-@article{passey2024interfere,
-  title={Interfere: Intervention Response Simulation and Prediction for Stochastic Nonlinear Dynamics},
-  author={Passey, D. J. and Mucha, Peter J.},
-  journal={arXiv preprint},
-  year={2025}
-}
-```
-
 ## Contact
 
 - Author: DJ Passey (djpassey@unc.edu)
