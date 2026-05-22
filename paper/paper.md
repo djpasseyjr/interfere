@@ -28,13 +28,13 @@ authors:
     orcid: 0000-0002-0648-7230
     affiliation: 2
 affiliations:
-  - name: University of North Carolina at Chapel Hill, United States
+  - name: University of North Carolina at Chapel Hill, NC, United States of America
     index: 1
     ror: 0130frc33
-  - name: Dartmouth College, United States
+  - name: Dartmouth College, Hanover, NH, United States of America
     index: 2
     ror: 049s0rh22
-  - name: Brigham Young University, United States
+  - name: Brigham Young University, Provo, UT, United States of America
     index: 3
     ror: 047rhhm47
 date: 20 May 2025
