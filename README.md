@@ -159,7 +159,9 @@ The package can be used to simulate and analyze how systems respond to intervent
 
 ## Documentation
 
-For a more detailed explanation of the purpose of the package refer to [paper.pdf](paper.pdf).
+For a more detailed explanation of the purpose of the package, refer to the
+[extended version of the paper](https://djpasseyjr.github.io/interfere/extended_paper/)
+in the documentation.
 
 ## Contributing
 
@@ -180,7 +182,11 @@ $ flake8 interfere
 
 ### Build docs
 
-Docs use [MkDocs](https://www.mkdocs.org/) (`mkdocs.yml`). From the repo root:
+Docs use [MkDocs](https://www.mkdocs.org/) (`mkdocs.yml`). The extended version of
+the paper (`docs/extended_paper.md`) renders citations with
+[`mkdocs-bibtex`](https://pypi.org/project/mkdocs-bibtex/), which requires
+[`pandoc`](https://pandoc.org/installing.html) to be installed on your system.
+From the repo root:
 
 ```bash
 $ mkdocs serve   # preview at http://127.0.0.1:8000
@@ -273,7 +279,9 @@ python -m pytest -v tests
 
 ### Building the docs
 
-Install dev dependencies (which include `mkdocs`), then build and serve the site locally:
+Install dev dependencies (which include `mkdocs` and `mkdocs-bibtex`), then build
+and serve the site locally. Rendering citations in the extended paper also
+requires [`pandoc`](https://pandoc.org/installing.html) to be installed:
 
 ```bash
 pip install ".[dev]"
