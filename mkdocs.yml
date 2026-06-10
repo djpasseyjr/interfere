@@ -9,3 +9,14 @@ nav:
   - Optimization: optimization.md
   - Custom forecast methods: custom_forecast_methods.md
   - Benchmark: benchmark.md
+  - Extended paper: extended_paper.md
+
+plugins:
+  - search
+  - bibtex:
+      bib_file: "docs/extended_paper.bib"
+      bib_by_default: false
+      enable_inline_citations: false
+
+markdown_extensions:
+  - footnotes
