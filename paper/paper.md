@@ -98,8 +98,9 @@ Interfere's `dynamics` submodule contains  more than 50 models, including linear
 nonlinear, chaotic, continuous-time, discrete-time, stochastic, and
 deterministic models from disciplines including finance, ecology, biology,
 neuroscience and public health.  (See
-the [simulation docs](https://djpasseyjr.github.io/interfere/simulation/), or [full
-paper](paper_full.pdf) for tables of models.) Most importantly, Interfere is built for
+the [simulation docs](https://djpasseyjr.github.io/interfere/simulation/), or the
+[extended version of this paper](https://djpasseyjr.github.io/interfere/extended_paper/)
+for tables of models.) Most importantly, Interfere is built for
 studying interventions: the inherited `BaseDynamics` type allows exogenous
 control of any observed state, added measurement noise, and, for most models,
 stochasticity parameterized by a scalar or covariance matrix. Interfere thus

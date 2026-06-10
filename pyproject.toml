@@ -41,6 +41,7 @@ dev = [
     "pylint",
     "black",
     "mkdocs",
+    "mkdocs-bibtex",
 ]
 
 [tool.setuptools.packages]
