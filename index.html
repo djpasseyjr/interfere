@@ -42,9 +42,19 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#interfere-benchmark-dataset-download">Interfere Benchmark Dataset (Download)</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#from-pypi">From PyPI</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#from-local-clone">From Local Clone</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a>
         <ul>
@@ -58,7 +68,33 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a>
+    <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#example-use">Example Use</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#build-docs">Build docs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#add-tests">Add Tests</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#dynamic-model-tests">Dynamic Model Tests</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#forecasting-method-tests">Forecasting Method Tests</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#running-full-tests">Running Full Tests</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#license">License</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#citation">Citation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contact">Contact</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#documentation-reference">Documentation (reference)</a>
     </li>
     </ul>
                 </li>
@@ -72,11 +108,23 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="prediction/">Prediction</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="optimization/">Optimization</a>
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="prediction/">Prediction</a>
+                <li class="toctree-l1"><a class="reference internal" href="custom_forecast_methods/">Custom forecast methods</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="benchmark/">Benchmark</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="extended_paper/">Extended paper</a>
                 </li>
               </ul>
       </div>
@@ -103,17 +151,25 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="interfere-intervention-response-prediction-in-complex-dynamic-models">🌀 Interfere: Intervention Response Prediction in Complex Dynamic Models</h1>
-<p><a href="https://pypi.org/project/interfere/"><img alt="PyPI Version" src="https://img.shields.io/pypi/v/interfere" /></a> <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a></p>
+<p><a href="https://pypi.org/project/interfere/"><img alt="PyPI Version" src="https://img.shields.io/pypi/v/interfere" /></a> <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a> <a href="https://djpasseyjr.github.io/interfere/"><img alt="Documentation" src="https://img.shields.io/badge/docs-gh--pages-blue" /></a></p>
 <p>Interfere is a comprehensive Python toolkit for simulating, intervening on, and
-optimizing forecasting methods to predict the behavior complex dynamical systems. It enables:</p>
+optimizing forecasting methods to predict the behavior of complex dynamical systems. It enables:</p>
 <ul>
 <li>Rich collections of continuous and discrete-time dynamic models (ODEs, SDEs,
-  differnce equations, and more).</li>
+  difference equations, and more).</li>
 <li>Exogenous interventions to generate control and treatment scenarios at scale.</li>
 <li>Seamless forecasting integrations (SINDy, VAR, reservoir computing, ARIMA, LSTM, NHITS).</li>
 <li>Automated sliding-window cross-validation and hyperparameter tuning with Optuna.</li>
 <li>Unified error metrics and evaluation workflows for intervention-response
   prediction.</li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>Interfere is a research-oriented Python package that addresses a fundamental question in complex systems: <em>When can we predict how complex systems will respond to interventions?</em> This package provides tools for:</p>
+<ul>
+<li>Modeling dynamic nonlinear multivariate stochastic systems.</li>
+<li>Simulating and analyzing how such systems respond to interventions.</li>
+<li>Generating complex dynamic counterfactuals.</li>
+<li>Studying causal relationships in complex systems.</li>
 </ul>
 <h2 id="interfere-benchmark-dataset-download">Interfere Benchmark Dataset (<a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Download</a>)</h2>
 <p><img alt="Sixty dynamic systems and intervention responses." src="images/sixty_models.png" /></p>
@@ -123,12 +179,19 @@ available for download as the <a href="https://drive.google.com/file/d/19_Ha-D8K
 1.1.1</a>.
 It can be used to benchmark a forecasting method's ability to predict the
 response of a dynamic system to interventions.</p>
+<h2 id="documentation">Documentation</h2>
+<p>Full documentation is built with MkDocs and published at <strong><a href="https://djpasseyjr.github.io/interfere/">https://djpasseyjr.github.io/interfere/</a></strong>.</p>
 <h2 id="installation">Installation</h2>
-<p>Install the core package from PyPI:</p>
+<h3 id="from-pypi">From PyPI</h3>
 <pre><code class="language-bash">pip install interfere
 </code></pre>
 <p>For Nixtla-based forecasting methods (<code>ARIMA</code>, <code>LSTM</code>, <code>NHITS</code>), install the extras:</p>
 <pre><code class="language-bash">pip install interfere[nixtla]
+</code></pre>
+<h3 id="from-local-clone">From Local Clone</h3>
+<pre><code class="language-bash">git clone https://github.com/djpasseyjr/interfere.git
+cd interfere
+pip install .
 </code></pre>
 <h2 id="quick-start">Quick Start</h2>
 <p>The Interfere package is designed around three main tasks: counterfactual simulation, predictive method optimization, and prediction. Here's a complete example using the SINDy (Sparse Identification of Nonlinear Dynamics) method:</p>
@@ -202,7 +265,7 @@ Y_endog, Y_exog = intervention.split_exog(sim_states)
 # Fit SINDy to the pre-intervention data.
 method.fit(t_train, Y_endog, Y_exog)
 
-# Use the inherited interfere.ForecastingMethod.simulate() method
+# Use the inherited interfere.ForecastMethod.simulate() method
 # To simulate intervention response using SINDy
 pred_traj = method.simulate(
     test_t, prior_states=sim_states, intervention=intervention
@@ -210,12 +273,94 @@ pred_traj = method.simulate(
 </code></pre>
 <p><img alt="Predicted vs Actual Intervention Response" src="images/prediction_comparison.png" /></p>
 <p>The SINDy method identifies the underlying dynamics of the system using sparse regression techniques, making it particularly effective for discovering interpretable mathematical models of complex systems.</p>
-<h2 id="documentation">Documentation</h2>
+<h2 id="dependencies">Dependencies</h2>
+<ol>
+<li>Basic: <code>pip install interfere</code></li>
+<li>Full forecasting methods: <code>pip install "interfere[methods]"</code></li>
+<li>Developer / experimental features: <code>pip install "interfere[dev]"</code></li>
+</ol>
+<h2 id="example-use">Example Use</h2>
+<p>The package can be used to simulate and analyze how systems respond to interventions. For example, it can model the effect of stochasticity on intervention response forecasting:</p>
+<p><img alt="Stochastic vs Deterministic Systems" src="https://github.com/djpasseyjr/interfere/blob/c7090043aec4a984a45517794d266df4eb105f79/images/det_v_stoch.png?raw=true" /></p>
+<h2 id="contributing">Contributing</h2>
+<p>Contributions are welcome! To contribute code, make your own local fork of the repository.</p>
+<p>Then install the full developer deps using <code>pip install ".[dev]"</code>. (The full dependencies are pretty big. Use a virtual environment.)</p>
+<p>After you write code, auto-format it with <code>black</code> at the top level of the repo:</p>
+<pre><code class="language-bash">black interfere
+</code></pre>
+<p>Then run the linter and fix any linter errors (also at the top level):</p>
+<pre><code class="language-bash">flake8 interfere
+</code></pre>
+<h3 id="build-docs">Build docs</h3>
+<p>Docs use <a href="https://www.mkdocs.org/">MkDocs</a> (<code>mkdocs.yml</code>). From the repo root:</p>
+<pre><code class="language-bash">mkdocs serve   # preview at http://127.0.0.1:8000
+mkdocs build   # output in site/
+</code></pre>
+<p>Install dev dependencies (which include <code>mkdocs</code>), then build and serve the site locally:</p>
+<pre><code class="language-bash">pip install &quot;.[dev]&quot;
+mkdocs serve
+</code></pre>
+<p>Open http://127.0.0.1:8000 to view the docs. To build static files only: <code>mkdocs build</code>.</p>
+<h3 id="add-tests">Add Tests</h3>
+<p>If you are adding a <em>dynamic model</em> or <em>forecasting method</em>, the test suite has a series of prebuilt tests.</p>
+<h4 id="dynamic-model-tests">Dynamic Model Tests</h4>
+<p>Add a factory function in <code>tests/sample_models.py</code>, then import it and append your model instance to the <code>MODELS</code> list in <code>tests/test_dynamics.py</code>:</p>
+<pre><code class="language-python"># In sample_models.py
+def my_model() -&gt; interfere.dynamics.MyDynamics:
+    return interfere.dynamics.MyDynamics(...)
+
+# In test_dynamics.py: add to imports, then
+MODELS = [
+    ...
+    my_model()
+]
+</code></pre>
+<p>Run tests for a specific model by index:</p>
+<pre><code class="language-bash">pytest tests -k &quot;model7&quot;
+</code></pre>
+<h4 id="forecasting-method-tests">Forecasting Method Tests</h4>
+<p>Add your method class to the <code>METHODS</code> list in <code>tests/test_methods.py</code>:</p>
+<pre><code class="language-python"># In test_methods.py
+METHODS = [
+    ...
+    interfere.methods.YourMethod,
+]
+</code></pre>
+<p>Run tests for a specific method by name:</p>
+<pre><code class="language-bash">pytest tests -k &quot;YourMethod&quot;
+</code></pre>
+<h3 id="running-full-tests">Running Full Tests</h3>
+<p>The full test suite takes over an hour. When contributing, just make sure you add tests for new code. The full suite will run as part of the automated checks with your pull request.</p>
+<p>To run locally:</p>
+<pre><code class="language-bash">git clone https://github.com/djpasseyjr/interfere.git
+cd interfere
+pip install &quot;.[dev]&quot;
+python -m pytest -v tests
+</code></pre>
+<p>(The full dependencies are pretty big. Use a virtual environment.)</p>
+<h2 id="license">License</h2>
+<p>This project is licensed under the MIT License - see the <a href="https://github.com/djpasseyjr/interfere/blob/main/LICENSE">LICENSE</a> file for details.</p>
+<h2 id="citation">Citation</h2>
+<p>If you use this software in your research, please cite:</p>
+<pre><code class="language-bibtex">@article{passey2024interfere,
+  title={Interfere: Intervention Response Simulation and Prediction for Stochastic Nonlinear Dynamics},
+  author={Passey, D. J. and Mucha, Peter J.},
+  journal={arXiv preprint},
+  year={2025}
+}
+</code></pre>
+<h2 id="contact">Contact</h2>
+<ul>
+<li>Author: DJ Passey (djpassey@unc.edu)</li>
+<li>Institution: University of North Carolina at Chapel Hill</li>
+</ul>
+<h2 id="documentation-reference">Documentation (reference)</h2>
 <ul>
 <li><a href="simulation/">Simulation</a>: Simulation engines and available dynamic models.</li>
 <li><a href="intervention/">Intervention</a>: Exogenous intervention interfaces.</li>
-<li><a href="optimization/">Optimization</a>: Automated cross-validation and hyperparameter tuning.</li>
 <li><a href="prediction/">Prediction</a>: Counterfactual forecasting workflows.</li>
+<li><a href="optimization/">Optimization</a>: Automated cross-validation and hyperparameter tuning.</li>
+<li><a href="custom_forecast_methods/">Custom forecast methods</a>: How to add your own forecasting method.</li>
 </ul>
               
             </div>
@@ -265,5 +410,5 @@ pred_traj = method.simulate(
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-05-04 22:25:27.236902+00:00
+Build Date UTC : 2026-06-11 18:43:34.386228+00:00
 -->

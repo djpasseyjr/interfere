@@ -56,11 +56,23 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../optimization/">Optimization</a>
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                <li class="toctree-l1"><a class="reference internal" href="../custom_forecast_methods/">Custom forecast methods</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmark/">Benchmark</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../extended_paper/">Extended paper</a>
                 </li>
               </ul>
       </div>
@@ -97,6 +109,16 @@
 </ul>
 <p>Subclasses implement the protected <code>_simulate()</code> method to define the specific propagation rules.</p>
 <p>With these foundational services—validation, time inference, noise injection, and intervention hooks—Interfere enables seamless simulation of everything from classic ODEs to complex SDEs and discrete-time maps.</p>
+<p><strong>Noise.</strong> Many <code>DynamicModel</code> subclasses accept optional constructor arguments
+for noise. <strong><code>measurement_noise_std</code></strong> (array or <code>None</code>): per-dimension standard
+deviation of Gaussian noise added to the observed trajectory after each step;
+use <code>None</code> for no measurement noise. <strong><code>sigma</code></strong>: coefficient for <em>process</em>
+(stochastic) noise in the dynamics. Concrete models differ in default values;
+see each class's docstring.</p>
+<p>While <code>interfere</code> supports other stochastic processes, the <code>sigma</code> parameter
+usually controls the magnitude of <em>additive</em> Wiener processes. That is, if the
+deterministic dynamics are controlled by $\frac{dx}{dt} = f(x)$, then the
+stochastic dynamics with $\sigma = \sigma_0$ would be $dX = f(X)dt + \sigma_0 dW$.</p>
 <p>In <code>interfere/dynamics/base.py</code>, three specialized simulation bases implement <code>_simulate()</code>:</p>
 <ul>
 <li><strong>OrdinaryDifferentialEquation</strong>: Integrates ODEs by defining a <code>dXdt(x, t)</code> derivative function and calling <code>scipy.integrate.odeint</code>, applies interventions at each step, and adds measurement noise.</li>
@@ -254,12 +276,12 @@
 <td>Kuramoto variant with phase frustration</td>
 </tr>
 <tr>
-<td><code>LotkaVoltera</code></td>
+<td><code>LotkaVolterra</code></td>
 <td>OrdinaryDifferentialEquation</td>
 <td>Predator–prey ODE model</td>
 </tr>
 <tr>
-<td><code>LotkaVolteraSDE</code></td>
+<td><code>LotkaVolterraSDE</code></td>
 <td>StochasticDifferentialEquation</td>
 <td>Stochastic predator–prey model</td>
 </tr>
@@ -270,7 +292,7 @@
 </tr>
 <tr>
 <td><code>MutualisticPopulation</code></td>
-<td>OrdinaryDifferentialEquation</td>
+<td>StochasticDifferentialEquation</td>
 <td>Interacting mutualistic species model</td>
 </tr>
 <tr>
@@ -290,7 +312,7 @@
 </tr>
 <tr>
 <td><code>WilsonCowan</code></td>
-<td>OrdinaryDifferentialEquation</td>
+<td>StochasticDifferentialEquation</td>
 <td>Wilson–Cowan neural population model</td>
 </tr>
 <tr>
@@ -325,7 +347,7 @@
 </tr>
 <tr>
 <td><code>PlantedTankNitrogenCycle</code></td>
-<td>OrdinaryDifferentialEquation</td>
+<td>StochasticDifferentialEquation</td>
 <td>Aquatic nitrogen cycle model</td>
 </tr>
 <tr>

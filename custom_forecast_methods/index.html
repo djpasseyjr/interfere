@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Custom forecast methods - interfere</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Custom forecast methods";
+        var mkdocs_page_input_path = "custom_forecast_methods.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../simulation/">Simulation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../optimization/">Optimization</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Custom forecast methods</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#what-you-need-to-implement">What you need to implement</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#complete-example">Complete example</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmark/">Benchmark</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../extended_paper/">Extended paper</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Custom forecast methods</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="custom-forecast-methods">Custom forecast methods</h1>
+<p>This page explains how to add your own forecasting method to use with Interfere's workflows (fitting, prediction, and hyperparameter tuning with <code>CrossValObjective</code> and Optuna). We use a <strong>polynomial forecaster</strong> as the running example: it fits a polynomial in time to each variable and extrapolates, with a single hyperparameter <code>degree</code>.</p>
+<h2 id="what-you-need-to-implement">What you need to implement</h2>
+<p>Subclass <code>interfere.ForecastMethod</code> and implement four pieces:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_fit(t, endog_states, exog_states)</code></td>
+<td>Train your model on the given time series. Store whatever you need for prediction.</td>
+</tr>
+<tr>
+<td><code>_predict(t, prior_endog_states, ...)</code></td>
+<td>Return predictions at times <code>t</code>, shape <code>(len(t), n_variables)</code>.</td>
+</tr>
+<tr>
+<td><code>get_window_size()</code></td>
+<td>Return how many past observations the method needs (for CV and prediction).</td>
+</tr>
+<tr>
+<td><code>_get_optuna_params(trial, ...)</code></td>
+<td>Return a dict of constructor kwargs for Optuna to try (so CV can tune hyperparameters).</td>
+</tr>
+</tbody>
+</table>
+<p>You also need <code>get_test_params()</code> (static) if the method will be used in the package test suite; for a standalone example you can return a fixed dict, e.g. <code>{"degree": 2}</code>.</p>
+<p>The polynomial example uses only endogenous data (no exogenous variables). If your method uses exogenous variables, you must handle <code>exog_states</code> in <code>_fit</code> and <code>prediction_exog</code> / <code>prior_exog_states</code> in <code>_predict</code>; the <a href="../prediction/">Prediction</a> and built-in methods (e.g. SINDy, VAR) show the expected shapes.</p>
+<h2 id="complete-example">Complete example</h2>
+<p>The code below is a full, runnable example. It defines a <strong>polynomial forecaster</strong> (fit a polynomial in time to each variable and extrapolate), then uses it with <code>CrossValObjective</code> and Optuna.</p>
+<pre><code class="language-python">from typing import Any, Dict, Optional
+import numpy as np
+import optuna
+import interfere
+
+
+class PolynomialForecast(interfere.ForecastMethod):
+    &quot;&quot;&quot;Fits a polynomial (in time) to each variable and extrapolates. Hyperparameter: degree.&quot;&quot;&quot;
+
+    def __init__(self, degree: int = 2):
+        self.degree = degree
+        self.coeffs_ = None  # filled in by _fit
+
+    def _fit(
+        self,
+        t: np.ndarray,
+        endog_states: np.ndarray,
+        exog_states: Optional[np.ndarray] = None,
+    ):
+        _, n_vars = endog_states.shape
+        self.coeffs_ = [
+            np.polyfit(t, endog_states[:, j], self.degree)
+            for j in range(n_vars)
+        ]
+
+    def _predict(
+        self,
+        t: np.ndarray,
+        prior_endog_states: np.ndarray,
+        prior_exog_states: Optional[np.ndarray] = None,
+        prior_t: Optional[np.ndarray] = None,
+        prediction_exog: Optional[np.ndarray] = None,
+        rng=None,
+    ) -&gt; np.ndarray:
+        n_vars = len(self.coeffs_)
+        return np.column_stack([
+            np.polyval(self.coeffs_[j], t) for j in range(n_vars)
+        ])
+
+    def get_window_size(self) -&gt; int:
+        return self.degree + 1
+
+    @staticmethod
+    def get_test_params() -&gt; Dict[str, Any]:
+        return {&quot;degree&quot;: 2}
+
+    @staticmethod
+    def _get_optuna_params(
+        trial,
+        max_lags: Optional[int] = None,
+        max_horizon=None,
+        **kwargs,
+    ) -&gt; Dict[str, Any]:
+        max_degree = 10
+        if max_lags is not None and max_lags &gt;= 2:
+            max_degree = min(max_degree, max_lags - 1)
+        max_degree = max(1, max_degree)
+        return {&quot;degree&quot;: trial.suggest_int(&quot;degree&quot;, 1, max_degree)}
+
+
+# --- Use it with the hyperparameter optimizer ---
+
+# Simple 1D time series: quadratic in time + noise
+t = np.linspace(0, 10, 100)
+y = 0.5 * t**2 - 2 * t + 1 + np.random.RandomState(42).normal(0, 0.5, size=t.size)
+data = y.reshape(-1, 1)  # shape (n_timesteps, n_variables)
+
+cv = interfere.CrossValObjective(
+    method_type=PolynomialForecast,
+    data=data,
+    times=t,
+    train_window_percent=0.6,
+    num_folds=4,
+    exog_idxs=[],
+    num_val_prior_states=10,
+    metric=interfere.metrics.rmse,
+    metric_direction=&quot;minimize&quot;,
+)
+
+study = optuna.create_study(direction=&quot;minimize&quot;)
+study.optimize(cv, n_trials=8, show_progress_bar=True)
+
+print(&quot;Best degree:&quot;, study.best_params[&quot;degree&quot;])
+print(&quot;Best CV RMSE:&quot;, round(study.best_value, 6))
+</code></pre>
+<p>In the example, <strong>data</strong> has shape <code>(n_timesteps, n_variables)</code> and <strong>times</strong> is 1D. <strong>CrossValObjective</strong> gets your class as <code>method_type</code>; it uses <code>_get_optuna_params</code> by default, so each Optuna trial builds <code>PolynomialForecast(**params)</code>, runs sliding-window CV, and returns the metric. Use <code>study.best_params</code> to instantiate your method and call <code>fit</code> / <code>predict</code> (or <code>simulate</code> with interventions) as in the <a href="../#quick-start">Quick Start</a> and <a href="../optimization/">Optimization</a> docs.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../optimization/" class="btn btn-neutral float-left" title="Optimization"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../benchmark/" class="btn btn-neutral float-right" title="Benchmark">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../optimization/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../benchmark/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

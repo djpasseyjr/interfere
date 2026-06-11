@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Benchmark - interfere</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Benchmark";
+        var mkdocs_page_input_path = "benchmark.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../simulation/">Simulation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../optimization/">Optimization</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../custom_forecast_methods/">Custom forecast methods</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Benchmark</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#whats-in-the-json">What's in the JSON</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-three-stages">The three stages</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#loading-the-json-and-building-interventions">Loading the JSON and building interventions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#minimal-end-to-end-example">Minimal end-to-end example</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../extended_paper/">Extended paper</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Benchmark</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="working-with-the-benchmark">Working with the benchmark</h1>
+<p>The <a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Interfere Benchmark</a> is a set of JSON files. Each file encodes one <strong>observational vs intervention</strong> problem: you get training data, an <strong>observational</strong> trajectory (continuation with the same exogenous driver), and an <strong>intervention</strong> trajectory (the same system under an intervention). The goal is to fit a forecasting method on the training data and compare how well it predicts the observational continuation versus the intervention response.</p>
+<h2 id="whats-in-the-json">What's in the JSON</h2>
+<p>Each benchmark JSON includes (among other keys) the following at the top level:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td>Variable descriptions and schema info</td>
+</tr>
+<tr>
+<td><code>model_description</code></td>
+<td>Text description of the underlying dynamics</td>
+</tr>
+<tr>
+<td><code>initial_condition_times</code></td>
+<td>Times for the short history before training</td>
+</tr>
+<tr>
+<td><code>initial_condition_states</code></td>
+<td>States at those times (prior to <code>train_*</code>)</td>
+</tr>
+<tr>
+<td><code>train_times</code></td>
+<td>1D array of training time points</td>
+</tr>
+<tr>
+<td><code>train_states</code></td>
+<td>2D array <code>(n_train, n_vars)</code> of training observations</td>
+</tr>
+<tr>
+<td><code>train_exog_idxs</code></td>
+<td>Column indices of exogenous variables during training (same as forecast)</td>
+</tr>
+<tr>
+<td><code>forecast_times</code></td>
+<td>Time points for the forecast period</td>
+</tr>
+<tr>
+<td><code>forecast_states</code></td>
+<td><strong>Observational</strong> trajectory: system continued with same exogenous driver</td>
+</tr>
+<tr>
+<td><code>forecast_exog_idxs</code></td>
+<td>Same as <code>train_exog_idxs</code></td>
+</tr>
+<tr>
+<td><code>causal_resp_states</code></td>
+<td><strong>Intervention</strong> trajectory: response under the "do" intervention</td>
+</tr>
+<tr>
+<td><code>causal_resp_times</code></td>
+<td>Same length as <code>forecast_times</code> (same time grid)</td>
+</tr>
+<tr>
+<td><code>causal_resp_exog_idxs</code></td>
+<td>Exogenous indices under the intervention (includes any newly driven variables)</td>
+</tr>
+<tr>
+<td><code>target_idx</code></td>
+<td>(Optional) column index of the prediction target</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>intervention is not stored as a separate object</strong>. It is implied by the exogenous columns: during the observational period they follow <code>train_states</code> / <code>forecast_states</code> at <code>forecast_exog_idxs</code>; during the intervention period they follow <code>train_states</code> / <code>causal_resp_states</code> at <code>causal_resp_exog_idxs</code>. You reconstruct callable interventions by interpolating those time series (see below).</p>
+<h2 id="the-three-stages">The three stages</h2>
+<ol>
+<li><strong>Training</strong>Fit a forecasting method on <code>train_states</code> at <code>train_times</code>, with exogenous variables at <code>train_exog_idxs</code>.</li>
+<li><strong>Observational forecast</strong>Using the <strong>same</strong> exogenous driver as in training (values from the observational run: training then <code>forecast_states</code>), simulate over <code>forecast_times</code> and compare to <code>forecast_states</code>.</li>
+<li><strong>Intervention forecast</strong>
+   Using the <strong>intervention</strong> exogenous driver (values from the intervention run: training then <code>causal_resp_states</code> at <code>causal_resp_exog_idxs</code>), simulate over the same <code>forecast_times</code> and compare to <code>causal_resp_states</code>.</li>
+</ol>
+<p>So: same training data; one continuation is "observational", the other is "under intervention"; the benchmark compares how well a method predicts both.</p>
+<h2 id="loading-the-json-and-building-interventions">Loading the JSON and building interventions</h2>
+<p>The package expects interventions as <strong>callables</strong> of time (e.g. <code>SignalIntervention</code> with scalar functions). The JSON only gives (time, value) arrays. So we load the arrays and turn the exogenous columns into callables via interpolation (e.g. <code>scipy.interpolate.interp1d</code>):</p>
+<pre><code class="language-python">import json
+import numpy as np
+import interfere
+from scipy.interpolate import interp1d
+
+def load_benchmark(path):
+    &quot;&quot;&quot;Load benchmark JSON and build interventions from exogenous columns.&quot;&quot;&quot;
+    with open(path) as f:
+        data = json.load(f)
+
+    train_t = np.array(data[&quot;train_times&quot;])
+    forecast_t = np.array(data[&quot;forecast_times&quot;])
+    train_states = np.array(data[&quot;train_states&quot;])
+    forecast_states = np.array(data[&quot;forecast_states&quot;])
+    causal_resp_states = np.array(data[&quot;causal_resp_states&quot;])
+    obs_exog_idxs = data[&quot;forecast_exog_idxs&quot;]
+    do_exog_idxs = data[&quot;causal_resp_exog_idxs&quot;]
+
+    # Time grid for interpolation: end of train (excl. last) + full forecast
+    obs_t = np.hstack([train_t[:-1], forecast_t])
+
+    # Observational intervention: exog follows observational trajectory (train -&gt; forecast_states)
+    obs_intervention = interfere.SignalIntervention(
+        obs_exog_idxs,
+        [
+            interp1d(obs_t, np.hstack([train_states[:-1, i], forecast_states[:, i]]))
+            for i in obs_exog_idxs
+        ],
+    )
+
+    # Do-intervention: exog follows intervention trajectory (train -&gt; causal_resp_states)
+    do_intervention = interfere.SignalIntervention(
+        do_exog_idxs,
+        [
+            interp1d(obs_t, np.hstack([train_states[:-1, i], causal_resp_states[:, i]]))
+            for i in do_exog_idxs
+        ],
+    )
+
+    return {
+        &quot;train_t&quot;: train_t,
+        &quot;forecast_t&quot;: forecast_t,
+        &quot;train_states&quot;: train_states,
+        &quot;forecast_states&quot;: forecast_states,
+        &quot;causal_resp_states&quot;: causal_resp_states,
+        &quot;obs_intervention&quot;: obs_intervention,
+        &quot;do_intervention&quot;: do_intervention,
+        &quot;model_description&quot;: data.get(&quot;model_description&quot;, &quot;&quot;),
+    }
+</code></pre>
+<p>This uses only <code>interfere</code>, <code>numpy</code>, and <code>scipy</code>; no separate experiments package.</p>
+<h2 id="minimal-end-to-end-example">Minimal end-to-end example</h2>
+<p>After loading with <code>load_benchmark</code>, fit on training data (with observational exog), run an observational forecast, then fit again with the do-intervention exog and run the intervention forecast. Compare both to the benchmark trajectories:</p>
+<pre><code class="language-python"># Load (path to your benchmark JSON)
+data = load_benchmark(&quot;examples/AttractingFixedPoint4D.json&quot;)
+train_t = data[&quot;train_t&quot;]
+forecast_t = data[&quot;forecast_t&quot;]
+train_states = data[&quot;train_states&quot;]
+obs_intervention = data[&quot;obs_intervention&quot;]
+do_intervention = data[&quot;do_intervention&quot;]
+
+# Fit on training data
+endog, exog = obs_intervention.split_exog(train_states)
+method = interfere.SINDy()
+method.fit(train_t, endog, exog)
+
+# Observational forecast: same exog as training continuation
+observational_pred = method.simulate(
+    forecast_t,
+    prior_states=train_states,
+    prior_t=train_t,
+    intervention=obs_intervention,
+)
+
+# Intervention forecast: fit with do-intervention exog, then simulate
+method2 = interfere.SINDy()
+endog2, exog2 = do_intervention.split_exog(train_states)
+method2.fit(train_t, endog2, exog2)
+intervention_pred = method2.simulate(
+    forecast_t,
+    prior_states=train_states,
+    prior_t=train_t,
+    intervention=do_intervention,
+)
+
+# Compare to ground truth
+forecast_rmse = np.sqrt(np.mean((observational_pred - data[&quot;forecast_states&quot;]) ** 2))
+intervention_rmse = np.sqrt(np.mean((intervention_pred - data[&quot;causal_resp_states&quot;]) ** 2))
+print(&quot;RMSE observational forecast:&quot;, forecast_rmse)
+print(&quot;RMSE intervention forecast:&quot;, intervention_rmse)
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../custom_forecast_methods/" class="btn btn-neutral float-left" title="Custom forecast methods"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../extended_paper/" class="btn btn-neutral float-right" title="Extended paper">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../custom_forecast_methods/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../extended_paper/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

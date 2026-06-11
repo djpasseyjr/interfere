@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Extended paper - interfere</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Extended paper";
+        var mkdocs_page_input_path = "extended_paper.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> interfere
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../simulation/">Simulation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../optimization/">Optimization</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../custom_forecast_methods/">Custom forecast methods</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmark/">Benchmark</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Extended paper</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#statement-of-need">Statement of Need</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-simulation">1. Simulation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-intervention">2. Intervention</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-optimization">3. Optimization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-intervention-response-prediction">4. Intervention Response Prediction</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#primary-contributions">Primary Contributions</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-dynamically-diverse-counterfactuals-at-scale">1. Dynamically Diverse Counterfactuals at Scale</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-cross-disciplinary-forecast-methods">2. Cross Disciplinary Forecast Methods</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-comprehensive-and-extensible-benchmarking">3. Comprehensive and Extensible Benchmarking</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#related-software-and-mathematical-foundations">Related Software and Mathematical Foundations</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#predictive-methods">Predictive Methods</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dynamic-models">Dynamic Models</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#acknowledgements">Acknowledgements</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#references">References</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">interfere</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Extended paper</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="interfere-studying-intervention-response-prediction-in-complex-dynamic-models-extended-version">Interfere: Studying Intervention Response Prediction in Complex Dynamic Models (Extended Version)</h1>
+<p><strong>Authors:</strong> D. J. Passey, Alice C. Schwarze, Zachary M. Boyd, Peter J. Mucha</p>
+<h2 id="summary">Summary</h2>
+<p>The vision of Interfere is simple: What if we used high-quality scientific models to create causal dynamic benchmark scenarios? Randomized experimental data and intervention response time series are essential for testing methods that attempt to infer dynamic relationships from data, but obtaining such datasets can be expensive and difficult. Mechanistic models are commonly developed to simulate scenarios and predict the response of systems to interventions across economics, neuroscience, ecology, systems biology and other areas <sup id="fnref:brayton_frbus_2014"><a class="footnote-ref" href="#fn:brayton_frbus_2014">1</a></sup><sup id="fnref:izhikevich_large-scale_2008"><a class="footnote-ref" href="#fn:izhikevich_large-scale_2008">2</a></sup><sup id="fnref:banks_parameter_2017"><a class="footnote-ref" href="#fn:banks_parameter_2017">3</a></sup><sup id="fnref:baker_mechanistic_2018"><a class="footnote-ref" href="#fn:baker_mechanistic_2018">4</a></sup>. Because these models are calibrated to the real world, they have the ability to generate diverse, complex, synthetic intervention responses that are characteristic of the real processes they emulate. Interfere offers the first steps towards this vision by combining (1) a general interface for simulating the effect of interventions on dynamic models, (2) a suite of predictive methods and cross validated hyper parameter optimization tools, and (3) the first known <a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">extensible benchmark data set</a> of dynamic intervention response scenarios (see Figure 1).</p>
+<p><img alt="Three-dimensional trajectories of sixty scenarios from differential equation and discrete time difference equation models." src="../images/sixty_models.png" /></p>
+<p><em><strong>Figure 1.</strong> Three-dimensional trajectories of sixty scenarios simulated with the Interfere
+package. The models simulated here are either differential equations or discrete time
+difference equations. For each system, the trajectory in blue represents the natural behavior of
+the system and the red depicts how the system responds to a specified intervention.
+Many of the models pictured have more than three dimensions (in such cases,
+only the three dimensions of the trajectory with the highest variance
+are shown). These sixty scenarios make up the <a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Interfere Benchmark 1.1.1</a> for
+intervention response prediction which is available online for download.</em></p>
+<h2 id="statement-of-need">Statement of Need</h2>
+<p>Over the past twenty years, the scientific community has experienced the emergence
+of multiple frameworks for identifying causal relationships in observational
+data <sup id="fnref:imbens_causal_2015"><a class="footnote-ref" href="#fn:imbens_causal_2015">5</a></sup><sup id="fnref:pearl_causality_2009"><a class="footnote-ref" href="#fn:pearl_causality_2009">6</a></sup><sup id="fnref:wieczorek_information_2019"><a class="footnote-ref" href="#fn:wieczorek_information_2019">7</a></sup>.
+The most influential frameworks are probabilistic and, while it is not a necessary
+condition for identifying causality, historically a static, linear relationship has
+often been assumed. However, when attempting to anticipate the response of complex dynamic
+systems in the medium and long term, a linear approximation of the dynamics can be
+insufficient.  Therefore, researchers have increasingly begun to employ
+non-linear, dynamic techniques for causal discovery and forecasting (e.g., <sup id="fnref:runge_discovering_2022"><a class="footnote-ref" href="#fn:runge_discovering_2022">8</a></sup>). Still,
+there are relatively few techniques that are able to fit causal dynamic
+nonlinear models to data. Because of this, we see an opportunity to bring
+together the insights from recent advancements in causal inference with
+historical work in dynamic modeling and simulation.</p>
+<p>In order to facilitate this cross pollination, we focus on a key problem --- predicting how a complex system responds to a previously unobserved intervention --- and designed the Interfere package for benchmarking tools aimed at intervention response prediction. The dynamic models contained in Interfere present challenges for computational methods that can likely only be addressed with the incorporation of mechanistic assumptions alongside probabilistic frameworks for causality. The Interfere package is a toolbox that allows researcher to validate predictive dynamic methods against simulated intervention scenarios. As such, the Interfere package encourages an opportunity for cross pollination between the probabilistic causal inference community and the modeling and simulation community.</p>
+<h2 id="usage">Usage</h2>
+<p>The Interfere package is designed around four tasks: (1) simulation, (2) intervention,
+(3) forecasting method optimization and (4) intervention response prediction. The following
+section will describe each task in detail alongside example code.</p>
+<h3 id="1-simulation">1. Simulation</h3>
+<p>The models implemented in the Interfere package are mainly stochastic
+differential equations (e.g. $d\mathbf{X} = A
+\mathbf{X} + d\mathbf{W}$)  simulated with the users choice of Ito's method or SR1, (a strong Runge-Kutta method, see <sup id="fnref:rosler_rungekutta_2010"><a class="footnote-ref" href="#fn:rosler_rungekutta_2010">9</a></sup>) or stochastic difference equations (e.g. $x[n+1] = 0.25 x[n] -
+0.5 x[n-1]$),
+simulated via initial conditions and stepping forward in time. Each dynamic model class included in the Interfere package has a simulate method.  To run a
+simulation, the package requires an array of equally spaced time values and and array containing
+initial conditions or historic observations. For example, the following code block produces the trajectories similar to those plotted in Figure 2:</p>
+<pre><code class="language-python">import numpy as np
+import interfere
+import optuna
+
+# Set up simulation parameters
+initial_cond = np.random.rand(3)
+t_train = np.arange(0, 10, 0.05)
+dynamics = interfere.dynamics.Belozyorov3DQuad(sigma=0.5)
+
+# Generate trajectory
+sim_states = dynamics.simulate(t_train, initial_cond)
+</code></pre>
+<p><img alt="Simulation of the quadratic Belozyorov system." src="../images/original_trajectory.png" /></p>
+<p><em><strong>Figure 2. Simulation of System:</strong> The natural, uninterupted evolution of the quaratic Belozyorov system <sup id="fnref:belozyorov_exponential_2015"><a class="footnote-ref" href="#fn:belozyorov_exponential_2015">10</a></sup> with the addition of a small
+amount of stochastic noise simulated using the Interfere package (only two of three dimensions shown).</em></p>
+<h3 id="2-intervention">2. Intervention</h3>
+<p>Next, we can take exogenous control of $x$ by pinning it to $\sin(t)$ and simulate the response of
+ $y$. The resulting simulation reveals how the behavior of the system is
+ altered by this particular intervention. See Figure 3 to see how the quadratic Belozyorov system <sup id="fnref2:belozyorov_exponential_2015"><a class="footnote-ref" href="#fn:belozyorov_exponential_2015">10</a></sup> responds to this intervention.</p>
+<pre><code class="language-python"># Time points for the intervention simulation
+test_t = np.arange(t_train[-1], 15, 0.05)
+
+# Intervention initialization
+intervention = interfere.SignalIntervention(iv_idxs=1, signals=np.sin)
+
+# Simulate intervention
+interv_states = dynamics.simulate(
+    test_t,
+    prior_states=sim_states,
+    intervention=intervention,
+)
+</code></pre>
+<p><img alt="System trajectory with intervention." src="../images/intervention_effect.png" /></p>
+<p><em><strong>Figure 3. System trajectory with intervention:</strong> The figure above demonstrates the
+effect that taking exogenous control of $x(t)$ by via $\text{do}(x(t)=\sin(t))$
+has on $y$. The intervention (black) and
+response (blue), depict a clear departure from
+the natural evolution behavior of the system.</em></p>
+<h3 id="3-optimization">3. Optimization</h3>
+<p>Interfere offers tools to optimize forecasting methods for time series
+prediction. By using Interfere's cross validation objective function along with a
+hyperparameter optimizer such as Optuna <sup id="fnref:akiba2019optuna"><a class="footnote-ref" href="#fn:akiba2019optuna">11</a></sup>, it is possible to compare
+hyperparameter settings on multiple folds of time series data, the data can be purely observational 
+(as in the benchmark) or contain interventions and responses. 
+Every Interfere forecasting method comes with sensible preset
+hyperparameter ranges for the optimizer to explore. Hyperparameter optimization of cross validated error
+is demonstrated in the following code block.</p>
+<pre><code class="language-python">
+# Select the SINDy method for hyperparameter optimization.
+method_type = interfere.SINDy
+
+# Create an objective function that aims to minimize cross validation error
+# over different hyper parameter configurations for SINDy
+cv_obj = interfere.CrossValObjective(
+    method_type=method_type,
+    data=sim_states,
+    times=t_train,
+    train_window_percent=0.3,
+    num_folds=5,
+    exog_idxs=intervention.iv_idxs,
+)
+
+# Run the study using optuna.
+study = optuna.create_study()
+study.optimize(cv_obj, n_trials=25)
+
+# Collect the best hyperparameters into a dictionary.
+best_param_dict = study.best_params
+</code></pre>
+<h3 id="4-intervention-response-prediction">4. Intervention Response Prediction</h3>
+<p>Using the best parameters from the hyperparameter optimization run, we can fit
+the forecasting
+method to all the data that occurred prior to the intervention, treating the states we plan to manipulate as
+exogenous. This way, the method expects to be given exogenous data about the
+intervention variable(s). After fitting to the unperturbed system, we forecast
+the intervention response by treating the desired intervention as an exogenous
+input signal applied during forecasting. Figure 4 demonstrates the optimized model's ability to forecast the intervention response.</p>
+<pre><code class="language-python"># Initialize SINDy with the best perfoming parameters.
+method = interfere.SINDy(**study.best_params)
+
+# Use an intervention helper function to split the pre-intervention data
+# into endogenous and exogenous columns.
+Y_endog, Y_exog = intervention.split_exog(sim_states)
+
+# Fit SINDy to the pre-intervention data.
+method.fit(t_train, Y_endog, Y_exog)
+
+# Use the inherited interfere.ForecastMethod.simulate() method
+# To simulate intervention response using SINDy
+pred_traj = method.simulate(
+    test_t, prior_states=sim_states, intervention=intervention
+)
+</code></pre>
+<p><img alt="Forecasting intervention response of the Belozyorov system." src="../images/prediction_comparison.png" /></p>
+<p><em><strong>Figure 4. Forecasting Intervention Response:</strong> Example of forecasting the response of
+the Belozyorov system to a sinusoidal intervention. Here,
+the intervention consists of 
+taking exogenous control of $x(t)$ (black). The ground truth response, $y(t)$ for
+$t &gt; 10$ is plotted in blue. Here, an equation discovery algorithm, SINDy,
+<sup id="fnref:brunton_discovering_2016"><a class="footnote-ref" href="#fn:brunton_discovering_2016">12</a></sup> is fit to the data that occurs prior to the
+intervention and makes an attempt to predict the intervention response (red
+curve). However, not all intervention responses can be so accurately predicted. See the bottom left of Figure 5 for a failed forecast scenario.</em></p>
+<h2 id="primary-contributions">Primary Contributions</h2>
+<p>The Interfere package provides three primary contributions. (1) Dynamically diverse counterfactuals at scale, (2) cross diciplinary forecast methods, and (3) comprehensive and extensible benchmarking.</p>
+<p><img alt="Comparing intervention response prediction for deterministic and stochastic systems." src="../images/det_v_stoch.png" /></p>
+<p><em><strong>Figure 5.</strong> Example experimental setup possible with Interfere: Can stochasticity help reveal associations between variables? Interfere can be used to comparing intervention response prediction for deterministic and stochastic versions of the same system.</em></p>
+<h3 id="1-dynamically-diverse-counterfactuals-at-scale">1. Dynamically Diverse Counterfactuals at Scale</h3>
+<p>The "dynamics" submodule in the Interfere package contains over fifty dynamic models. It contains a mix of linear, nonlinear, chaotic, continuous time, discrete time, stochastic, and deterministic models. The models come from a variety of disciplines including finance, ecology, biology, neuroscience and public health. Each model inherits the from the Interfere BaseDynamics type and gains the ability to take exogenous control of any observed state and to add measurement noise. Most models also gain the ability to make any observed state stochastic where magnitude of stochasticity can be controlled by a simple scalar parameter or fine tuned with a covariance matrix.</p>
+<p>Because of the difficulty of building models of complex systems, predictive methods for complex dynamics are typically benchmarked on less than ten dynamical systems <sup id="fnref:challu_nhits_2023"><a class="footnote-ref" href="#fn:challu_nhits_2023">13</a></sup><sup id="fnref2:brunton_discovering_2016"><a class="footnote-ref" href="#fn:brunton_discovering_2016">12</a></sup><sup id="fnref:vlachas_backpropagation_2020"><a class="footnote-ref" href="#fn:vlachas_backpropagation_2020">14</a></sup><sup id="fnref:pathak_model-free_2018"><a class="footnote-ref" href="#fn:pathak_model-free_2018">15</a></sup><sup id="fnref:prasse_predicting_2022"><a class="footnote-ref" href="#fn:prasse_predicting_2022">16</a></sup>. As such, Interfere offers a clear improvement over current benchmarking methods for prediction in complex dynamics.</p>
+<p>Most importantly, Interfere is built around interventions: the ability to take exogenous control of one or several state variables in a complex system and observe the response. Imbuing a suite of scientific models with general exogenous control is no small feat because models can be complex and are implemented in a variety of ways. Interfere offers the ability to produce complex dynamic intervention response and standard forecasting scenarios at scale. This unique feature enables large scale evaluation of dynamic causal prediction methods—tested against systems with properties of interest to scientists. For example, we can simulate the change in concentration of ammonia based on the nitrogen cycle and an exogenous fertilizing schedule.</p>
+<h3 id="2-cross-disciplinary-forecast-methods">2. Cross Disciplinary Forecast Methods</h3>
+<p>A second contribution of Interfere is the integration of dynamic <em>forecasting</em> methodologies from deep learning (LSTM, NHITS), applied mathematics (SINDy, Reservoir Computers) and social science (VAR). The Interfere "ForecastMethod" class is expressive enough to describe, fit and predict with multivariate dynamic models and apply interventions to the states of the models during prediction. This cross disciplinary mix of techniques has the potential to produce new insights into the problem of intervention response prediction among others. For example, experiments using this package have revealed that cross validation error does not correlate with well with prediction error when LSTM and NHITS attempt to predict intervention response.</p>
+<h3 id="3-comprehensive-and-extensible-benchmarking">3. Comprehensive and Extensible Benchmarking</h3>
+<p>The third major contribution of Interfere is the collection of dynamic scenarios organized into the <a href="https://drive.google.com/file/d/19_Ha-D8Kb1fFJ_iECU62eawbeuCpeV_g/view?usp=sharing">Interfere Benchmark</a>. The Interfere Benchmark is a comprehensive and extensible set of dynamic scenarios that are conveniently available for testing methods that predict the effects of interventions. The benchmark set contains 60 intervention response scenarios for testing, each simulated with different levels of stochastic noise. Each scenario is housed in a JSON file, complete with full metadata annotation, documentation, versioning and commit hashes marking the commit of Interfere that was used to generate the data. The scenarios was revied by hand with some systems exposed to exogenous input to ensure that none of the key variables settle into a steady state. Additionally, all interventions were chosen in a manner such that the response of the target variable is a significant departure from its previous behavior.</p>
+<p>The Interfere package enables researchers from various backgrounds to systematically study the problem of predicting intervention response on simulated data from a wide range of disciplines. It thereby facilitates future progress towards correctly anticipating how complex systems will respond in new, never before seen scenarios.</p>
+<h2 id="related-software-and-mathematical-foundations">Related Software and Mathematical Foundations</h2>
+<h3 id="predictive-methods">Predictive Methods</h3>
+<p>The Interfere package draws from the Nixtla open source ecosystem for time series forecasting. We implemented intervention support for LSTM and NHITS from the NeuralForecast package, and for ARIMA from the StatsForecast package <sup id="fnref:olivares2022library_neuralforecast"><a class="footnote-ref" href="#fn:olivares2022library_neuralforecast">17</a></sup><sup id="fnref:garza2022statsforecast"><a class="footnote-ref" href="#fn:garza2022statsforecast">18</a></sup>. We followed Nixtla's example for cross validation and hyperparameter optimization approaches. We integrated predictive methods from the PySINDy <sup id="fnref:kaptanoglu2022"><a class="footnote-ref" href="#fn:kaptanoglu2022">19</a></sup> and StatsModels <sup id="fnref:seabold2010statsmodels"><a class="footnote-ref" href="#fn:seabold2010statsmodels">20</a></sup> packages. We also include ResComp, a reservoir computing method for global forecasts from <sup id="fnref:harding_global_2024"><a class="footnote-ref" href="#fn:harding_global_2024">21</a></sup>. Hyperparameter optimization is designed around the Optuna framework <sup id="fnref2:akiba2019optuna"><a class="footnote-ref" href="#fn:akiba2019optuna">11</a></sup>.</p>
+<p>While other forecasting methods exist, integrating a method with Interfere requires that the method is capable of (1) multivariate endogenous dynamic forecasting, (2) support for exogenous variables, and (3) support for flexible length forecast windows or recursive predictions. Few forecasting methods meet these criteria, and it is our hope that this package can encourage the development of additional methods.</p>
+<h3 id="dynamic-models">Dynamic Models</h3>
+<p>The table below list the dynamic models that are currently implemented in the Interfere package, plus attributions. These dynamic models in were implemented directly from mathematical descriptions except for two, "Hodgkin Huxley Pyclustering" and "Stuart Landau Kuramoto" which adapt existing simulations from the PyClustering package <sup id="fnref:novikov2019"><a class="footnote-ref" href="#fn:novikov2019">22</a></sup>.</p>
+<table>
+<thead>
+<tr>
+<th>Dynamic Model Class</th>
+<th>Description and Source</th>
+<th>Properties</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Arithmetic Brownian Motion</td>
+<td>Brownian motion with linear drift and constant diffusion <sup id="fnref:oksendal_stochastic_2005"><a class="footnote-ref" href="#fn:oksendal_stochastic_2005">23</a></sup></td>
+<td>Stochastic, Linear</td>
+</tr>
+<tr>
+<td>Coupled Logistic Map</td>
+<td>Discrete-time logistic map with spatial coupling <sup id="fnref:lloyd_coupled_1995"><a class="footnote-ref" href="#fn:lloyd_coupled_1995">24</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Stochastic Coupled Map Lattice</td>
+<td>Coupled map lattice with stochastic noise <sup id="fnref:kaneko_coupled_1991"><a class="footnote-ref" href="#fn:kaneko_coupled_1991">25</a></sup></td>
+<td>Nonlinear, Stochastic, Chaotic</td>
+</tr>
+<tr>
+<td>Michaelis Menten</td>
+<td>Model for enzyme kinetics and biochemical reaction networks <sup id="fnref:srinivasan_guide_2022"><a class="footnote-ref" href="#fn:srinivasan_guide_2022">26</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Lotka Volterra SDE</td>
+<td>Stochastic Lotka-Volterra predator-prey model <sup id="fnref:hening_stochastic_2018"><a class="footnote-ref" href="#fn:hening_stochastic_2018">27</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Kuramoto</td>
+<td>Coupled oscillator model to study synchronization <sup id="fnref:rodrigues_kuramoto_2016"><a class="footnote-ref" href="#fn:rodrigues_kuramoto_2016">28</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Kuramoto Sakaguchi</td>
+<td>Kuramoto model variant with phase frustration <sup id="fnref:sakaguchi_soluble_1986"><a class="footnote-ref" href="#fn:sakaguchi_soluble_1986">29</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Hodgkin Huxley Pyclustering</td>
+<td>Neuron action-potential dynamics based on Hodgkin-Huxley equations <sup id="fnref:hodgkin_quantitative_1952"><a class="footnote-ref" href="#fn:hodgkin_quantitative_1952">30</a></sup></td>
+<td>Nonlinear</td>
+</tr>
+<tr>
+<td>Stuart Landau Kuramoto</td>
+<td>Coupled oscillators with amplitude-phase dynamics <sup id="fnref:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Mutualistic Population</td>
+<td>Dynamics of interacting mutualistic species <sup id="fnref2:prasse_predicting_2022"><a class="footnote-ref" href="#fn:prasse_predicting_2022">16</a></sup></td>
+<td>Nonlinear</td>
+</tr>
+<tr>
+<td>Ornstein Uhlenbeck</td>
+<td>Mean-reverting stochastic differential equation <sup id="fnref:gardiner_stochastic_2009"><a class="footnote-ref" href="#fn:gardiner_stochastic_2009">32</a></sup></td>
+<td>Stochastic, Linear</td>
+</tr>
+<tr>
+<td>Belozyorov 3D Quad</td>
+<td>3-dimensional quadratic chaotic system <sup id="fnref3:belozyorov_exponential_2015"><a class="footnote-ref" href="#fn:belozyorov_exponential_2015">10</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Liping 3D Quad Finance</td>
+<td>Chaotic dynamics applied in financial modeling <sup id="fnref:liping_new_2021"><a class="footnote-ref" href="#fn:liping_new_2021">33</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Lorenz</td>
+<td>Classic chaotic system describing atmospheric convection <sup id="fnref:lorenz_deterministic_2017"><a class="footnote-ref" href="#fn:lorenz_deterministic_2017">34</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Rossler</td>
+<td>Simplified 3D chaotic attractor system <sup id="fnref:rossler_equation_1976"><a class="footnote-ref" href="#fn:rossler_equation_1976">35</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Thomas</td>
+<td>Chaotic attractor with simple structure and rich dynamics <sup id="fnref:thomas_deterministic_1999"><a class="footnote-ref" href="#fn:thomas_deterministic_1999">36</a></sup></td>
+<td>Nonlinear, Chaotic</td>
+</tr>
+<tr>
+<td>Damped Oscillator</td>
+<td>Harmonic oscillator with damping and noise (Classical linear model)</td>
+<td>Linear, Stochastic</td>
+</tr>
+<tr>
+<td>SIS</td>
+<td>Epidemiological model (Susceptible-Infected-Susceptible) <sup id="fnref3:prasse_predicting_2022"><a class="footnote-ref" href="#fn:prasse_predicting_2022">16</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>VARMA Dynamics</td>
+<td>Vector AutoRegressive Moving Average for time series modeling <sup id="fnref:hamilton_time_2020"><a class="footnote-ref" href="#fn:hamilton_time_2020">37</a></sup></td>
+<td>Linear, Stochastic</td>
+</tr>
+<tr>
+<td>Wilson Cowan</td>
+<td>Neural mass model for neuronal population dynamics <sup id="fnref:wilson_excitatory_1972"><a class="footnote-ref" href="#fn:wilson_excitatory_1972">38</a></sup></td>
+<td>Nonlinear</td>
+</tr>
+<tr>
+<td>Geometric Brownian Motion</td>
+<td>Stochastic model widely used in financial mathematics <sup id="fnref:black_pricing_1973"><a class="footnote-ref" href="#fn:black_pricing_1973">39</a></sup></td>
+<td>Nonlinear, Stochastic</td>
+</tr>
+<tr>
+<td>Planted Tank Nitrogen Cycle</td>
+<td>Biochemical cycle modeling nitrogen transformation in aquatic systems <sup id="fnref:fazio_mathematical_2006"><a class="footnote-ref" href="#fn:fazio_mathematical_2006">40</a></sup></td>
+<td>Nonlinear</td>
+</tr>
+<tr>
+<td>Generative Forecaster</td>
+<td>Predictive forecasting models trained on simulation, then used to generate data (Written for Interfere)</td>
+<td>Stochastic</td>
+</tr>
+<tr>
+<td>Standard Normal Noise</td>
+<td>IID noise from standard normal distribution <sup id="fnref2:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Stochastic</td>
+</tr>
+<tr>
+<td>Standard Cauchy Noise</td>
+<td>IID noise from standard Cauchy distribution <sup id="fnref3:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Stochastic</td>
+</tr>
+<tr>
+<td>Standard Exponential Noise</td>
+<td>IID noise from standard exponential distribution <sup id="fnref4:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Stochastic</td>
+</tr>
+<tr>
+<td>Standard Gamma Noise</td>
+<td>IID noise from standard gamma distribution <sup id="fnref5:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Stochastic</td>
+</tr>
+<tr>
+<td>Standard T Noise</td>
+<td>IID noise from Student's t-distribution <sup id="fnref6:cliff_unifying_2023"><a class="footnote-ref" href="#fn:cliff_unifying_2023">31</a></sup></td>
+<td>Stochastic</td>
+</tr>
+</tbody>
+</table>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>The work described here was supported by an NSF Graduate Research Fellowship (DJP) and by award W911NF2510049 from the Army Research Office. The content is solely the responsibility of the authors and does not necessarily represent the official views of any agency supporting this research.</p>
+<h2 id="references">References</h2>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:brayton_frbus_2014">
+<p>Flint Brayton, Thomas Laubach, and David Reifschneider. The FRB/US model: a tool for macroeconomic policy analysis. <em>FEDS Notes</em>, pages 03, 2014. <a href="https://doi.org/10.17016/2380-7172.0012">doi:10.17016/2380-7172.0012</a>.&#160;<a class="footnote-backref" href="#fnref:brayton_frbus_2014" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:izhikevich_large-scale_2008">
+<p>Eugene M. Izhikevich and Gerald M. Edelman. Large-scale model of mammalian thalamocortical systems. <em>Proceedings of the National Academy of Sciences</em>, 105(9):3593–3598, March 2008. URL: <a href="https://pnas.org/doi/full/10.1073/pnas.0712231105">https://pnas.org/doi/full/10.1073/pnas.0712231105</a> (visited on 2025-03-20), <a href="https://doi.org/10.1073/pnas.0712231105">doi:10.1073/pnas.0712231105</a>.&#160;<a class="footnote-backref" href="#fnref:izhikevich_large-scale_2008" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:banks_parameter_2017">
+<p>H.T. Banks, J.E. Banks, R. Bommarco, A. Curtsdotter, T. Jonsson, and A.N. Laubmeier. Parameter estimation for an allometric food web model. <em>International Journal of Pure and Applied Mathematics</em>, April 2017. URL: <a href="http://www.ijpam.eu/contents/2017-114-1/12/">http://www.ijpam.eu/contents/2017-114-1/12/</a> (visited on 2023-10-06), <a href="https://doi.org/10.12732/ijpam.v114i1.12">doi:10.12732/ijpam.v114i1.12</a>.&#160;<a class="footnote-backref" href="#fnref:banks_parameter_2017" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:baker_mechanistic_2018">
+<p>Ruth E. Baker, Jose-Maria Peña, Jayaratnam Jayamohan, and Antoine Jérusalem. Mechanistic models versus machine learning, a fight worth fighting for the biological community? <em>Biology Letters</em>, 14(5):20170660, May 2018. URL: <a href="https://royalsocietypublishing.org/doi/10.1098/rsbl.2017.0660">https://royalsocietypublishing.org/doi/10.1098/rsbl.2017.0660</a> (visited on 2025-03-19), <a href="https://doi.org/10.1098/rsbl.2017.0660">doi:10.1098/rsbl.2017.0660</a>.&#160;<a class="footnote-backref" href="#fnref:baker_mechanistic_2018" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:imbens_causal_2015">
+<p>Guido W. Imbens and Donald B. Rubin. <em>Causal Inference for Statistics, Social, and Biomedical Sciences: An Introduction</em>. Cambridge University Press, 1 edition, April 2015. ISBN 978-0-521-88588-1 978-1-139-02575-1. URL: <a href="https://www.cambridge.org/core/product/identifier/9781139025751/type/book">https://www.cambridge.org/core/product/identifier/9781139025751/type/book</a> (visited on 2023-10-05), <a href="https://doi.org/10.1017/CBO9781139025751">doi:10.1017/CBO9781139025751</a>.&#160;<a class="footnote-backref" href="#fnref:imbens_causal_2015" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:pearl_causality_2009">
+<p>Judea Pearl. <em>Causality</em>. Cambridge University Press, Cambridge, 2 edition, 2009. ISBN 978-0-521-89560-6. URL: <a href="https://www.cambridge.org/core/books/causality/B0046844FAE10CBF274D4ACBDAEB5F5B">https://www.cambridge.org/core/books/causality/B0046844FAE10CBF274D4ACBDAEB5F5B</a> (visited on 2023-10-05), <a href="https://doi.org/10.1017/CBO9780511803161">doi:10.1017/CBO9780511803161</a>.&#160;<a class="footnote-backref" href="#fnref:pearl_causality_2009" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:wieczorek_information_2019">
+<p>Aleksander Wieczorek and Volker Roth. Information theoretic causal effect quantification. <em>Entropy</em>, 21(10):975, October 2019. URL: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7514306/">https://pmc.ncbi.nlm.nih.gov/articles/PMC7514306/</a> (visited on 2024-11-16), <a href="https://doi.org/10.3390/e21100975">doi:10.3390/e21100975</a>.&#160;<a class="footnote-backref" href="#fnref:wieczorek_information_2019" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+<li id="fn:runge_discovering_2022">
+<p>Jakob Runge. Discovering contemporaneous and lagged causal relations in autocorrelated nonlinear time series datasets. January 2022. arXiv:2003.03685 [stat]. URL: <a href="http://arxiv.org/abs/2003.03685">http://arxiv.org/abs/2003.03685</a> (visited on 2025-03-17), <a href="https://doi.org/10.48550/arXiv.2003.03685">doi:10.48550/arXiv.2003.03685</a>.&#160;<a class="footnote-backref" href="#fnref:runge_discovering_2022" title="Jump back to footnote 8 in the text">&#8617;</a></p>
+</li>
+<li id="fn:rosler_rungekutta_2010">
+<p>Andreas Rößler. Runge–Kutta methods for the strong approximation of solutions of stochastic differential equations. <em>SIAM Journal on Numerical Analysis</em>, 48(3):922–952, January 2010. Publisher: Society for Industrial and Applied Mathematics. URL: <a href="https://epubs.siam.org/doi/abs/10.1137/09076636X">https://epubs.siam.org/doi/abs/10.1137/09076636X</a> (visited on 2025-05-08), <a href="https://doi.org/10.1137/09076636X">doi:10.1137/09076636X</a>.&#160;<a class="footnote-backref" href="#fnref:rosler_rungekutta_2010" title="Jump back to footnote 9 in the text">&#8617;</a></p>
+</li>
+<li id="fn:belozyorov_exponential_2015">
+<p>Vasiliy Ye Belozyorov. Exponential-algebraic maps and chaos in 3D autonomous quadratic systems. <em>International Journal of Bifurcation and Chaos</em>, 25(04):1550048, 2015. Publisher: World Scientific. <a href="https://doi.org/10.1142/S0218127415500480">doi:10.1142/S0218127415500480</a>.&#160;<a class="footnote-backref" href="#fnref:belozyorov_exponential_2015" title="Jump back to footnote 10 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:belozyorov_exponential_2015" title="Jump back to footnote 10 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:belozyorov_exponential_2015" title="Jump back to footnote 10 in the text">&#8617;</a></p>
+</li>
+<li id="fn:akiba2019optuna">
+<p>Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama. Optuna: a next-generation hyperparameter optimization framework. In <em>The 25th ACM SIGKDD International Conference on Knowledge Discovery &amp; Data Mining</em>, 2623–2631. 2019.&#160;<a class="footnote-backref" href="#fnref:akiba2019optuna" title="Jump back to footnote 11 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:akiba2019optuna" title="Jump back to footnote 11 in the text">&#8617;</a></p>
+</li>
+<li id="fn:brunton_discovering_2016">
+<p>Steven L. Brunton, Joshua L. Proctor, and J. Nathan Kutz. Discovering governing equations from data by sparse identification of nonlinear dynamical systems. <em>Proceedings of the National Academy of Sciences</em>, 113(15):3932–3937, April 2016. URL: <a href="https://pnas.org/doi/full/10.1073/pnas.1517384113">https://pnas.org/doi/full/10.1073/pnas.1517384113</a> (visited on 2023-10-10), <a href="https://doi.org/10.1073/pnas.1517384113">doi:10.1073/pnas.1517384113</a>.&#160;<a class="footnote-backref" href="#fnref:brunton_discovering_2016" title="Jump back to footnote 12 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:brunton_discovering_2016" title="Jump back to footnote 12 in the text">&#8617;</a></p>
+</li>
+<li id="fn:challu_nhits_2023">
+<p>Cristian Challu, Kin G. Olivares, Boris N. Oreshkin, Federico Garza Ramirez, Max Mergenthaler Canseco, and Artur Dubrawski. NHITS: neural hierarchical interpolation for time series forecasting. <em>Proceedings of the AAAI Conference on Artificial Intelligence</em>, 37(6):6989–6997, June 2023. Number: 6. URL: <a href="https://ojs.aaai.org/index.php/AAAI/article/view/25854">https://ojs.aaai.org/index.php/AAAI/article/view/25854</a> (visited on 2025-03-21), <a href="https://doi.org/10.1609/aaai.v37i6.25854">doi:10.1609/aaai.v37i6.25854</a>.&#160;<a class="footnote-backref" href="#fnref:challu_nhits_2023" title="Jump back to footnote 13 in the text">&#8617;</a></p>
+</li>
+<li id="fn:vlachas_backpropagation_2020">
+<p>P.R. Vlachas, J. Pathak, B.R. Hunt, T.P. Sapsis, M. Girvan, E. Ott, and P. Koumoutsakos. Backpropagation algorithms and reservoir computing in recurrent neural networks for the forecasting of complex spatiotemporal dynamics. <em>Neural Networks</em>, 126:191–217, June 2020. URL: <a href="https://linkinghub.elsevier.com/retrieve/pii/S0893608020300708">https://linkinghub.elsevier.com/retrieve/pii/S0893608020300708</a> (visited on 2025-02-19), <a href="https://doi.org/10.1016/j.neunet.2020.02.016">doi:10.1016/j.neunet.2020.02.016</a>.&#160;<a class="footnote-backref" href="#fnref:vlachas_backpropagation_2020" title="Jump back to footnote 14 in the text">&#8617;</a></p>
+</li>
+<li id="fn:pathak_model-free_2018">
+<p>Jaideep Pathak, Brian Hunt, Michelle Girvan, Zhixin Lu, and Edward Ott. Model-free prediction of large spatiotemporally chaotic systems from data: a reservoir computing approach. <em>Physical Review Letters</em>, 120(2):024102, January 2018. Publisher: American Physical Society. URL: <a href="https://link.aps.org/doi/10.1103/PhysRevLett.120.024102">https://link.aps.org/doi/10.1103/PhysRevLett.120.024102</a> (visited on 2025-02-19), <a href="https://doi.org/10.1103/PhysRevLett.120.024102">doi:10.1103/PhysRevLett.120.024102</a>.&#160;<a class="footnote-backref" href="#fnref:pathak_model-free_2018" title="Jump back to footnote 15 in the text">&#8617;</a></p>
+</li>
+<li id="fn:prasse_predicting_2022">
+<p>Bastian Prasse and Piet Van Mieghem. Predicting network dynamics without requiring the knowledge of the interaction graph. <em>Proceedings of the National Academy of Sciences</em>, 119(44):e2205517119, November 2022. Publisher: Proceedings of the National Academy of Sciences. URL: <a href="https://www.pnas.org/doi/10.1073/pnas.2205517119">https://www.pnas.org/doi/10.1073/pnas.2205517119</a> (visited on 2025-01-14), <a href="https://doi.org/10.1073/pnas.2205517119">doi:10.1073/pnas.2205517119</a>.&#160;<a class="footnote-backref" href="#fnref:prasse_predicting_2022" title="Jump back to footnote 16 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:prasse_predicting_2022" title="Jump back to footnote 16 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:prasse_predicting_2022" title="Jump back to footnote 16 in the text">&#8617;</a></p>
+</li>
+<li id="fn:olivares2022library_neuralforecast">
+<p>Kin G. Olivares, Cristian Challú, Azul Garza, Max Mergenthaler Canseco, and Artur Dubrawski. NeuralForecast: user friendly state-of-the-art neural forecasting models. PyCon Salt Lake City, Utah, US 2022, 2022. URL: <a href="https://github.com/Nixtla/neuralforecast">https://github.com/Nixtla/neuralforecast</a>.&#160;<a class="footnote-backref" href="#fnref:olivares2022library_neuralforecast" title="Jump back to footnote 17 in the text">&#8617;</a></p>
+</li>
+<li id="fn:garza2022statsforecast">
+<p>Azul Garza, Max Mergenthaler Canseco, Cristian Challú, and Kin G. Olivares. StatsForecast: lightning fast forecasting with statistical and econometric models. PyCon Salt Lake City, Utah, US 2022, 2022. URL: <a href="https://github.com/Nixtla/statsforecast">https://github.com/Nixtla/statsforecast</a>.&#160;<a class="footnote-backref" href="#fnref:garza2022statsforecast" title="Jump back to footnote 18 in the text">&#8617;</a></p>
+</li>
+<li id="fn:kaptanoglu2022">
+<p>Alan A. Kaptanoglu, Brian M. de Silva, Urban Fasel, Kadierdan Kaheman, Andy J. Goldschmidt, Jared Callaham, Charles B. Delahunt, Zachary G. Nicolaou, Kathleen Champion, Jean-Christophe Loiseau, J. Nathan Kutz, and Steven L. Brunton. Pysindy: a comprehensive Python package for robust sparse system identification. <em>Journal of Open Source Software</em>, 7(69):3994, 2022. URL: <a href="https://doi.org/10.21105/joss.03994">https://doi.org/10.21105/joss.03994</a>, <a href="https://doi.org/10.21105/joss.03994">doi:10.21105/joss.03994</a>.&#160;<a class="footnote-backref" href="#fnref:kaptanoglu2022" title="Jump back to footnote 19 in the text">&#8617;</a></p>
+</li>
+<li id="fn:seabold2010statsmodels">
+<p>Skipper Seabold and Josef Perktold. Statsmodels: econometric and statistical modeling with Python. In <em>9th Python in Science Conference</em>. 2010. <a href="https://doi.org/10.25080/majora-92bf1922-011">doi:10.25080/majora-92bf1922-011</a>.&#160;<a class="footnote-backref" href="#fnref:seabold2010statsmodels" title="Jump back to footnote 20 in the text">&#8617;</a></p>
+</li>
+<li id="fn:harding_global_2024">
+<p>S. Harding, Q. Leishman, W. Lunceford, D. J. Passey, T. Pool, and B. Webb. Global forecasts in reservoir computers. <em>Chaos: An Interdisciplinary Journal of Nonlinear Science</em>, 34(2):023136, February 2024. URL: <a href="https://doi.org/10.1063/5.0181694">https://doi.org/10.1063/5.0181694</a> (visited on 2025-02-19), <a href="https://doi.org/10.1063/5.0181694">doi:10.1063/5.0181694</a>.&#160;<a class="footnote-backref" href="#fnref:harding_global_2024" title="Jump back to footnote 21 in the text">&#8617;</a></p>
+</li>
+<li id="fn:novikov2019">
+<p>Andrei V. Novikov. Pyclustering: data mining library. <em>Journal of Open Source Software</em>, 4(36):1230, 2019. URL: <a href="https://doi.org/10.21105/joss.01230">https://doi.org/10.21105/joss.01230</a>, <a href="https://doi.org/10.21105/joss.01230">doi:10.21105/joss.01230</a>.&#160;<a class="footnote-backref" href="#fnref:novikov2019" title="Jump back to footnote 22 in the text">&#8617;</a></p>
+</li>
+<li id="fn:oksendal_stochastic_2005">
+<p>Bernt Karsten Øksendal. <em>Stochastic differential equations: an introduction with applications</em>. Universitext. Springer, Berlin, 6th ed., corrected third printing 2005 edition, 2005. ISBN 978-3-540-04758-2.&#160;<a class="footnote-backref" href="#fnref:oksendal_stochastic_2005" title="Jump back to footnote 23 in the text">&#8617;</a></p>
+</li>
+<li id="fn:lloyd_coupled_1995">
+<p>Alun L Lloyd. The coupled logistic map: a simple model for the effects of spatial heterogeneity on population dynamics. <em>Journal of Theoretical Biology</em>, 173(3):217–230, 1995. Publisher: Elsevier. <a href="https://doi.org/10.1006/jtbi.1995.0058">doi:10.1006/jtbi.1995.0058</a>.&#160;<a class="footnote-backref" href="#fnref:lloyd_coupled_1995" title="Jump back to footnote 24 in the text">&#8617;</a></p>
+</li>
+<li id="fn:kaneko_coupled_1991">
+<p>Kunihiko Kaneko. Coupled map lattice. In <em>Chaos, Order, and Patterns</em>, pages 237–247. Springer, 1991.&#160;<a class="footnote-backref" href="#fnref:kaneko_coupled_1991" title="Jump back to footnote 25 in the text">&#8617;</a></p>
+</li>
+<li id="fn:srinivasan_guide_2022">
+<p>Bharath Srinivasan. A guide to the Michaelis–Menten equation: steady state and beyond. <em>The FEBS journal</em>, 289(20):6086–6098, 2022. Publisher: Wiley Online Library. <a href="https://doi.org/10.1111/febs.16124">doi:10.1111/febs.16124</a>.&#160;<a class="footnote-backref" href="#fnref:srinivasan_guide_2022" title="Jump back to footnote 26 in the text">&#8617;</a></p>
+</li>
+<li id="fn:hening_stochastic_2018">
+<p>Alexandru Hening and Dang H Nguyen. Stochastic Lotka–Volterra food chains. <em>Journal of mathematical biology</em>, 77:135–163, 2018. Publisher: Springer.&#160;<a class="footnote-backref" href="#fnref:hening_stochastic_2018" title="Jump back to footnote 27 in the text">&#8617;</a></p>
+</li>
+<li id="fn:rodrigues_kuramoto_2016">
+<p>Francisco A Rodrigues, Thomas K DM Peron, Peng Ji, and Jürgen Kurths. The Kuramoto model in complex networks. <em>Physics Reports</em>, 610:1–98, 2016. Publisher: Elsevier.&#160;<a class="footnote-backref" href="#fnref:rodrigues_kuramoto_2016" title="Jump back to footnote 28 in the text">&#8617;</a></p>
+</li>
+<li id="fn:sakaguchi_soluble_1986">
+<p>Hidetsugu Sakaguchi and Yoshiki Kuramoto. A soluble active rotater model showing phase transitions via mutual entertainment. <em>Progress of Theoretical Physics</em>, 76(3):576–581, 1986. Publisher: Oxford University Press.&#160;<a class="footnote-backref" href="#fnref:sakaguchi_soluble_1986" title="Jump back to footnote 29 in the text">&#8617;</a></p>
+</li>
+<li id="fn:hodgkin_quantitative_1952">
+<p>Alan L Hodgkin and Andrew F Huxley. A quantitative description of membrane current and its application to conduction and excitation in nerve. <em>The Journal of physiology</em>, 117(4):500, 1952.&#160;<a class="footnote-backref" href="#fnref:hodgkin_quantitative_1952" title="Jump back to footnote 30 in the text">&#8617;</a></p>
+</li>
+<li id="fn:cliff_unifying_2023">
+<p>Oliver M. Cliff, Annie G. Bryant, Joseph T. Lizier, Naotsugu Tsuchiya, and Ben D. Fulcher. Unifying pairwise interactions in complex dynamics. <em>Nature Computational Science</em>, 3(10):883–893, October 2023. URL: <a href="https://doi.org/10.1038/s43588-023-00519-x">https://doi.org/10.1038/s43588-023-00519-x</a>, <a href="https://doi.org/10.1038/s43588-023-00519-x">doi:10.1038/s43588-023-00519-x</a>.&#160;<a class="footnote-backref" href="#fnref:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a><a class="footnote-backref" href="#fnref5:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a><a class="footnote-backref" href="#fnref6:cliff_unifying_2023" title="Jump back to footnote 31 in the text">&#8617;</a></p>
+</li>
+<li id="fn:gardiner_stochastic_2009">
+<p>Crispin Gardiner. <em>Stochastic methods</em>. Volume 4. Springer Berlin Heidelberg, 2009. <a href="https://doi.org/10.1093/hesc/9780192896599.003.0008">doi:10.1093/hesc/9780192896599.003.0008</a>.&#160;<a class="footnote-backref" href="#fnref:gardiner_stochastic_2009" title="Jump back to footnote 32 in the text">&#8617;</a></p>
+</li>
+<li id="fn:liping_new_2021">
+<p>Chen Liping, Muhammad Altaf Khan, Abdon Atangana, and Sunil Kumar. A new financial chaotic model in Atangana-Baleanu stochastic fractional differential equations. <em>Alexandria Engineering Journal</em>, 60(6):5193–5204, 2021. Publisher: Elsevier. <a href="https://doi.org/10.1016/j.aej.2021.04.023">doi:10.1016/j.aej.2021.04.023</a>.&#160;<a class="footnote-backref" href="#fnref:liping_new_2021" title="Jump back to footnote 33 in the text">&#8617;</a></p>
+</li>
+<li id="fn:lorenz_deterministic_2017">
+<p>Edward N Lorenz. Deterministic nonperiodic flow 1. In <em>Universality in Chaos, 2nd edition</em>, pages 367–378. Routledge, 2017. <a href="https://doi.org/10.1201/9780203734636-38">doi:10.1201/9780203734636-38</a>.&#160;<a class="footnote-backref" href="#fnref:lorenz_deterministic_2017" title="Jump back to footnote 34 in the text">&#8617;</a></p>
+</li>
+<li id="fn:rossler_equation_1976">
+<p>Otto E Rössler. An equation for continuous chaos. <em>Physics Letters A</em>, 57(5):397–398, 1976. Publisher: Elsevier.&#160;<a class="footnote-backref" href="#fnref:rossler_equation_1976" title="Jump back to footnote 35 in the text">&#8617;</a></p>
+</li>
+<li id="fn:thomas_deterministic_1999">
+<p>René Thomas. Deterministic chaos seen in terms of feedback circuits: analysis, synthesis," labyrinth chaos". <em>International Journal of Bifurcation and Chaos</em>, 9(10):1889–1905, 1999. Publisher: World Scientific. <a href="https://doi.org/10.1142/S0218127499001383">doi:10.1142/S0218127499001383</a>.&#160;<a class="footnote-backref" href="#fnref:thomas_deterministic_1999" title="Jump back to footnote 36 in the text">&#8617;</a></p>
+</li>
+<li id="fn:hamilton_time_2020">
+<p>James D Hamilton. <em>Time series analysis</em>. Princeton university press, 2020.&#160;<a class="footnote-backref" href="#fnref:hamilton_time_2020" title="Jump back to footnote 37 in the text">&#8617;</a></p>
+</li>
+<li id="fn:wilson_excitatory_1972">
+<p>Hugh R Wilson and Jack D Cowan. Excitatory and inhibitory interactions in localized populations of model neurons. <em>Biophysical journal</em>, 12(1):1–24, 1972. Publisher: Elsevier. <a href="https://doi.org/10.1016/S0006-3495(72)86068-5">doi:10.1016/S0006-3495(72)86068-5</a>.&#160;<a class="footnote-backref" href="#fnref:wilson_excitatory_1972" title="Jump back to footnote 38 in the text">&#8617;</a></p>
+</li>
+<li id="fn:black_pricing_1973">
+<p>Fischer Black and Myron Scholes. The pricing of options and corporate liabilities. <em>Journal of political economy</em>, 81(3):637–654, 1973. Publisher: The University of Chicago Press.&#160;<a class="footnote-backref" href="#fnref:black_pricing_1973" title="Jump back to footnote 39 in the text">&#8617;</a></p>
+</li>
+<li id="fn:fazio_mathematical_2006">
+<p>Riccardo Fazio and Alessandra Jannelli. Mathematical and numerical modeling for a bio-chemical aquarium. <em>Applied Mathematics and Computation</em>, 174(2):1370–1383, 2006. Publisher: Elsevier. <a href="https://doi.org/10.1016/j.amc.2005.05.045">doi:10.1016/j.amc.2005.05.045</a>.&#160;<a class="footnote-backref" href="#fnref:fazio_mathematical_2006" title="Jump back to footnote 40 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../benchmark/" class="btn btn-neutral float-left" title="Benchmark"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../benchmark/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

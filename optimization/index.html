@@ -51,6 +51,10 @@
                 <li class="toctree-l1"><a class="reference internal" href="../intervention/">Intervention</a>
                 </li>
               </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                </li>
+              </ul>
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Optimization</a>
     <ul class="current">
@@ -72,7 +76,15 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../prediction/">Prediction</a>
+                <li class="toctree-l1"><a class="reference internal" href="../custom_forecast_methods/">Custom forecast methods</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmark/">Benchmark</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../extended_paper/">Extended paper</a>
                 </li>
               </ul>
       </div>
@@ -110,7 +122,7 @@
 <li><strong>train_window_percent</strong> <em>(float)</em>: Fraction of <code>data</code> used for training in each fold (0 &lt; p &lt; 1).</li>
 <li><strong>num_folds</strong> <em>(int)</em>: Total number of folds (including the initial training window).</li>
 <li><strong>exog_idxs</strong> <em>(Optional[list[int]])</em>: Indices of columns in <code>data</code> treated as exogenous variables during fitting and validation.</li>
-<li><strong>val_scheme</strong> <em>(str)</em>: Validation strategy: <code>"forecast"</code> (score the chunk immediately after training), <code>"last"</code> (score a fixed hold-out chunk at end), or <code>"all"</code> (score all hold-out chunks).</li>
+<li><strong>val_scheme</strong> <em>(str)</em>: Validation strategy: <code>"forecast"</code> (score the fold immediately after training), <code>"last"</code> (score a fixed hold-out fold at end), or <code>"all"</code> (score all hold-out folds).</li>
 <li><strong>num_val_prior_states</strong> <em>(int)</em>: Number of prior observations used as context for each validation prediction.</li>
 <li><strong>metric</strong> <em>(Callable[[np.ndarray, np.ndarray], float])</em>: Callable metric function accepting <code>actual</code> and <code>predicted</code> arrays and returning a scalar error (e.g., <code>interfere.metrics.rmse</code>).</li>
 <li><strong>metric_direction</strong> <em>(str)</em>: <code>"minimize"</code> or <code>"maximize"</code>, passed to Optuna's study.</li>
@@ -162,9 +174,9 @@ error = interfere.metrics.rmse(actual, predicted)
 </code></pre>
 <h3 id="cross-validation-workflow">Cross-Validation Workflow</h3>
 <ol>
-<li><strong>Partition Data</strong>: Split <code>data</code> into a sliding training window (size = <code>train_window_percent</code> × T) and subsequent validation chunks.</li>
-<li><strong>Slide Window</strong>: For each of the <code>num_folds</code>, advance the training window by one validation chunk and retrain the forecasting method from scratch.</li>
-<li><strong>Score Predictions</strong>: Depending on <code>val_scheme</code>, compute the error metric on hold-out observations immediately after training (<code>"forecast"</code>), at the end (<code>"last"</code>), or on all chunks (<code>"all"</code>).</li>
+<li><strong>Partition Data</strong>: Split <code>data</code> into a sliding training window (size = <code>train_window_percent</code> × T) and subsequent validation folds.</li>
+<li><strong>Slide Window</strong>: For each of the <code>num_folds</code>, advance the training window by one validation fold and retrain the forecasting method from scratch.</li>
+<li><strong>Score Predictions</strong>: Depending on <code>val_scheme</code>, compute the error metric on hold-out observations immediately after training (<code>"forecast"</code>), at the end (<code>"last"</code>), or on all folds (<code>"all"</code>).</li>
 <li><strong>Aggregate Result</strong>: Return the aggregated metric across folds to Optuna to guide hyperparameter search.</li>
 </ol>
 <h2 id="supported-forecasting-methods">Supported Forecasting Methods</h2>
@@ -227,7 +239,7 @@ cv = interfere.CrossValObjective(
     exog_idxs=[],
     val_scheme=&quot;forecast&quot;,
     num_val_prior_states=5,
-    metric=interfere.metrics.RootMeanSquaredError(),
+    metric=interfere.metrics.rmse,
     metric_direction=&quot;minimize&quot;,
 )
 
@@ -241,8 +253,8 @@ print(&quot;Best hyperparameters:&quot;, study.best_params)
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../intervention/" class="btn btn-neutral float-left" title="Intervention"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../prediction/" class="btn btn-neutral float-right" title="Prediction">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../prediction/" class="btn btn-neutral float-left" title="Prediction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../custom_forecast_methods/" class="btn btn-neutral float-right" title="Custom forecast methods">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -265,10 +277,10 @@ print(&quot;Best hyperparameters:&quot;, study.best_params)
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../intervention/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../prediction/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../prediction/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../custom_forecast_methods/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
