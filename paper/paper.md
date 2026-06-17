@@ -42,7 +42,7 @@ bibliography: paper.bib
 ---
 # Summary
 
-The Interfere package focuses on *intervention response prediction*—forecasting how complex, dynamic systems respond to novel interventions. 
+The Interfere package focuses on *intervention response prediction*: forecasting how complex, dynamic systems respond to novel interventions. 
 While ideal data for benchmarking predictive methods for such problems would come from controlled, longitudinal experiments, such experiments are often infeasible due to confounding, cost, and ethical constraints. 
 In contrast, many synthetic benchmarks rely on models with static linear relationships and/or independent noise profiles that lack the complex interdependent feedback present in the real world.
 However, many disciplines, including economics, ecology, and systems biology, employ mechanistic dynamic models [@brayton_frbus_2014; @izhikevich_large-scale_2008; @banks_parameter_2017; @baker_mechanistic_2018]
@@ -71,7 +71,7 @@ the intervention to predict intervention response (red).
 Multiple frameworks have emerged for identifying causal relationships from data [@imbens_causal_2015; @pearl_causality_2009; @wieczorek_information_2019].
 Many frameworks assume a static, linear relationship.
 Because a linear approximation can be insufficient for anticipating the response of complex dynamic systems at medium and long times, 
-non-linear, dynamic techniques have been developed for causal discovery and forecasting [e.g. @runge_discovering_2022]. Nevertheless, there are relatively few intervention oriented techniques to fit dynamic nonlinear models to data. 
+non-linear, dynamic techniques have been developed for causal discovery and forecasting [e.g., @runge_discovering_2022]. Nevertheless, there are relatively few intervention oriented techniques to fit dynamic nonlinear models to data. 
 
 Interfere's benchmarking approach is enabled by a unified toolkit for simulating
 intervention response, standardized method evaluation, and systematic
